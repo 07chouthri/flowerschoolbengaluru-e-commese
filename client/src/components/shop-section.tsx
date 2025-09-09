@@ -78,7 +78,7 @@ export default function ShopSection() {
             {products.map((product) => (
               <Card 
                 key={product.id} 
-                className="card-shadow hover:shadow-xl transition-all group overflow-hidden"
+                className="card-shadow hover:shadow-xl transition-all group overflow-hidden card-hover-lift flower-float"
                 data-testid={`card-product-${product.id}`}
               >
                 <div className="overflow-hidden">
@@ -120,10 +120,10 @@ export default function ShopSection() {
           <Button 
             variant="secondary" 
             size="lg"
-            className="bg-white text-primary hover:bg-gray-100"
+            className="bg-white text-primary hover:bg-gray-100 button-glow"
             data-testid="button-special-offer"
           >
-            Shop Now & Save
+            🛒 Shop Now & Save
           </Button>
         </div>
       </div>
