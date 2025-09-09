@@ -23,10 +23,11 @@ function Navigation() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3" data-testid="link-home">
-            <div className="w-10 h-10 bg-primary text-primary-foreground rounded-lg flex items-center justify-center font-bold text-lg">
-              B
-            </div>
-            <span className="font-bold text-xl text-foreground">Bouquet Bar</span>
+            <img 
+              src="/attached_assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png" 
+              alt="Bouquet Bar Logo" 
+              className="h-12 w-auto"
+            />
           </Link>
 
           {/* Navigation Links */}
