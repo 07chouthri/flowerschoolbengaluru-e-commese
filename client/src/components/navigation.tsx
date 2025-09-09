@@ -21,9 +21,9 @@ export default function Navigation() {
     <nav className="fixed top-0 w-full bg-card/95 backdrop-blur-sm z-50 border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
-          <div className="flex items-center space-x-2">
-            <img src={logoPath} alt="Bouquet Bar Logo" className="h-10 w-auto" />
-            <span className="text-xl font-bold text-foreground">Bouquet Bar</span>
+          <div className="flex items-center space-x-3">
+            <img src={logoPath} alt="Bouquet Bar Logo" className="h-14 w-auto logo-pulse flower-float" />
+            <span className="text-2xl font-bold gradient-text">Bouquet Bar</span>
           </div>
           
           <div className="hidden md:flex space-x-8">
