@@ -63,7 +63,7 @@ export default function ShopPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-rose-50/20 to-emerald-50/20">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
@@ -83,7 +83,7 @@ export default function ShopPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-rose-50/20 to-emerald-50/20">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <motion.div

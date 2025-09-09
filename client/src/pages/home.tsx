@@ -1,4 +1,3 @@
-import Navigation from "@/components/navigation";
 import HeroSection from "@/components/hero-section";
 import AboutSection from "@/components/about-section";
 import ShopSection from "@/components/shop-section";
@@ -13,8 +12,7 @@ import FloatingWhatsapp from "@/components/floating-whatsapp";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Navigation />
+    <div className="bg-background text-foreground">
       <HeroSection />
       <AboutSection />
       <ShopSection />

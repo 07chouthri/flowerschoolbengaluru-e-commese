@@ -18,42 +18,51 @@ function Navigation() {
   const { user, signout } = useAuth();
 
   return (
-    <nav className="bg-background/80 backdrop-blur-sm border-b sticky top-0 z-50">
+    <nav className="bg-background border-b border-border sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2" data-testid="link-home">
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">BB</span>
+          <Link to="/" className="flex items-center space-x-3" data-testid="link-home">
+            <div className="w-10 h-10 bg-primary text-primary-foreground rounded-lg flex items-center justify-center font-bold text-lg">
+              B
             </div>
-            <span className="font-bold text-lg">Bouquet Bar</span>
+            <span className="font-bold text-xl text-foreground">Bouquet Bar</span>
           </Link>
 
           {/* Navigation Links */}
-          <div className="hidden md:flex items-center space-x-6">
-            <Link to="/" className="flex items-center space-x-2 hover:text-primary transition-colors" data-testid="nav-home">
-              <HomeIcon className="h-4 w-4" />
-              <span>Home</span>
+          <div className="hidden md:flex items-center space-x-8">
+            <Link 
+              to="/" 
+              className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+              data-testid="nav-home"
+            >
+              Home
             </Link>
-            <Link to="/shop" className="flex items-center space-x-2 hover:text-primary transition-colors" data-testid="nav-shop">
-              <ShoppingBag className="h-4 w-4" />
-              <span>Shop</span>
+            <Link 
+              to="/shop" 
+              className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+              data-testid="nav-shop"
+            >
+              Shop
             </Link>
-            <Link to="/school" className="flex items-center space-x-2 hover:text-primary transition-colors" data-testid="nav-school">
-              <GraduationCap className="h-4 w-4" />
-              <span>School</span>
+            <Link 
+              to="/school" 
+              className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+              data-testid="nav-school"
+            >
+              School
             </Link>
           </div>
 
           {/* User Actions */}
           <div className="flex items-center space-x-4">
             {user ? (
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                    <User className="h-4 w-4 text-primary" />
+                  <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                    <User className="h-4 w-4 text-muted-foreground" />
                   </div>
-                  <span className="text-sm font-medium" data-testid="text-user-name">
+                  <span className="text-sm font-medium text-foreground" data-testid="text-user-name">
                     {user.firstName || 'User'}
                   </span>
                 </div>
@@ -63,7 +72,6 @@ function Navigation() {
                   onClick={() => signout.mutate()}
                   data-testid="button-signout"
                 >
-                  <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
                 </Button>
               </div>
