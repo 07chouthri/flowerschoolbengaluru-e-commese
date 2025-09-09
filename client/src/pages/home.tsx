@@ -1,5 +1,6 @@
 import Navigation from "@/components/navigation";
 import HeroSection from "@/components/hero-section";
+import FeatureImageSection from "@/components/feature-image-section";
 import AboutSection from "@/components/about-section";
 import ShopSection from "@/components/shop-section";
 import SchoolSection from "@/components/school-section";
@@ -16,6 +17,7 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground">
       <Navigation />
       <HeroSection />
+      <FeatureImageSection />
       <AboutSection />
       <ShopSection />
       <SchoolSection />
