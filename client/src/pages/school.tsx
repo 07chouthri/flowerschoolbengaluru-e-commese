@@ -58,21 +58,38 @@ export default function SchoolPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            Floral Design School
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Master the art of floral design with our professional courses. From basic techniques 
-            to advanced commercial skills, learn from experienced instructors in hands-on sessions.
-          </p>
-        </motion.div>
+      {/* Hero Section */}
+      <section className="bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700 py-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=1200&h=800&fit=crop&crop=center')] bg-cover bg-center opacity-10"></div>
+        <div className="container mx-auto px-4 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center max-w-4xl mx-auto"
+          >
+            <h1 className="text-6xl font-bold text-foreground mb-6 animate-fadeIn">
+              Master Floral
+              <span className="block text-5xl bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mt-2">
+                Design Arts
+              </span>
+            </h1>
+            <p className="text-xl text-muted-foreground mb-8 animate-fadeIn" style={{ animationDelay: '200ms' }}>
+              Transform your passion for flowers into professional expertise. Learn from master florists 
+              in hands-on workshops that blend traditional techniques with contemporary design trends.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fadeIn" style={{ animationDelay: '400ms' }}>
+              <Button size="lg" className="hover:scale-105 transition-all duration-300 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg" data-testid="button-explore-courses">
+                🎓 Explore Courses
+              </Button>
+              <Button size="lg" variant="outline" className="hover:scale-105 transition-all duration-300 border-2 hover:border-emerald-300" data-testid="button-free-trial">
+                ✨ Free Trial Class
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+      
+      <div className="container mx-auto px-4 py-12">
 
         {/* Search */}
         <motion.div
@@ -244,6 +261,108 @@ export default function SchoolPage() {
             </p>
           </motion.div>
         )}
+        
+        {/* Course Categories */}
+        <section className="py-16 bg-muted mt-16 rounded-lg">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-foreground mb-4 animate-fadeIn">
+              Course Categories
+            </h2>
+            <p className="text-lg text-muted-foreground animate-fadeIn" style={{ animationDelay: '200ms' }}>
+              Choose your learning path based on your interests and skill level
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { 
+                name: "Beginner Basics", 
+                description: "Perfect for newcomers to floral design", 
+                image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&crop=center", 
+                icon: "🌱",
+                courses: "5 Courses"
+              },
+              { 
+                name: "Professional Certification", 
+                description: "Advanced skills for commercial florists", 
+                image: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=400&h=300&fit=crop&crop=center", 
+                icon: "🎓",
+                courses: "8 Courses"
+              },
+              { 
+                name: "Wedding Specialist", 
+                description: "Specialized training for wedding arrangements", 
+                image: "https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?w=400&h=300&fit=crop&crop=center", 
+                icon: "💐",
+                courses: "6 Courses"
+              }
+            ].map((category, index) => (
+              <Card 
+                key={category.name} 
+                className="group hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer animate-bounceIn overflow-hidden"
+                style={{ animationDelay: `${index * 150}ms` }}
+                data-testid={`category-${category.name.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                  <div className="absolute top-4 right-4">
+                    <Badge variant="secondary" className="bg-white/90 text-black">{category.courses}</Badge>
+                  </div>
+                  <div className="absolute bottom-4 left-4 text-white">
+                    <div className="text-3xl mb-2">{category.icon}</div>
+                    <h3 className="text-xl font-bold mb-1">{category.name}</h3>
+                  </div>
+                </div>
+                <CardContent className="p-6">
+                  <p className="text-muted-foreground mb-4">{category.description}</p>
+                  <Button variant="outline" className="w-full hover:bg-primary hover:text-primary-foreground transition-all duration-200">
+                    View Courses
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+        
+        {/* Success Stories */}
+        <section className="py-16">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-foreground mb-4 animate-fadeIn">
+              Student Success Stories
+            </h2>
+            <p className="text-lg text-muted-foreground animate-fadeIn" style={{ animationDelay: '200ms' }}>
+              See how our graduates have transformed their passion into successful careers
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { name: "Priya Sharma", role: "Wedding Florist", story: "Started my own wedding decoration business after completing the certification course.", rating: 5 },
+              { name: "Arjun Patel", role: "Flower Shop Owner", story: "The business skills taught here helped me expand my family flower shop into 3 locations.", rating: 5 },
+              { name: "Meera Singh", role: "Event Designer", story: "Now working with top event management companies in Mumbai thanks to the professional training.", rating: 5 }
+            ].map((story, index) => (
+              <Card 
+                key={story.name}
+                className="p-6 hover:shadow-lg transition-all duration-300 animate-slideInLeft"
+                style={{ animationDelay: `${index * 200}ms` }}
+              >
+                <div className="flex items-center space-x-1 mb-3">
+                  {[...Array(story.rating)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                  ))}
+                </div>
+                <p className="text-muted-foreground mb-4 italic">"{story.story}"</p>
+                <div>
+                  <p className="font-semibold text-foreground">{story.name}</p>
+                  <p className="text-sm text-muted-foreground">{story.role}</p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </section>
 
         {/* Call to Action */}
         <motion.div
@@ -269,6 +388,33 @@ export default function SchoolPage() {
           </div>
         </motion.div>
       </div>
+      
+      {/* Call to Action Section */}
+      <section className="py-16 bg-gradient-to-r from-emerald-500 to-teal-500 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl font-bold mb-6">
+              Ready to Start Your Floral Journey?
+            </h2>
+            <p className="text-xl text-emerald-100 mb-8 max-w-2xl mx-auto">
+              Join hundreds of students who have transformed their love for flowers into rewarding careers. 
+              Book a free consultation with our instructors today.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" variant="secondary" className="hover:scale-105 transition-all duration-300" data-testid="button-free-consultation">
+                Book Free Consultation
+              </Button>
+              <Button size="lg" variant="outline" className="hover:scale-105 transition-all duration-300 border-white text-white hover:bg-white hover:text-emerald-500" data-testid="button-download-brochure">
+                Download Brochure
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
     </div>
   );
 }
