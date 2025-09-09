@@ -30,7 +30,7 @@ export default function Footer() {
                 className="h-16 w-auto" 
               />
               <div className="text-left">
-                <h2 className="text-3xl font-bold text-gray-900 tracking-wide font-serif">Bouquet Bar</h2>
+                <h2 className="text-3xl font-bold text-gray-900 tracking-wide">Bouquet Bar</h2>
                 <p className="text-lg text-gray-600 font-medium">Bengaluru, India</p>
               </div>
             </div>
@@ -47,7 +47,7 @@ export default function Footer() {
           <div className="grid md:grid-cols-4 gap-10 mb-16">
             {/* Company Information */}
             <div className="space-y-6">
-              <h4 className="text-xl font-semibold text-gray-900 border-b-2 border-gray-300 pb-2 inline-block font-serif">Company</h4>
+              <h4 className="text-xl font-semibold text-gray-900 border-b-2 border-gray-300 pb-2 inline-block">Company</h4>
               <div className="space-y-4">
                 <p className="text-gray-600 text-sm leading-relaxed font-light">
                   Established as India's leading floral education institute, we combine traditional artistry with modern techniques.
@@ -83,7 +83,7 @@ export default function Footer() {
 
             {/* Navigation Links */}
             <div className="space-y-6">
-              <h4 className="text-xl font-semibold text-gray-900 border-b-2 border-gray-300 pb-2 inline-block font-serif">Navigation</h4>
+              <h4 className="text-xl font-semibold text-gray-900 border-b-2 border-gray-300 pb-2 inline-block">Navigation</h4>
               <ul className="space-y-3">
                 <li>
                   <button 
@@ -144,7 +144,7 @@ export default function Footer() {
 
             {/* Services */}
             <div className="space-y-6">
-              <h4 className="text-xl font-semibold text-gray-900 border-b-2 border-gray-300 pb-2 inline-block font-serif">Services</h4>
+              <h4 className="text-xl font-semibold text-gray-900 border-b-2 border-gray-300 pb-2 inline-block">Services</h4>
               <ul className="space-y-3">
                 <li><button className="text-gray-600 hover:text-gray-900 transition-all duration-300 font-medium" data-testid="footer-category-roses">Fresh Flower Delivery</button></li>
                 <li><button className="text-gray-600 hover:text-gray-900 transition-all duration-300 font-medium" data-testid="footer-category-orchids">Premium Arrangements</button></li>
@@ -157,7 +157,7 @@ export default function Footer() {
 
             {/* Support */}
             <div className="space-y-6">
-              <h4 className="text-xl font-semibold text-gray-900 border-b-2 border-gray-300 pb-2 inline-block font-serif">Support</h4>
+              <h4 className="text-xl font-semibold text-gray-900 border-b-2 border-gray-300 pb-2 inline-block">Support</h4>
               <ul className="space-y-3">
                 <li><button className="text-gray-600 hover:text-gray-900 transition-all duration-300 font-medium" data-testid="footer-policy-refund">Refund Policy</button></li>
                 <li><button className="text-gray-600 hover:text-gray-900 transition-all duration-300 font-medium" data-testid="footer-policy-shipping">Shipping Information</button></li>
@@ -175,7 +175,7 @@ export default function Footer() {
             
             <div className="bg-white rounded-2xl border border-gray-200 p-8 max-w-2xl mx-auto shadow-sm">
               <div className="text-center">
-                <h4 className="text-2xl font-bold text-gray-900 mb-3 font-serif">Stay Connected</h4>
+                <h4 className="text-2xl font-bold text-gray-900 mb-3">Stay Connected</h4>
                 <p className="text-gray-600 mb-6 font-light">Subscribe to receive updates on new courses, fresh arrivals, and exclusive offers.</p>
                 <form onSubmit={handleNewsletterSubmit} className="flex gap-3">
                   <Input
