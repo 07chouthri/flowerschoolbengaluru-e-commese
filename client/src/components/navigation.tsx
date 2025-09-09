@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Menu, X, User, UserPlus } from "lucide-react";
-import { useCart } from "@/hooks/use-cart";
+import { Menu, X, User, UserPlus } from "lucide-react";
 import { Link } from "wouter";
 import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 
 export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { totalItems } = useCart();
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -87,10 +85,6 @@ export default function Navigation() {
                 </Button>
               </Link>
             </div>
-            <Button className="hidden md:flex items-center" data-testid="button-cart">
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Cart ({totalItems})
-            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -166,10 +160,6 @@ export default function Navigation() {
                 </Link>
               </div>
               
-              <Button className="w-full mt-4" data-testid="button-mobile-cart">
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Cart ({totalItems})
-              </Button>
             </div>
           </div>
         )}
