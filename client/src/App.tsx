@@ -11,8 +11,10 @@ import SignupPage from "@/pages/signup";
 import SigninPage from "@/pages/signin";
 import ShopPage from "@/pages/shop";
 import SchoolPage from "@/pages/school";
+import Gallery from "@/pages/gallery";
+import Contact from "@/pages/contact";
 import { useAuth } from "@/hooks/useAuth";
-import { User, LogOut, ShoppingBag, GraduationCap, Home as HomeIcon } from "lucide-react";
+import { User, LogOut, ShoppingBag, GraduationCap, Home as HomeIcon, Camera, Mail } from "lucide-react";
 
 function Navigation() {
   const { user, signout } = useAuth();
@@ -22,36 +24,59 @@ function Navigation() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3" data-testid="link-home">
-            <img 
-              src="/attached_assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png" 
-              alt="Bouquet Bar Logo" 
-              className="h-12 w-auto"
-            />
+          <Link to="/" className="flex items-center space-x-3 hover:scale-105 transition-transform" data-testid="link-home">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                B
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-foreground">Bouquet Bar</h1>
+                <p className="text-xs text-muted-foreground">Flowers & Design School</p>
+              </div>
+            </div>
           </Link>
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
             <Link 
               to="/" 
-              className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+              className="text-muted-foreground hover:text-foreground hover:scale-105 transition-all font-medium flex items-center space-x-1"
               data-testid="nav-home"
             >
-              Home
+              <HomeIcon className="h-4 w-4" />
+              <span>Home</span>
             </Link>
             <Link 
               to="/shop" 
-              className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+              className="text-muted-foreground hover:text-foreground hover:scale-105 transition-all font-medium flex items-center space-x-1"
               data-testid="nav-shop"
             >
-              Shop
+              <ShoppingBag className="h-4 w-4" />
+              <span>Shop</span>
             </Link>
             <Link 
               to="/school" 
-              className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+              className="text-muted-foreground hover:text-foreground hover:scale-105 transition-all font-medium flex items-center space-x-1"
               data-testid="nav-school"
             >
-              School
+              <GraduationCap className="h-4 w-4" />
+              <span>School</span>
+            </Link>
+            <Link 
+              to="/gallery" 
+              className="text-muted-foreground hover:text-foreground hover:scale-105 transition-all font-medium flex items-center space-x-1"
+              data-testid="nav-gallery"
+            >
+              <Camera className="h-4 w-4" />
+              <span>Gallery</span>
+            </Link>
+            <Link 
+              to="/contact" 
+              className="text-muted-foreground hover:text-foreground hover:scale-105 transition-all font-medium flex items-center space-x-1"
+              data-testid="nav-contact"
+            >
+              <Mail className="h-4 w-4" />
+              <span>Contact</span>
             </Link>
           </div>
 
@@ -121,6 +146,8 @@ function Router() {
           <Route path="/signup" component={SignupPage} />
           <Route path="/shop" component={ShopPage} />
           <Route path="/school" component={SchoolPage} />
+          <Route path="/gallery" component={Gallery} />
+          <Route path="/contact" component={Contact} />
           <Route component={NotFound} />
         </Switch>
       </main>
