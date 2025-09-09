@@ -15,6 +15,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     store: new PgSession({
       conString: process.env.DATABASE_URL,
       createTableIfMissing: true,
+      errorLog: console.error,
     }),
     secret: process.env.SESSION_SECRET || 'fallback-dev-secret',
     resave: false,
