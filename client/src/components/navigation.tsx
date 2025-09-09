@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Menu, X } from "lucide-react";
+import { ShoppingCart, Menu, X, User, UserPlus } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
+import { Link } from "wouter";
 import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 
 export default function Navigation() {
@@ -72,6 +73,20 @@ export default function Navigation() {
           </div>
 
           <div className="flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-3">
+              <Link href="/signin">
+                <Button variant="ghost" className="text-sm" data-testid="button-signin">
+                  <User className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button className="text-sm button-glow bg-gradient-to-r from-pink-600 to-green-600 hover:from-pink-500 hover:to-green-500" data-testid="button-signup">
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Sign Up
+                </Button>
+              </Link>
+            </div>
             <Button className="hidden md:flex items-center" data-testid="button-cart">
               <ShoppingCart className="w-4 h-4 mr-2" />
               Cart ({totalItems})
@@ -134,6 +149,23 @@ export default function Navigation() {
               >
                 Contact
               </button>
+              
+              {/* Mobile Auth Buttons */}
+              <div className="border-t border-border pt-4 mt-4 space-y-3">
+                <Link href="/signin">
+                  <Button variant="ghost" className="w-full justify-start" data-testid="button-mobile-signin">
+                    <User className="w-4 h-4 mr-2" />
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button className="w-full button-glow bg-gradient-to-r from-pink-600 to-green-600 hover:from-pink-500 hover:to-green-500" data-testid="button-mobile-signup">
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
+              
               <Button className="w-full mt-4" data-testid="button-mobile-cart">
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 Cart ({totalItems})
