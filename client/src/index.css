@@ -16,40 +16,40 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(222 84% 5%);
-  --border: hsl(214 32% 91%);
+  --background: hsl(25 20% 98%);
+  --foreground: hsl(220 9% 22%);
+  --border: hsl(220 13% 91%);
   --card: hsl(0 0% 100%);
-  --card-foreground: hsl(222 84% 5%);
-  --card-border: hsl(214 32% 91%);
+  --card-foreground: hsl(220 9% 22%);
+  --card-border: hsl(220 13% 91%);
   --sidebar: hsl(0 0% 100%);
-  --sidebar-foreground: hsl(222 84% 5%);
-  --sidebar-border: hsl(214 32% 91%);
-  --sidebar-primary: hsl(222 47% 11%);
-  --sidebar-primary-foreground: hsl(210 40% 98%);
-  --sidebar-accent: hsl(210 40% 96%);
-  --sidebar-accent-foreground: hsl(222 84% 5%);
-  --sidebar-ring: hsl(222 47% 11%);
+  --sidebar-foreground: hsl(220 9% 22%);
+  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-primary: hsl(332 79% 58%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(25 35% 92%);
+  --sidebar-accent-foreground: hsl(220 9% 22%);
+  --sidebar-ring: hsl(332 79% 58%);
   --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(222 84% 5%);
-  --popover-border: hsl(214 32% 91%);
-  --primary: hsl(222 47% 11%);
-  --primary-foreground: hsl(210 40% 98%);
-  --secondary: hsl(210 40% 96%);
-  --secondary-foreground: hsl(222 84% 5%);
-  --muted: hsl(210 40% 96%);
-  --muted-foreground: hsl(215 16% 47%);
-  --accent: hsl(210 40% 96%);
-  --accent-foreground: hsl(222 84% 5%);
+  --popover-foreground: hsl(220 9% 22%);
+  --popover-border: hsl(220 13% 91%);
+  --primary: hsl(332 79% 58%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(160 64% 40%);
+  --secondary-foreground: hsl(0 0% 100%);
+  --muted: hsl(25 20% 95%);
+  --muted-foreground: hsl(220 9% 46%);
+  --accent: hsl(25 35% 92%);
+  --accent-foreground: hsl(220 9% 22%);
   --destructive: hsl(0 63% 31%);
   --destructive-foreground: hsl(0 0% 100%);
-  --input: hsl(214 32% 91%);
-  --ring: hsl(222 47% 11%);
-  --chart-1: hsl(222 47% 11%);
-  --chart-2: hsl(210 40% 96%);
-  --chart-3: hsl(215 16% 47%);
-  --chart-4: hsl(214 32% 91%);
-  --chart-5: hsl(210 40% 98%);
+  --input: hsl(220 13% 91%);
+  --ring: hsl(332 79% 58%);
+  --chart-1: hsl(332 79% 58%);
+  --chart-2: hsl(160 64% 40%);
+  --chart-3: hsl(25 35% 92%);
+  --chart-4: hsl(220 9% 46%);
+  --chart-5: hsl(220 13% 91%);
 
   --font-sans: 'Inter', sans-serif;
   --font-serif: Georgia, serif;
@@ -116,18 +116,18 @@
   --sidebar: hsl(220 9% 12%);
   --sidebar-foreground: hsl(0 0% 95%);
   --sidebar-border: hsl(220 9% 20%);
-  --sidebar-primary: hsl(210 40% 98%);
-  --sidebar-primary-foreground: hsl(222 84% 5%);
+  --sidebar-primary: hsl(332 79% 58%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
   --sidebar-accent: hsl(220 9% 15%);
   --sidebar-accent-foreground: hsl(0 0% 95%);
-  --sidebar-ring: hsl(210 40% 98%);
+  --sidebar-ring: hsl(332 79% 58%);
   --popover: hsl(220 9% 12%);
   --popover-foreground: hsl(0 0% 95%);
   --popover-border: hsl(220 9% 20%);
-  --primary: hsl(210 40% 98%);
-  --primary-foreground: hsl(222 84% 5%);
-  --secondary: hsl(220 9% 15%);
-  --secondary-foreground: hsl(0 0% 95%);
+  --primary: hsl(332 79% 58%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(160 64% 40%);
+  --secondary-foreground: hsl(0 0% 100%);
   --muted: hsl(220 9% 15%);
   --muted-foreground: hsl(220 9% 65%);
   --accent: hsl(220 9% 15%);
@@ -135,12 +135,12 @@
   --destructive: hsl(0 63% 31%);
   --destructive-foreground: hsl(0 0% 100%);
   --input: hsl(220 9% 20%);
-  --ring: hsl(210 40% 98%);
-  --chart-1: hsl(210 40% 98%);
-  --chart-2: hsl(220 9% 15%);
-  --chart-3: hsl(220 9% 65%);
-  --chart-4: hsl(220 9% 20%);
-  --chart-5: hsl(220 9% 12%);
+  --ring: hsl(332 79% 58%);
+  --chart-1: hsl(332 79% 58%);
+  --chart-2: hsl(160 64% 40%);
+  --chart-3: hsl(220 9% 15%);
+  --chart-4: hsl(220 9% 65%);
+  --chart-5: hsl(220 9% 20%);
 
   --shadow-2xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.05);
   --shadow-xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.05);
@@ -162,9 +162,27 @@
   }
 }
 
-/* Custom styles */
+/* Custom styles for the floral theme */
 .hero-gradient {
-  background: linear-gradient(135deg, hsl(222 47% 11% / 0.02), hsl(214 32% 91% / 0.05));
+  background: linear-gradient(135deg, hsl(332 79% 58% / 0.1), hsl(160 64% 40% / 0.1));
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-gradient::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
 }
 
 .floating-whatsapp {
@@ -172,13 +190,13 @@
   bottom: 20px;
   right: 20px;
   z-index: 1000;
-  animation: pulse 2s infinite;
-  transition: all 0.3s ease;
+  animation: bounce 2s infinite;
 }
 
-.floating-whatsapp:hover {
-  transform: scale(1.1);
-  animation: none;
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
 }
 
 .image-hover {
@@ -198,15 +216,102 @@
   box-shadow: var(--shadow-md);
 }
 
-/* Fade-in animations - removed for professional design */
+/* Fade-in animations */
+.fade-in {
+  animation: fadeIn 0.8s ease-in forwards;
+  opacity: 0;
+}
 
-/* Slide-in animations - removed for professional design */
+.fade-in-delay-1 {
+  animation: fadeIn 0.8s ease-in 0.2s forwards;
+  opacity: 0;
+}
 
-/* Logo styling - clean and professional */
+.fade-in-delay-2 {
+  animation: fadeIn 0.8s ease-in 0.4s forwards;
+  opacity: 0;
+}
 
-/* Text styling - clean and professional */
+.fade-in-delay-3 {
+  animation: fadeIn 0.8s ease-in 0.6s forwards;
+  opacity: 0;
+}
 
-/* Footer styling - clean and professional */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Slide-in animations */
+.slide-in-left {
+  animation: slideInLeft 0.6s ease-out forwards;
+  opacity: 0;
+  transform: translateX(-50px);
+}
+
+.slide-in-right {
+  animation: slideInRight 0.6s ease-out forwards;
+  opacity: 0;
+  transform: translateX(50px);
+}
+
+@keyframes slideInLeft {
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Logo pulse animation */
+.logo-pulse {
+  animation: logoPulse 3s ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* Gradient text animation */
+.gradient-text {
+  background: linear-gradient(45deg, hsl(332 79% 58%), hsl(160 64% 40%), hsl(332 79% 58%));
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Enhanced footer gradient */
+.footer-gradient {
+  background: linear-gradient(135deg, 
+    hsl(332 79% 15%), 
+    hsl(160 64% 20%), 
+    hsl(332 79% 12%)
+  );
+  position: relative;
+}
+
+.footer-gradient::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    hsl(332 79% 58%), 
+    hsl(160 64% 40%), 
+    hsl(332 79% 58%)
+  );
+}
 
 /* Card hover enhancements */
 .card-hover-lift {
@@ -218,65 +323,36 @@
   box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
 }
 
-/* Button styling - clean and professional */
-
-/* Beautiful animations for modern appeal */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Button glow effects */
+.button-glow {
+  position: relative;
+  overflow: hidden;
 }
 
-@keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-30px); }
-  to { opacity: 1; transform: translateX(0); }
+.button-glow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.5s;
 }
 
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(30px); }
-  to { opacity: 1; transform: translateX(0); }
+.button-glow:hover::before {
+  left: 100%;
 }
 
-@keyframes bounceIn {
-  0% { opacity: 0; transform: scale(0.3); }
-  50% { opacity: 1; transform: scale(1.05); }
-  70% { transform: scale(0.9); }
-  100% { opacity: 1; transform: scale(1); }
+/* Flower floating animation */
+.flower-float {
+  animation: floatFlower 6s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.8s ease-out forwards;
-}
-
-.animate-slideInLeft {
-  animation: slideInLeft 0.6s ease-out forwards;
-}
-
-.animate-slideInRight {
-  animation: slideInRight 0.6s ease-out forwards;
-}
-
-.animate-bounceIn {
-  animation: bounceIn 0.6s ease-out forwards;
-}
-
-.animate-pulse-slow {
-  animation: pulse 3s ease-in-out infinite;
-}
-
-.shimmer-effect {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
+@keyframes floatFlower {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-10px) rotate(1deg); }
+  66% { transform: translateY(-5px) rotate(-1deg); }
 }
 
 /**

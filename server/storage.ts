@@ -1,15 +1,11 @@
-import { type User, type UpsertUser, type Product, type InsertProduct, type Course, type InsertCourse, type Order, type InsertOrder, type Enrollment, type InsertEnrollment, type Testimonial, type InsertTestimonial, type BlogPost, type InsertBlogPost } from "@shared/schema";
-import { users, products, courses, orders, enrollments, testimonials, blogPosts } from "@shared/schema";
-import { db } from "./db";
-import { eq } from "drizzle-orm";
-import bcrypt from "bcryptjs";
+import { type User, type InsertUser, type Product, type InsertProduct, type Course, type InsertCourse, type Order, type InsertOrder, type Enrollment, type InsertEnrollment, type Testimonial, type InsertTestimonial, type BlogPost, type InsertBlogPost } from "@shared/schema";
+import { randomUUID } from "crypto";
 
 export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: UpsertUser): Promise<User>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
   
   // Products
   getAllProducts(): Promise<Product[]>;
@@ -44,24 +40,24 @@ export interface IStorage {
   createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
 }
 
-export class DatabaseStorage implements IStorage {
+export class MemStorage implements IStorage {
+  private users: Map<string, User> = new Map();
+  private products: Map<string, Product> = new Map();
+  private courses: Map<string, Course> = new Map();
+  private orders: Map<string, Order> = new Map();
+  private enrollments: Map<string, Enrollment> = new Map();
+  private testimonials: Map<string, Testimonial> = new Map();
+  private blogPosts: Map<string, BlogPost> = new Map();
+
   constructor() {
     this.initializeData();
   }
 
-  private async initializeData() {
-    // Check if data already exists
-    try {
-      const existingProducts = await db.select().from(products).limit(1);
-      if (existingProducts.length > 0) return;
-    } catch (error) {
-      // Tables might not exist yet, continue with initialization
-      console.log("Tables may not exist yet, proceeding with data initialization");
-    }
-
-    // Initialize sample data
-    const sampleProducts: InsertProduct[] = [
+  private initializeData() {
+    // Initialize products
+    const sampleProducts: Product[] = [
       {
+        id: "1",
         name: "Premium Red Roses",
         description: "12 fresh red roses with premium wrapping",
         price: "1299.00",
@@ -69,8 +65,10 @@ export class DatabaseStorage implements IStorage {
         image: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
         inStock: true,
         featured: true,
+        createdAt: new Date(),
       },
       {
+        id: "2",
         name: "White Orchid Elegance",
         description: "Pristine white orchids in ceramic pot",
         price: "2499.00",
@@ -78,8 +76,10 @@ export class DatabaseStorage implements IStorage {
         image: "https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
         inStock: true,
         featured: true,
+        createdAt: new Date(),
       },
       {
+        id: "3",
         name: "Bridal Bliss Bouquet",
         description: "Mixed roses and lilies for your special day",
         price: "3999.00",
@@ -87,8 +87,10 @@ export class DatabaseStorage implements IStorage {
         image: "https://images.unsplash.com/photo-1606800052052-a08af7148866?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
         inStock: true,
         featured: true,
+        createdAt: new Date(),
       },
       {
+        id: "4",
         name: "Seasonal Surprise",
         description: "Sunflowers and seasonal mix bouquet",
         price: "899.00",
@@ -96,11 +98,16 @@ export class DatabaseStorage implements IStorage {
         image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
         inStock: true,
         featured: true,
+        createdAt: new Date(),
       },
     ];
 
-    const sampleCourses: InsertCourse[] = [
+    sampleProducts.forEach(product => this.products.set(product.id, product));
+
+    // Initialize courses
+    const sampleCourses: Course[] = [
       {
+        id: "1",
         title: "Floral Design Basics",
         description: "Perfect for beginners to learn fundamental techniques",
         price: "8999.00",
@@ -109,8 +116,10 @@ export class DatabaseStorage implements IStorage {
         features: ["Color theory & composition", "Basic arrangement techniques", "Flower care & preservation", "5 take-home arrangements"],
         popular: false,
         nextBatch: "March 15, 2024",
+        createdAt: new Date(),
       },
       {
+        id: "2",
         title: "Professional Bouquet Making",
         description: "Advanced techniques for commercial arrangements",
         price: "15999.00",
@@ -119,8 +128,10 @@ export class DatabaseStorage implements IStorage {
         features: ["Wedding & event designs", "Business setup guidance", "Advanced wrapping techniques", "10 professional arrangements"],
         popular: true,
         nextBatch: "March 20, 2024",
+        createdAt: new Date(),
       },
       {
+        id: "3",
         title: "Garden Design & Care",
         description: "Learn indoor & outdoor gardening essentials",
         price: "12999.00",
@@ -129,196 +140,205 @@ export class DatabaseStorage implements IStorage {
         features: ["Plant selection & care", "Garden layout design", "Seasonal maintenance", "Indoor plant mastery"],
         popular: false,
         nextBatch: "March 25, 2024",
+        createdAt: new Date(),
       },
     ];
 
-    const sampleTestimonials: InsertTestimonial[] = [
+    sampleCourses.forEach(course => this.courses.set(course.id, course));
+
+    // Initialize testimonials
+    const sampleTestimonials: Testimonial[] = [
       {
+        id: "1",
         name: "Priya Sharma",
         location: "Bengaluru",
         rating: 5,
         comment: "Absolutely stunning arrangements! The roses I ordered for my anniversary were fresh and beautifully wrapped. The delivery was prompt and the flowers lasted for over a week.",
         type: "shop",
         image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150",
+        createdAt: new Date(),
       },
       {
+        id: "2",
         name: "Rajesh Kumar",
         location: "Course Graduate",
         rating: 5,
         comment: "The Professional Bouquet Making course transformed my passion into a career! The instructors are amazing and the hands-on practice sessions were invaluable. Now I run my own floral business.",
         type: "school",
         image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150",
+        createdAt: new Date(),
       },
       {
+        id: "3",
         name: "Ananya Reddy",
         location: "Bride",
         rating: 5,
         comment: "Bouquet Bar made our wedding absolutely magical! From bridal bouquets to venue decorations, everything was perfect. The team understood our vision and executed it flawlessly.",
         type: "shop",
         image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150",
+        createdAt: new Date(),
       },
     ];
 
-    const sampleBlogPosts: InsertBlogPost[] = [
+    sampleTestimonials.forEach(testimonial => this.testimonials.set(testimonial.id, testimonial));
+
+    // Initialize blog posts
+    const sampleBlogPosts: BlogPost[] = [
       {
+        id: "1",
         title: "How to Keep Flowers Fresh for Longer",
         excerpt: "Learn professional techniques to extend the life of your beautiful arrangements with these simple care tips.",
         content: "Detailed care instructions...",
         category: "CARE TIPS",
         image: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=250",
+        publishedAt: new Date("2024-03-10"),
+        createdAt: new Date(),
       },
       {
+        id: "2",
         title: "Top 10 Floral Design Trends for 2024",
         excerpt: "Discover the latest trends shaping the floral industry this year, from minimalist designs to bold color combinations.",
         content: "Trend analysis content...",
         category: "TRENDS",
         image: "https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=250",
+        publishedAt: new Date("2024-03-08"),
+        createdAt: new Date(),
       },
       {
+        id: "3",
         title: "Wedding Flowers: A Complete Planning Guide",
         excerpt: "Everything you need to know about choosing perfect flowers for your special day, from bouquets to venue decorations.",
         content: "Wedding planning guide content...",
         category: "WEDDING GUIDE",
         image: "https://images.unsplash.com/photo-1606800052052-a08af7148866?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=250",
+        publishedAt: new Date("2024-03-05"),
+        createdAt: new Date(),
       },
     ];
 
-    // Insert sample data
-    try {
-      await db.insert(products).values(sampleProducts);
-      await db.insert(courses).values(sampleCourses);
-      await db.insert(testimonials).values(sampleTestimonials);
-      await db.insert(blogPosts).values(sampleBlogPosts);
-    } catch (error) {
-      console.log("Sample data already exists or error inserting:", error);
-    }
+    sampleBlogPosts.forEach(post => this.blogPosts.set(post.id, post));
   }
 
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    return this.users.get(id);
   }
 
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.username === username);
   }
 
-  async createUser(userData: UpsertUser): Promise<User> {
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-    const [user] = await db
-      .insert(users)
-      .values({ ...userData, password: hashedPassword })
-      .returning();
-    return user;
-  }
-
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const id = randomUUID();
+    const user: User = { ...insertUser, id };
+    this.users.set(id, user);
     return user;
   }
 
   async getAllProducts(): Promise<Product[]> {
-    return await db.select().from(products);
+    return Array.from(this.products.values());
   }
 
   async getFeaturedProducts(): Promise<Product[]> {
-    return await db.select().from(products).where(eq(products.featured, true));
+    return Array.from(this.products.values()).filter(product => product.featured);
   }
 
   async getProductsByCategory(category: string): Promise<Product[]> {
     if (category === "all") return this.getAllProducts();
-    return await db.select().from(products).where(eq(products.category, category));
+    return Array.from(this.products.values()).filter(product => product.category === category);
   }
 
   async getProduct(id: string): Promise<Product | undefined> {
-    const [product] = await db.select().from(products).where(eq(products.id, id));
-    return product;
+    return this.products.get(id);
   }
 
-  async createProduct(productData: InsertProduct): Promise<Product> {
-    const [product] = await db.insert(products).values(productData).returning();
+  async createProduct(insertProduct: InsertProduct): Promise<Product> {
+    const id = randomUUID();
+    const product: Product = { ...insertProduct, id, createdAt: new Date() };
+    this.products.set(id, product);
     return product;
   }
 
   async getAllCourses(): Promise<Course[]> {
-    return await db.select().from(courses);
+    return Array.from(this.courses.values());
   }
 
   async getCourse(id: string): Promise<Course | undefined> {
-    const [course] = await db.select().from(courses).where(eq(courses.id, id));
-    return course;
+    return this.courses.get(id);
   }
 
-  async createCourse(courseData: InsertCourse): Promise<Course> {
-    const [course] = await db.insert(courses).values(courseData).returning();
+  async createCourse(insertCourse: InsertCourse): Promise<Course> {
+    const id = randomUUID();
+    const course: Course = { ...insertCourse, id, createdAt: new Date() };
+    this.courses.set(id, course);
     return course;
   }
 
   async getAllOrders(): Promise<Order[]> {
-    return await db.select().from(orders);
+    return Array.from(this.orders.values());
   }
 
   async getOrder(id: string): Promise<Order | undefined> {
-    const [order] = await db.select().from(orders).where(eq(orders.id, id));
-    return order;
+    return this.orders.get(id);
   }
 
-  async createOrder(orderData: InsertOrder): Promise<Order> {
-    const [order] = await db.insert(orders).values(orderData).returning();
+  async createOrder(insertOrder: InsertOrder): Promise<Order> {
+    const id = randomUUID();
+    const order: Order = { ...insertOrder, id, status: "pending", createdAt: new Date() };
+    this.orders.set(id, order);
     return order;
   }
 
   async getAllEnrollments(): Promise<Enrollment[]> {
-    return await db.select().from(enrollments);
+    return Array.from(this.enrollments.values());
   }
 
   async getEnrollment(id: string): Promise<Enrollment | undefined> {
-    const [enrollment] = await db.select().from(enrollments).where(eq(enrollments.id, id));
-    return enrollment;
+    return this.enrollments.get(id);
   }
 
-  async createEnrollment(enrollmentData: InsertEnrollment): Promise<Enrollment> {
-    const [enrollment] = await db.insert(enrollments).values(enrollmentData).returning();
+  async createEnrollment(insertEnrollment: InsertEnrollment): Promise<Enrollment> {
+    const id = randomUUID();
+    const enrollment: Enrollment = { ...insertEnrollment, id, status: "pending", createdAt: new Date() };
+    this.enrollments.set(id, enrollment);
     return enrollment;
   }
 
   async getAllTestimonials(): Promise<Testimonial[]> {
-    return await db.select().from(testimonials);
+    return Array.from(this.testimonials.values());
   }
 
   async getTestimonialsByType(type: string): Promise<Testimonial[]> {
-    return await db.select().from(testimonials).where(eq(testimonials.type, type));
+    return Array.from(this.testimonials.values()).filter(testimonial => testimonial.type === type);
   }
 
-  async createTestimonial(testimonialData: InsertTestimonial): Promise<Testimonial> {
-    const [testimonial] = await db.insert(testimonials).values(testimonialData).returning();
+  async createTestimonial(insertTestimonial: InsertTestimonial): Promise<Testimonial> {
+    const id = randomUUID();
+    const testimonial: Testimonial = { ...insertTestimonial, id, createdAt: new Date() };
+    this.testimonials.set(id, testimonial);
     return testimonial;
   }
 
   async getAllBlogPosts(): Promise<BlogPost[]> {
-    return await db.select().from(blogPosts).orderBy(blogPosts.publishedAt);
+    return Array.from(this.blogPosts.values()).sort((a, b) => 
+      new Date(b.publishedAt!).getTime() - new Date(a.publishedAt!).getTime()
+    );
   }
 
   async getBlogPost(id: string): Promise<BlogPost | undefined> {
-    const [post] = await db.select().from(blogPosts).where(eq(blogPosts.id, id));
-    return post;
+    return this.blogPosts.get(id);
   }
 
-  async createBlogPost(postData: InsertBlogPost): Promise<BlogPost> {
-    const [post] = await db.insert(blogPosts).values(postData).returning();
+  async createBlogPost(insertBlogPost: InsertBlogPost): Promise<BlogPost> {
+    const id = randomUUID();
+    const post: BlogPost = { 
+      ...insertBlogPost, 
+      id, 
+      publishedAt: new Date(), 
+      createdAt: new Date() 
+    };
+    this.blogPosts.set(id, post);
     return post;
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();
