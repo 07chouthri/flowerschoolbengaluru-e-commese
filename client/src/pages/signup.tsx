@@ -37,7 +37,7 @@ export default function SignUp() {
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/10 to-secondary/10 relative overflow-hidden">
           <div className="flex flex-col justify-center px-12 relative z-10">
             <div className="mb-8">
-              <img src={logoPath} alt="Bouquet Bar Logo" className="h-20 w-auto mb-6" />
+              <img src={logoPath} alt="Bouquet Bar Logo" className="h-28 w-auto mb-6" />
               <h1 className="text-4xl font-bold text-gray-900 mb-4">
                 Join Bouquet Bar
               </h1>
@@ -52,8 +52,8 @@ export default function SignUp() {
                   <User className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Professional Training</h3>
-                  <p className="text-gray-600">Learn from certified instructors</p>
+                  <h3 className="font-semibold text-gray-900">Shop Premium Flowers</h3>
+                  <p className="text-gray-600">Fresh flowers delivered to your door</p>
                 </div>
               </div>
               
@@ -85,7 +85,7 @@ export default function SignUp() {
           <div className="w-full max-w-md mx-auto">
             {/* Mobile Logo */}
             <div className="lg:hidden text-center mb-8">
-              <img src={logoPath} alt="Bouquet Bar Logo" className="h-16 w-auto mx-auto mb-4" />
+              <img src={logoPath} alt="Bouquet Bar Logo" className="h-24 w-auto mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-gray-900">Join Bouquet Bar</h2>
             </div>
 

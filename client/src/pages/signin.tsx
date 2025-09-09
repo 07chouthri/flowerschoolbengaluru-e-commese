@@ -33,7 +33,7 @@ export default function SignIn() {
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/10 to-secondary/10 relative overflow-hidden">
           <div className="flex flex-col justify-center px-12 relative z-10">
             <div className="mb-8">
-              <img src={logoPath} alt="Bouquet Bar Logo" className="h-20 w-auto mb-6" />
+              <img src={logoPath} alt="Bouquet Bar Logo" className="h-28 w-auto mb-6" />
               <h1 className="text-4xl font-bold text-gray-900 mb-4">
                 Welcome Back
               </h1>
@@ -81,7 +81,7 @@ export default function SignIn() {
           <div className="w-full max-w-md mx-auto">
             {/* Mobile Logo */}
             <div className="lg:hidden text-center mb-8">
-              <img src={logoPath} alt="Bouquet Bar Logo" className="h-16 w-auto mx-auto mb-4" />
+              <img src={logoPath} alt="Bouquet Bar Logo" className="h-24 w-auto mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-gray-900">Welcome Back</h2>
             </div>
 
