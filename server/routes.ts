@@ -308,12 +308,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isValid = true;
       } else {
         // Use Twilio Verify for phone numbers
-        const formattedPhone = contact.startsWith('+') ? contact : `+91${contact}`;
+        const cleanPhone = contact.replace(/\s+/g, ''); // Remove spaces for consistent formatting
+        const formattedPhone = cleanPhone.startsWith('+') ? cleanPhone : `+91${cleanPhone}`;
+        console.log(`[VERIFY DEBUG] Clean phone: "${cleanPhone}", Formatted: "${formattedPhone}"`);
         isValid = await verifyCode(formattedPhone, otp);
         
         if (isValid) {
-          // Store verification status for password reset
-          otpStorage.set(contact, {
+          // Store verification status for password reset using clean phone number
+          otpStorage.set(cleanPhone, {
             otp: otp,
             expires: Date.now() + (10 * 60 * 1000), // 10 minutes
             verified: true
@@ -341,13 +343,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "All fields are required" });
       }
 
-      const storedOtp = otpStorage.get(contact);
+      // Normalize phone number for OTP lookup
+      const lookupKey = contactType === "phone" ? contact.replace(/\s+/g, '') : contact;
+      const storedOtp = otpStorage.get(lookupKey);
+      console.log(`[RESET DEBUG] Looking up OTP with key: "${lookupKey}" (original: "${contact}")`);
       if (!storedOtp || !storedOtp.verified) {
         return res.status(400).json({ message: "OTP not verified" });
       }
 
       if (storedOtp.expires < Date.now()) {
-        otpStorage.delete(contact);
+        otpStorage.delete(lookupKey);
         return res.status(400).json({ message: "OTP has expired" });
       }
 
@@ -356,7 +361,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (contactType === "email") {
         user = await storage.getUserByEmail(contact);
       } else {
-        user = await storage.getUserByPhone(contact);
+        // Normalize phone number by removing spaces and formatting consistently
+        const cleanPhone = contact.replace(/\s+/g, ''); // Remove all spaces
+        console.log(`[RESET DEBUG] Looking for user with phone: "${cleanPhone}" (original: "${contact}")`);
+        user = await storage.getUserByPhone(cleanPhone);
       }
 
       if (!user) {
@@ -370,7 +378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUser(user.id, { password: hashedPassword });
 
       // Clean up OTP
-      otpStorage.delete(contact);
+      otpStorage.delete(lookupKey);
 
       res.json({ message: "Password reset successfully" });
     } catch (error) {
