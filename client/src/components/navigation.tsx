@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Menu, X, User, UserPlus } from "lucide-react";
 import { useLocation } from "wouter";
-import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
+import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484651264.png";
 
 export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
