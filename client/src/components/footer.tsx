@@ -78,9 +78,26 @@ export default function Footer() {
                     <Facebook className="w-5 h-5" />
                   </button>
                 </div>
-                <p className="text-gray-500 text-xs leading-relaxed font-light mt-3">
-                  Subscribe to receive updates on new courses, fresh arrivals, and exclusive offers.
-                </p>
+                
+                {/* Small Newsletter Subscription */}
+                <div className="mt-4">
+                  <h5 className="text-sm font-semibold text-gray-900 mb-2">Subscribe Now</h5>
+                  <p className="text-gray-600 text-xs mb-3">
+                    Get updates on promotions and offers coupons.
+                  </p>
+                  <form onSubmit={handleNewsletterSubmit} className="flex gap-1">
+                    <Input
+                      type="email"
+                      placeholder="Enter email address"
+                      className="flex-1 h-8 text-xs"
+                      required
+                      data-testid="input-newsletter-email"
+                    />
+                    <Button type="submit" size="sm" className="h-8 px-2 text-xs" data-testid="button-newsletter-subscribe">
+                      →
+                    </Button>
+                  </form>
+                </div>
               </div>
             </div>
 
@@ -169,29 +186,6 @@ export default function Footer() {
                 <li><button className="text-gray-600 hover:text-gray-900 transition-all duration-300 font-medium" data-testid="footer-policy-course">Course Terms</button></li>
                 <li><button className="text-gray-600 hover:text-gray-900 transition-all duration-300 font-medium" data-testid="footer-policy-career">Career Opportunities</button></li>
               </ul>
-            </div>
-          </div>
-
-          {/* Newsletter Subscription Section */}
-          <div className="mb-12">
-            <div className="w-full h-px bg-gray-200 mb-6"></div>
-            <div className="max-w-md mx-auto">
-              <h4 className="text-lg font-semibold text-gray-900 mb-2">Subscribe Now</h4>
-              <p className="text-gray-600 text-sm mb-4">
-                Get updates on promotions and offers coupons.
-              </p>
-              <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
-                <Input
-                  type="email"
-                  placeholder="Enter email address"
-                  className="flex-1 h-9 text-sm"
-                  required
-                  data-testid="input-newsletter-email"
-                />
-                <Button type="submit" size="sm" className="px-3" data-testid="button-newsletter-subscribe">
-                  →
-                </Button>
-              </form>
             </div>
           </div>
 
