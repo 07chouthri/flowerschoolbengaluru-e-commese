@@ -5,10 +5,10 @@ export function FloatingElements() {
   return (
     <div className="fixed inset-0 pointer-events-none z-10 overflow-hidden">
       {/* Animated background elements */}
-      <div className="absolute top-10 left-10 w-32 h-32 bg-pink-200/30 rounded-full blur-xl animate-pulse"></div>
-      <div className="absolute top-1/3 right-20 w-24 h-24 bg-purple-200/30 rounded-full blur-lg animate-bounce delay-1000"></div>
-      <div className="absolute bottom-1/4 left-1/4 w-40 h-40 bg-blue-200/20 rounded-full blur-xl animate-pulse delay-500"></div>
-      <div className="absolute bottom-10 right-10 w-28 h-28 bg-pink-300/20 rounded-full blur-lg animate-bounce delay-700"></div>
+      <div className="absolute top-10 left-10 w-32 h-32 bg-orange-200/20 rounded-full blur-xl animate-pulse"></div>
+      <div className="absolute top-1/3 right-20 w-24 h-24 bg-teal-200/25 rounded-full blur-lg animate-bounce delay-1000"></div>
+      <div className="absolute bottom-1/4 left-1/4 w-40 h-40 bg-orange-100/15 rounded-full blur-xl animate-pulse delay-500"></div>
+      <div className="absolute bottom-10 right-10 w-28 h-28 bg-teal-300/20 rounded-full blur-lg animate-bounce delay-700"></div>
     </div>
   );
 }
@@ -32,7 +32,7 @@ export function ScrollIndicator() {
   return (
     <div className="fixed top-0 left-0 w-full h-1 bg-gray-200 z-50">
       <div 
-        className="h-full bg-gradient-to-r from-pink-500 to-purple-600 transition-all duration-300"
+        className="h-full bg-gradient-to-r from-orange-500 to-teal-500 transition-all duration-300"
         style={{ width: `${scrollProgress}%` }}
       ></div>
     </div>
@@ -75,9 +75,9 @@ export function CreativeCard({
   glowColor?: 'pink' | 'purple' | 'blue';
 }) {
   const glowClasses = {
-    pink: 'hover:shadow-pink-500/25',
-    purple: 'hover:shadow-purple-500/25', 
-    blue: 'hover:shadow-blue-500/25'
+    pink: 'hover:shadow-orange-500/25',
+    purple: 'hover:shadow-teal-500/25', 
+    blue: 'hover:shadow-orange-400/25'
   };
 
   return (
@@ -109,9 +109,9 @@ export function CreativeButton({
   [key: string]: any;
 }) {
   const variants = {
-    primary: 'bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white',
-    secondary: 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white',
-    accent: 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white'
+    primary: 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white',
+    secondary: 'bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white',
+    accent: 'bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white'
   };
 
   return (
