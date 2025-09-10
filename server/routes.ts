@@ -5,6 +5,39 @@ import { insertOrderSchema, insertEnrollmentSchema, insertUserSchema } from "@sh
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 
+// Simple in-memory session storage
+const sessions: Map<string, { userId: string; expires: number }> = new Map();
+
+// Helper function to generate session token
+const generateSessionToken = () => {
+  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+};
+
+// Helper function to clean expired sessions
+const cleanExpiredSessions = () => {
+  const now = Date.now();
+  sessions.forEach((session, token) => {
+    if (session.expires < now) {
+      sessions.delete(token);
+    }
+  });
+};
+
+// Middleware to get user from session
+const getUserFromSession = async (req: any) => {
+  cleanExpiredSessions();
+  const sessionToken = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.sessionToken;
+  if (!sessionToken) return null;
+  
+  const session = sessions.get(sessionToken);
+  if (!session || session.expires < Date.now()) {
+    sessions.delete(sessionToken);
+    return null;
+  }
+  
+  return await storage.getUser(session.userId);
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication Routes
   app.post("/api/auth/signup", async (req, res) => {
@@ -61,12 +94,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
+      // Create session
+      const sessionToken = generateSessionToken();
+      const expiresAt = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
+      sessions.set(sessionToken, { userId: user.id, expires: expiresAt });
+
+      // Set cookie
+      res.cookie('sessionToken', sessionToken, { 
+        httpOnly: true, 
+        secure: false, // set to true in production with HTTPS
+        maxAge: 7 * 24 * 60 * 60 * 1000 
+      });
+
       // Return user without password
       const { password: _, ...userWithoutPassword } = user;
-      res.json({ user: userWithoutPassword, message: "Signed in successfully" });
+      res.json({ user: userWithoutPassword, message: "Signed in successfully", sessionToken });
     } catch (error) {
       console.error("Signin error:", error);
       res.status(500).json({ message: "Failed to sign in" });
+    }
+  });
+
+  app.get("/api/auth/user", async (req, res) => {
+    try {
+      const user = await getUserFromSession(req);
+      if (!user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      // Return user without password
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Get user error:", error);
+      res.status(500).json({ message: "Failed to get user" });
+    }
+  });
+
+  app.post("/api/auth/signout", async (req, res) => {
+    try {
+      const sessionToken = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.sessionToken;
+      if (sessionToken) {
+        sessions.delete(sessionToken);
+      }
+      res.clearCookie('sessionToken');
+      res.json({ message: "Signed out successfully" });
+    } catch (error) {
+      console.error("Signout error:", error);
+      res.status(500).json({ message: "Failed to sign out" });
     }
   });
 
