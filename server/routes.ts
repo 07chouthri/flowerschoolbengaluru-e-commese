@@ -4,9 +4,46 @@ import { storage } from "./storage";
 import { insertOrderSchema, insertEnrollmentSchema, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import twilio from "twilio";
 
 // Simple in-memory session storage
 const sessions: Map<string, { userId: string; expires: number }> = new Map();
+
+// Simple in-memory OTP storage
+const otpStorage: Map<string, { otp: string; expires: number; verified: boolean }> = new Map();
+
+// Initialize Twilio client
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
+
+// Helper function to generate OTP
+const generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+// Helper function to send SMS
+const sendSMS = async (phone: string, message: string) => {
+  try {
+    await twilioClient.messages.create({
+      body: message,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: phone,
+    });
+    return true;
+  } catch (error) {
+    console.error("SMS sending error:", error);
+    return false;
+  }
+};
+
+// Helper function to send email (mock implementation)
+const sendEmail = async (email: string, subject: string, message: string) => {
+  // In a real app, you would integrate with an email service like SendGrid, AWS SES, etc.
+  console.log(`[EMAIL] To: ${email}, Subject: ${subject}, Message: ${message}`);
+  return true;
+};
 
 // Helper function to generate session token
 const generateSessionToken = () => {
@@ -142,6 +179,147 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Signout error:", error);
       res.status(500).json({ message: "Failed to sign out" });
+    }
+  });
+
+  // Forgot Password - Send OTP
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { contact, contactType } = req.body;
+      
+      if (!contact || !contactType) {
+        return res.status(400).json({ message: "Contact and contact type are required" });
+      }
+
+      // Check if user exists
+      let user;
+      if (contactType === "email") {
+        user = await storage.getUserByEmail(contact);
+      } else {
+        user = await storage.getUserByPhone(contact);
+      }
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Generate OTP
+      const otp = generateOTP();
+      const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutes
+
+      // Store OTP
+      otpStorage.set(contact, {
+        otp,
+        expires: expiresAt,
+        verified: false
+      });
+
+      // Send OTP
+      let sent = false;
+      if (contactType === "email") {
+        sent = await sendEmail(
+          contact,
+          "Password Reset - Bouquet Bar",
+          `Your verification code is: ${otp}. This code will expire in 10 minutes.`
+        );
+      } else {
+        // Format phone number for SMS
+        const formattedPhone = contact.startsWith('+') ? contact : `+91${contact}`;
+        sent = await sendSMS(
+          formattedPhone,
+          `Your Bouquet Bar verification code is: ${otp}. Expires in 10 minutes.`
+        );
+      }
+
+      if (!sent) {
+        return res.status(500).json({ message: `Failed to send OTP via ${contactType}` });
+      }
+
+      res.json({ message: `OTP sent to your ${contactType}` });
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      res.status(500).json({ message: "Failed to send OTP" });
+    }
+  });
+
+  // Verify OTP
+  app.post("/api/auth/verify-otp", async (req, res) => {
+    try {
+      const { contact, otp, contactType } = req.body;
+      
+      if (!contact || !otp || !contactType) {
+        return res.status(400).json({ message: "Contact, OTP, and contact type are required" });
+      }
+
+      const storedOtp = otpStorage.get(contact);
+      if (!storedOtp) {
+        return res.status(400).json({ message: "No OTP found for this contact" });
+      }
+
+      if (storedOtp.expires < Date.now()) {
+        otpStorage.delete(contact);
+        return res.status(400).json({ message: "OTP has expired" });
+      }
+
+      if (storedOtp.otp !== otp) {
+        return res.status(400).json({ message: "Invalid OTP" });
+      }
+
+      // Mark OTP as verified
+      storedOtp.verified = true;
+      otpStorage.set(contact, storedOtp);
+
+      res.json({ message: "OTP verified successfully" });
+    } catch (error) {
+      console.error("Verify OTP error:", error);
+      res.status(500).json({ message: "Failed to verify OTP" });
+    }
+  });
+
+  // Reset Password
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { contact, otp, newPassword, contactType } = req.body;
+      
+      if (!contact || !otp || !newPassword || !contactType) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+
+      const storedOtp = otpStorage.get(contact);
+      if (!storedOtp || !storedOtp.verified) {
+        return res.status(400).json({ message: "OTP not verified" });
+      }
+
+      if (storedOtp.expires < Date.now()) {
+        otpStorage.delete(contact);
+        return res.status(400).json({ message: "OTP has expired" });
+      }
+
+      // Find user
+      let user;
+      if (contactType === "email") {
+        user = await storage.getUserByEmail(contact);
+      } else {
+        user = await storage.getUserByPhone(contact);
+      }
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      
+      // Update password
+      await storage.updateUser(user.id, { password: hashedPassword });
+
+      // Clean up OTP
+      otpStorage.delete(contact);
+
+      res.json({ message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ message: "Failed to reset password" });
     }
   });
 
