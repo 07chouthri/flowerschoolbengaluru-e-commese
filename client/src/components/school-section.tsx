@@ -86,12 +86,34 @@ export default function SchoolSection() {
             </div>
           </div>
           
-          <div>
-            <img 
-              src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
-              alt="Floral design class with instructor and students" 
-              className="rounded-2xl shadow-2xl image-hover w-full" 
-            />
+          <div className="relative group">
+            <div className="relative overflow-hidden rounded-2xl bg-white/60 backdrop-blur-sm shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:-translate-y-2">
+              <img 
+                src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+                alt="Floral design class with instructor and students" 
+                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-110" 
+              />
+              
+              {/* Professional overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              {/* Educational badge */}
+              <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <Badge className="bg-white/95 text-black backdrop-blur-sm">Live Classes</Badge>
+              </div>
+              
+              {/* Modern content overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+                <h3 className="font-bold text-lg mb-2">Professional Floral Design Training</h3>
+                <p className="text-sm opacity-90">Learn from expert instructors in hands-on workshops</p>
+              </div>
+              
+              {/* Elegant border glow */}
+              <div className="absolute inset-0 rounded-2xl ring-2 ring-white/30 group-hover:ring-purple-300/60 transition-all duration-500"></div>
+              
+              {/* Shimmer effect */}
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000"></div>
+            </div>
           </div>
         </div>
 

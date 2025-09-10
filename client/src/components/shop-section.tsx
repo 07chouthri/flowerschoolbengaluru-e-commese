@@ -81,12 +81,22 @@ export default function ShopSection() {
                 className="card-shadow hover:shadow-xl transition-all group overflow-hidden card-hover-lift flower-float"
                 data-testid={`card-product-${product.id}`}
               >
-                <div className="overflow-hidden">
+                <div className="relative overflow-hidden rounded-t-xl">
                   <img 
                     src={product.image} 
                     alt={product.name} 
-                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300" 
+                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500" 
                   />
+                  {/* Product overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  
+                  {/* Professional badge */}
+                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <Badge className="bg-white/90 text-black text-xs backdrop-blur-sm">Premium</Badge>
+                  </div>
+                  
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700"></div>
                 </div>
                 <CardContent className="p-6">
                   <h3 className="text-lg font-semibold mb-2" data-testid={`text-product-name-${product.id}`}>

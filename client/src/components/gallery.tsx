@@ -75,14 +75,33 @@ export default function Gallery() {
           {currentImages.map((image, index) => (
             <div 
               key={`${activeTab}-${index}`} 
-              className="group cursor-pointer"
+              className="group cursor-pointer relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2"
               data-testid={`gallery-item-${index}`}
             >
-              <img 
-                src={image.src} 
-                alt={image.alt} 
-                className="w-full h-64 object-cover rounded-xl image-hover" 
-              />
+              <div className="relative overflow-hidden rounded-xl">
+                <img 
+                  src={image.src} 
+                  alt={image.alt} 
+                  className="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110" 
+                />
+                {/* Professional overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                {/* Modern hover content */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+                  <h3 className="font-semibold text-sm mb-1">{image.alt}</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs opacity-80">View Details</span>
+                    <div className="w-4 h-0.5 bg-white/60 group-hover:bg-white transition-colors duration-300"></div>
+                  </div>
+                </div>
+
+                {/* Elegant border glow */}
+                <div className="absolute inset-0 rounded-xl ring-1 ring-white/20 group-hover:ring-pink-300/50 transition-all duration-500"></div>
+                
+                {/* Shimmer effect */}
+                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 ease-out"></div>
+              </div>
             </div>
           ))}
         </div>
