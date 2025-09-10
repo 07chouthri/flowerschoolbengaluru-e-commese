@@ -172,6 +172,28 @@ export default function Footer() {
             </div>
           </div>
 
+          {/* Newsletter Subscription Section */}
+          <div className="mb-16">
+            <div className="w-full h-px bg-gray-200 mb-8"></div>
+            <div className="max-w-2xl mx-auto text-center">
+              <h3 className="text-2xl font-semibold text-gray-900 mb-4">Stay Updated</h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                Subscribe to receive updates on new courses, fresh arrivals, and exclusive offers.
+              </p>
+              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3">
+                <Input
+                  type="email"
+                  placeholder="Enter your email address"
+                  className="flex-1"
+                  required
+                  data-testid="input-newsletter-email"
+                />
+                <Button type="submit" className="bg-primary hover:bg-primary/90" data-testid="button-newsletter-subscribe">
+                  Subscribe
+                </Button>
+              </form>
+            </div>
+          </div>
 
           {/* Professional Copyright Section */}
           <div className="mt-16">
