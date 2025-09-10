@@ -15,12 +15,17 @@ export default function Navigation() {
     const handleScroll = () => {
       const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
       
-      if (currentScrollTop > lastScrollTop && currentScrollTop > 100) {
-        // Scrolling down
+      // Show nav when at top of page
+      if (currentScrollTop <= 50) {
         setIsScrollingUp(false);
-      } else if (currentScrollTop < lastScrollTop) {
-        // Scrolling up
+      }
+      // Hide nav when scrolling up (but not at the very top)
+      else if (currentScrollTop < lastScrollTop && currentScrollTop > 50) {
         setIsScrollingUp(true);
+      }
+      // Show nav when scrolling down
+      else if (currentScrollTop > lastScrollTop) {
+        setIsScrollingUp(false);
       }
       
       setLastScrollTop(currentScrollTop <= 0 ? 0 : currentScrollTop);
