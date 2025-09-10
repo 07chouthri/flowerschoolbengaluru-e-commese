@@ -31,11 +31,17 @@ const sendSMS = async (phone: string, message: string) => {
       ? process.env.TWILIO_PHONE_NUMBER 
       : `+1${process.env.TWILIO_PHONE_NUMBER}`;
     
+    console.log(`[SMS DEBUG] Attempting to send SMS:`);
+    console.log(`[SMS DEBUG] FROM: ${fromNumber}`);
+    console.log(`[SMS DEBUG] TO: ${phone}`);
+    console.log(`[SMS DEBUG] TWILIO_PHONE_NUMBER env: ${process.env.TWILIO_PHONE_NUMBER}`);
+    
     await twilioClient.messages.create({
       body: message,
       from: fromNumber,
       to: phone,
     });
+    console.log(`[SMS SUCCESS] SMS sent successfully to ${phone}`);
     return true;
   } catch (error) {
     console.error("SMS sending error:", error);
