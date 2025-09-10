@@ -7,7 +7,7 @@ import {
   Search, 
   MapPin, 
   ShoppingCart, 
-  User, 
+  UserIcon, 
   Heart,
   Gift,
   Calendar,
@@ -22,14 +22,31 @@ import Footer from "@/components/footer";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import bouquetBarLogo from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
+import { type Product, type User } from "@shared/schema";
 
 export default function Shop() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Get products data
+  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+  });
+  
+  // Filter products based on search and category
+  const filteredProducts = products.filter((product: Product) => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         product.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === "all" || 
+                           product.category.toLowerCase() === selectedCategory.toLowerCase();
+    return matchesSearch && matchesCategory;
+  });
+  
   // Get current user data
-  const { data: user } = useQuery({
+  const { data: user } = useQuery<User>({
     queryKey: ["/api/auth/user"],
     retry: false,
   });
@@ -202,6 +219,11 @@ export default function Shop() {
           {/* Main Navigation */}
           <div className="flex items-center justify-between py-4">
             <Link href="/" className="flex items-center gap-3">
+              <img 
+                src={bouquetBarLogo}
+                alt="Bouquet Bar Logo"
+                className="w-12 h-auto"
+              />
               <div className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
                 Bouquet Bar
               </div>
@@ -231,7 +253,7 @@ export default function Shop() {
                     Hello, {user.firstName || 'User'}!
                   </span>
                   <Button variant="outline" size="sm" data-testid="button-account">
-                    <User className="w-4 h-4 mr-2" />
+                    <UserIcon className="w-4 h-4 mr-2" />
                     Account
                   </Button>
                   <Button 
@@ -248,7 +270,7 @@ export default function Shop() {
               ) : (
                 <Link href="/signin">
                   <Button size="sm" data-testid="button-login">
-                    <User className="w-4 h-4 mr-2" />
+                    <UserIcon className="w-4 h-4 mr-2" />
                     Login
                   </Button>
                 </Link>
@@ -258,10 +280,22 @@ export default function Shop() {
           
           {/* Category Navigation */}
           <div className="flex items-center gap-8 py-4 overflow-x-auto">
+            <button
+              onClick={() => setSelectedCategory("all")}
+              className={`whitespace-nowrap font-medium flex items-center gap-1 hover-elevate px-3 py-2 rounded-md ${
+                selectedCategory === "all" ? "text-primary bg-primary/10" : "text-gray-700 hover:text-primary"
+              }`}
+              data-testid="button-category-all"
+            >
+              All Categories
+            </button>
             {categories.map((category) => (
               <button
                 key={category}
-                className="whitespace-nowrap text-gray-700 hover:text-primary font-medium flex items-center gap-1 hover-elevate px-3 py-2 rounded-md"
+                onClick={() => setSelectedCategory(category.toLowerCase())}
+                className={`whitespace-nowrap font-medium flex items-center gap-1 hover-elevate px-3 py-2 rounded-md ${
+                  selectedCategory === category.toLowerCase() ? "text-primary bg-primary/10" : "text-gray-700 hover:text-primary"
+                }`}
                 data-testid={`button-category-${category.toLowerCase()}`}
               >
                 {category}
@@ -383,40 +417,93 @@ export default function Shop() {
         </div>
       </section>
 
-      {/* Pick Their Fav Flowers */}
+      {/* Products Section */}
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold mb-8">Pick Their Fav Flowers</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {flowerProducts.map((product, index) => (
-              <Card key={index} className="overflow-hidden hover-elevate" data-testid={`card-product-${index}`}>
-                <div className="relative">
-                  <img 
-                    src={product.image}
-                    alt={product.title}
-                    className="w-full h-64 object-cover"
-                  />
-                  <button className="absolute top-4 right-4 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center">
-                    <Heart className="w-4 h-4 text-gray-600" />
-                  </button>
-                </div>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">{product.title}</h3>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl font-bold text-primary">{product.price}</span>
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span className="text-sm text-gray-600">{product.rating}</span>
-                    </div>
-                  </div>
-                  <Button className="w-full mt-4" data-testid={`button-add-cart-${index}`}>
-                    Add to Cart
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-bold">
+              {searchQuery ? `Search Results for "${searchQuery}"` : 
+               selectedCategory === "all" ? "All Products" : 
+               `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Products`}
+            </h2>
+            <div className="text-sm text-gray-600">
+              {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} found
+            </div>
           </div>
+          
+          {productsLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, index) => (
+                <Card key={index} className="overflow-hidden">
+                  <div className="w-full h-64 bg-gray-200 animate-pulse"></div>
+                  <CardContent className="p-4">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                    <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="text-center py-12">
+              <Gift className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                {searchQuery ? 'No products found' : 'No products in this category'}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {searchQuery ? 'Try searching with different keywords' : 'Please select a different category'}
+              </p>
+              {searchQuery && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setSearchQuery("")}
+                  data-testid="button-clear-search"
+                >
+                  Clear Search
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProducts.map((product, index) => (
+                <Card key={product.id} className="overflow-hidden hover-elevate" data-testid={`card-product-${product.id}`}>
+                  <div className="relative">
+                    <img 
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-64 object-cover"
+                    />
+                    <button className="absolute top-4 right-4 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover-elevate">
+                      <Heart className="w-4 h-4 text-gray-600" />
+                    </button>
+                    {!product.inStock && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <Badge variant="secondary" className="bg-white text-black">
+                          Out of Stock
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-gray-900 mb-2">{product.name}</h3>
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-xl font-bold text-primary">₹{product.price}</span>
+                      <Badge variant="outline" className="text-xs">
+                        {product.category}
+                      </Badge>
+                    </div>
+                    <Button 
+                      className="w-full" 
+                      disabled={!product.inStock}
+                      data-testid={`button-add-cart-${product.id}`}
+                    >
+                      {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
