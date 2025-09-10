@@ -44,53 +44,58 @@ export default function Navigation() {
   };
 
   return (
-    <nav className={`fixed top-0 w-full bg-card/95 backdrop-blur-sm z-50 border-b border-border transition-transform duration-300 ${isScrollingUp ? '-translate-y-full' : 'translate-y-0'}`}>
+    <nav className={`fixed top-0 w-full bg-white/95 backdrop-blur-md z-50 border-b border-gray-200 shadow-lg transition-all duration-500 ${isScrollingUp ? '-translate-y-full' : 'translate-y-0'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
-          <div className="flex items-center space-x-3">
-            <img src={logoPath} alt="Bouquet Bar Logo" className="h-14 w-auto logo-pulse flower-float" />
-            <span className="text-2xl font-bold gradient-text">Bouquet Bar</span>
+        <div className="flex justify-between items-center h-20">
+          <div className="flex items-center space-x-3 group">
+            <div className="relative">
+              <img src={logoPath} alt="Bouquet Bar Logo" className="h-16 w-auto animate-logo-pulse" />
+              <div className="absolute -inset-2 bg-gradient-to-r from-orange-400/20 to-teal-400/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </div>
+            <span className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+              Bouquet Bar
+            </span>
           </div>
           
-          <div className="hidden md:flex space-x-8">
+          <div className="hidden md:flex space-x-2">
             <button 
               onClick={() => scrollToSection('home')}
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="px-4 py-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-xl magnetic-hover transition-all duration-300 font-medium"
               data-testid="nav-home"
             >
               Home
             </button>
             <button 
               onClick={() => scrollToSection('shop')}
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="px-4 py-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-xl magnetic-hover transition-all duration-300 font-medium"
               data-testid="nav-shop"
             >
               Shop
             </button>
             <button 
               onClick={() => scrollToSection('school')}
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="px-4 py-2 text-gray-600 hover:text-teal-600 hover:bg-teal-50 rounded-xl magnetic-hover transition-all duration-300 font-medium"
               data-testid="nav-school"
             >
               School
             </button>
             <button 
               onClick={() => scrollToSection('gallery')}
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="px-4 py-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-xl magnetic-hover transition-all duration-300 font-medium"
               data-testid="nav-gallery"
             >
               Gallery
             </button>
             <button 
               onClick={() => scrollToSection('blog')}
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="px-4 py-2 text-gray-600 hover:text-teal-600 hover:bg-teal-50 rounded-xl magnetic-hover transition-all duration-300 font-medium"
               data-testid="nav-blog"
             >
               Blog
             </button>
             <button 
               onClick={() => scrollToSection('contact')}
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="px-4 py-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-xl magnetic-hover transition-all duration-300 font-medium"
               data-testid="nav-contact"
             >
               Contact
@@ -101,7 +106,7 @@ export default function Navigation() {
             <div className="hidden md:flex items-center space-x-3">
               <Button 
                 variant="ghost" 
-                className="text-sm" 
+                className="text-sm magnetic-hover hover:bg-orange-50 hover:text-orange-600 transition-all duration-300" 
                 onClick={() => setLocation('/signin')}
                 data-testid="button-signin"
               >
@@ -109,7 +114,7 @@ export default function Navigation() {
                 Sign In
               </Button>
               <Button 
-                className="text-sm button-glow bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600" 
+                className="text-sm bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-700 hover:to-teal-700 text-white magnetic-hover transform transition-all duration-300 rounded-xl shadow-md" 
                 onClick={() => setLocation('/signup')}
                 data-testid="button-signup"
               >
