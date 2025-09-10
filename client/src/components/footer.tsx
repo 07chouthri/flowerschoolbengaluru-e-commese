@@ -18,7 +18,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-gray-900 text-white">
+    <footer className="bg-gray-50 text-gray-900 border-t border-gray-200">
       <div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           {/* Professional Brand Section */}
@@ -30,12 +30,12 @@ export default function Footer() {
                 className="h-16 w-auto" 
               />
               <div className="text-left">
-                <h2 className="text-3xl font-bold text-white tracking-wide">Bouquet Bar</h2>
-                <p className="text-lg text-gray-300 font-medium">Bengaluru, India</p>
+                <h2 className="text-3xl font-bold text-gray-900 tracking-wide">Bouquet Bar</h2>
+                <p className="text-lg text-gray-600 font-medium">Bengaluru, India</p>
               </div>
             </div>
             <div className="w-24 h-1 bg-primary mx-auto mb-6 rounded-full"></div>
-            <p className="text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed font-light">
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed font-light">
               India's premier floral design institute and online flower marketplace. 
               Transforming passion into expertise through professional floral education and premium flower collections.
             </p>
@@ -47,7 +47,7 @@ export default function Footer() {
           <div className="grid md:grid-cols-4 gap-10 mb-16">
             {/* Company Information */}
             <div className="space-y-6">
-              <h4 className="text-xl font-semibold text-white border-b-2 border-primary pb-2 inline-block">Company</h4>
+              <h4 className="text-xl font-semibold text-gray-900 border-b-2 border-primary pb-2 inline-block">Company</h4>
               <div className="space-y-4">
                 <p className="text-gray-600 text-sm leading-relaxed font-light">
                   Established as India's leading floral education institute, we combine traditional artistry with modern techniques.
@@ -86,7 +86,7 @@ export default function Footer() {
 
             {/* Navigation Links */}
             <div className="space-y-6">
-              <h4 className="text-xl font-semibold text-white border-b-2 border-primary pb-2 inline-block">Navigation</h4>
+              <h4 className="text-xl font-semibold text-gray-900 border-b-2 border-primary pb-2 inline-block">Navigation</h4>
               <ul className="space-y-3">
                 <li>
                   <button 
