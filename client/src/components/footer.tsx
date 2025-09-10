@@ -78,6 +78,9 @@ export default function Footer() {
                     <Facebook className="w-5 h-5" />
                   </button>
                 </div>
+                <p className="text-gray-500 text-xs leading-relaxed font-light mt-3">
+                  Subscribe to receive updates on new courses, fresh arrivals, and exclusive offers.
+                </p>
               </div>
             </div>
 
@@ -169,32 +172,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Professional Newsletter Section */}
-          <div className="relative">
-            <div className="w-full h-px bg-gray-200 mb-12"></div>
-            
-            <div className="bg-white rounded-2xl border border-gray-200 p-8 max-w-2xl mx-auto shadow-sm">
-              <div className="text-center">
-                <h4 className="text-2xl font-bold text-gray-900 mb-3">Stay Connected</h4>
-                <p className="text-gray-600 mb-6 font-light">Subscribe to receive updates on new courses, fresh arrivals, and exclusive offers.</p>
-                <form onSubmit={handleNewsletterSubmit} className="flex gap-3">
-                  <Input
-                    type="email"
-                    placeholder="Enter your professional email"
-                    className="flex-1 bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus:ring-gray-500 focus:border-gray-500"
-                    data-testid="input-newsletter-email"
-                  />
-                  <Button 
-                    type="submit"
-                    className="bg-gray-900 hover:bg-gray-800 text-white font-semibold px-8"
-                    data-testid="button-newsletter-subscribe"
-                  >
-                    Subscribe
-                  </Button>
-                </form>
-              </div>
-            </div>
-          </div>
 
           {/* Professional Copyright Section */}
           <div className="mt-16">
