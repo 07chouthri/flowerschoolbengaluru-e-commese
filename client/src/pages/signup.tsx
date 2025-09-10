@@ -31,10 +31,10 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-50 to-pink-100">
       <div className="flex min-h-screen">
         {/* Left Side - Branding */}
-        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/10 to-secondary/10 relative overflow-hidden">
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-pink-200/80 via-purple-200/60 to-pink-300/80 relative overflow-hidden">
           <div className="flex flex-col justify-center px-12 relative z-10">
             <div className="mb-8">
               <img src={logoPath} alt="Bouquet Bar Logo" className="h-28 w-auto mb-6" />
