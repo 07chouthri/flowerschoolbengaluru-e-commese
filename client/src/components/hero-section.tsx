@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingBag, GraduationCap, Star } from "lucide-react";
+import { ShoppingBag, GraduationCap, Star, Sparkles } from "lucide-react";
+import { CreativeButton, SectionDivider } from "@/components/creative-enhancements";
 
 export default function HeroSection() {
   const scrollToSection = (sectionId: string) => {
@@ -48,41 +49,44 @@ export default function HeroSection() {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                size="lg"
+              <CreativeButton 
                 onClick={() => scrollToSection('shop')}
-                className="text-lg font-semibold bg-primary hover:bg-primary/90"
+                variant="primary"
+                className="text-lg font-semibold"
                 data-testid="button-hero-shop"
               >
                 <ShoppingBag className="w-5 h-5 mr-2" />
                 Shop Flowers
-              </Button>
-              <Button 
-                size="lg"
-                variant="outline"
+                <Sparkles className="w-4 h-4 ml-2" />
+              </CreativeButton>
+              <CreativeButton 
                 onClick={() => scrollToSection('school')}
-                className="text-lg font-semibold border-2 border-secondary text-secondary hover:bg-secondary hover:text-white"
+                variant="secondary"
+                className="text-lg font-semibold"
                 data-testid="button-hero-classes"
               >
                 <GraduationCap className="w-5 h-5 mr-2" />
                 Explore Courses
-              </Button>
+              </CreativeButton>
             </div>
           </div>
           
           <div className="relative">
-            <div className="relative bg-gradient-to-br from-primary/5 to-secondary/5 rounded-3xl p-8">
-              <img 
-                src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600" 
-                alt="Professional floral design students learning flower arrangement" 
-                className="rounded-2xl shadow-xl w-full object-cover h-[500px]"
-              />
+            <div className="relative bg-gradient-to-br from-pink-50/50 to-purple-50/50 rounded-3xl p-8 backdrop-blur-sm border border-pink-100/50">
+              <div className="relative overflow-hidden rounded-2xl">
+                <img 
+                  src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600" 
+                  alt="Professional floral design students learning flower arrangement" 
+                  className="w-full object-cover h-[500px] hover:scale-105 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+              </div>
               
-              {/* Professional certification badge */}
-              <div className="absolute -bottom-4 -right-4 bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+              {/* Professional certification badge with enhanced design */}
+              <div className="absolute -bottom-4 -right-4 bg-white/95 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-pink-100 hover:scale-105 transition-all duration-300">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Star className="w-6 h-6 text-primary fill-current" />
+                  <div className="w-12 h-12 bg-gradient-to-br from-pink-100 to-purple-100 rounded-lg flex items-center justify-center">
+                    <Star className="w-6 h-6 text-pink-600 fill-current animate-pulse" />
                   </div>
                   <div>
                     <div className="font-semibold text-gray-900">Certified Institute</div>
@@ -90,10 +94,16 @@ export default function HeroSection() {
                   </div>
                 </div>
               </div>
+
+              {/* Floating elements around the image */}
+              <div className="absolute top-4 left-4 w-8 h-8 bg-pink-400/30 rounded-full blur-sm animate-bounce delay-300"></div>
+              <div className="absolute top-1/3 left-2 w-6 h-6 bg-purple-400/30 rounded-full blur-sm animate-pulse delay-1000"></div>
+              <div className="absolute bottom-1/4 right-2 w-10 h-10 bg-blue-400/20 rounded-full blur-sm animate-bounce delay-700"></div>
             </div>
           </div>
         </div>
       </div>
+      <SectionDivider variant="wave" />
     </section>
   );
 }

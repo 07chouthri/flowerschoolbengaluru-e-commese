@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Menu, X, User, UserPlus } from "lucide-react";
-import { Link } from "wouter";
+import { useLocation } from "wouter";
 import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 
 export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrollingUp, setIsScrollingUp] = useState(false);
   const [lastScrollTop, setLastScrollTop] = useState(0);
+  const [location, setLocation] = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -93,18 +94,23 @@ export default function Navigation() {
 
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex items-center space-x-3">
-              <Link href="/signin">
-                <Button variant="ghost" className="text-sm" data-testid="button-signin">
-                  <User className="w-4 h-4 mr-2" />
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/signup">
-                <Button className="text-sm button-glow bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600" data-testid="button-signup">
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Sign Up
-                </Button>
-              </Link>
+              <Button 
+                variant="ghost" 
+                className="text-sm" 
+                onClick={() => setLocation('/signin')}
+                data-testid="button-signin"
+              >
+                <User className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+              <Button 
+                className="text-sm button-glow bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600" 
+                onClick={() => setLocation('/signup')}
+                data-testid="button-signup"
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Sign Up
+              </Button>
             </div>
             <Button
               variant="ghost"
@@ -167,18 +173,23 @@ export default function Navigation() {
               
               {/* Mobile Auth Buttons */}
               <div className="border-t border-border pt-4 mt-4 space-y-3">
-                <Link href="/signin">
-                  <Button variant="ghost" className="w-full justify-start" data-testid="button-mobile-signin">
-                    <User className="w-4 h-4 mr-2" />
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/signup">
-                  <Button className="w-full button-glow bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600" data-testid="button-mobile-signup">
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Sign Up
-                  </Button>
-                </Link>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start" 
+                  onClick={() => setLocation('/signin')}
+                  data-testid="button-mobile-signin"
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+                <Button 
+                  className="w-full button-glow bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600" 
+                  onClick={() => setLocation('/signup')}
+                  data-testid="button-mobile-signup"
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Sign Up
+                </Button>
               </div>
               
             </div>
