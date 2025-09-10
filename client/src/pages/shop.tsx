@@ -17,9 +17,17 @@ import {
   Phone
 } from "lucide-react";
 import { Link } from "wouter";
+import Footer from "@/components/footer";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Shop() {
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Get current user data
+  const { data: user } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+  });
 
   const categories = [
     "Birthday", "Occasions", "Anniversary", "Flowers", "Cakes", 
@@ -182,10 +190,24 @@ export default function Shop() {
                 <Phone className="w-4 h-4 mr-2" />
                 Contact
               </Button>
-              <Button size="sm" data-testid="button-login">
-                <User className="w-4 h-4 mr-2" />
-                Login
-              </Button>
+              {user ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-700 font-medium">
+                    Hello, {user.firstName || 'User'}!
+                  </span>
+                  <Button variant="outline" size="sm" data-testid="button-account">
+                    <User className="w-4 h-4 mr-2" />
+                    Account
+                  </Button>
+                </div>
+              ) : (
+                <Link href="/signin">
+                  <Button size="sm" data-testid="button-login">
+                    <User className="w-4 h-4 mr-2" />
+                    Login
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
           
@@ -362,6 +384,9 @@ export default function Shop() {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
