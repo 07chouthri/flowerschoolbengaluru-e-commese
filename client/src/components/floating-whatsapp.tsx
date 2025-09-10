@@ -13,7 +13,7 @@ export default function FloatingWhatsapp() {
     <div className="floating-whatsapp">
       <Button
         size="icon"
-        className="bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 w-14 h-14"
+        className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 w-14 h-14"
         onClick={openWhatsApp}
         data-testid="button-floating-whatsapp"
       >

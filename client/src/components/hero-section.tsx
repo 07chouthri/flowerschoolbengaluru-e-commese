@@ -11,7 +11,7 @@ export default function HeroSection() {
   };
 
   return (
-    <section id="home" className="bg-gradient-to-br from-white via-pink-50/30 to-green-50/30 pt-24 pb-16">
+    <section id="home" className="bg-gradient-to-br from-white via-pink-50/30 to-gray-50/30 pt-24 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center min-h-[600px]">
           <div className="space-y-8">

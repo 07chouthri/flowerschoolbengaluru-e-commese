@@ -150,7 +150,7 @@ export default function ContactSection() {
               <h4 className="text-lg font-semibold">Quick Actions</h4>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button 
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                   onClick={openWhatsApp}
                   data-testid="button-whatsapp"
                 >
