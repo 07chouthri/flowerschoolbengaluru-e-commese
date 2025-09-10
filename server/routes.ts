@@ -23,6 +23,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create user
       const user = await storage.createUser({
         username: userData.username,
+        email: userData.email,
+        phone: userData.phone,
         password: hashedPassword,
       });
 

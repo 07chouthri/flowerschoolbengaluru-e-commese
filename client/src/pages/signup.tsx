@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, User, Lock } from "lucide-react";
+import { ArrowLeft, User, Mail, Phone, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -13,6 +13,8 @@ import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
 export default function SignUp() {
   const [formData, setFormData] = useState({
     username: "",
+    email: "",
+    phone: "",
     password: "",
     confirmPassword: ""
   });
@@ -20,7 +22,7 @@ export default function SignUp() {
   const [, setLocation] = useLocation();
 
   const signupMutation = useMutation({
-    mutationFn: async (userData: { username: string; password: string }) => {
+    mutationFn: async (userData: { username: string; email: string; phone: string; password: string }) => {
       return await apiRequest("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -66,6 +68,8 @@ export default function SignUp() {
 
     signupMutation.mutate({
       username: formData.username,
+      email: formData.email,
+      phone: formData.phone,
       password: formData.password,
     });
   };
@@ -158,6 +162,42 @@ export default function SignUp() {
                         value={formData.username}
                         onChange={handleInputChange}
                         data-testid="input-username"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-gray-700 font-medium">Email Address</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        required
+                        className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
+                        placeholder="your.email@example.com"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        data-testid="input-email"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-gray-700 font-medium">Phone Number</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        required
+                        className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
+                        placeholder="+91 98765 43210"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        data-testid="input-phone"
                       />
                     </div>
                   </div>
