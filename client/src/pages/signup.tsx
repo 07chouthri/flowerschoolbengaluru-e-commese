@@ -12,7 +12,8 @@ import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
-    username: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
     password: "",
@@ -22,7 +23,7 @@ export default function SignUp() {
   const [, setLocation] = useLocation();
 
   const signupMutation = useMutation({
-    mutationFn: async (userData: { username: string; email: string; phone: string; password: string }) => {
+    mutationFn: async (userData: { firstName: string; lastName: string; email: string; phone: string; password: string }) => {
       return await apiRequest("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -67,7 +68,8 @@ export default function SignUp() {
     }
 
     signupMutation.mutate({
-      username: formData.username,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
       email: formData.email,
       phone: formData.phone,
       password: formData.password,
@@ -148,21 +150,40 @@ export default function SignUp() {
               
               <CardContent className="space-y-6">
                 <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="username" className="text-gray-700 font-medium">Username</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="username"
-                        name="username"
-                        type="text"
-                        required
-                        className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                        placeholder="Choose a username"
-                        value={formData.username}
-                        onChange={handleInputChange}
-                        data-testid="input-username"
-                      />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName" className="text-gray-700 font-medium">First Name</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="firstName"
+                          name="firstName"
+                          type="text"
+                          required
+                          className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
+                          placeholder="First name"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          data-testid="input-first-name"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName" className="text-gray-700 font-medium">Last Name</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="lastName"
+                          name="lastName"
+                          type="text"
+                          required
+                          className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
+                          placeholder="Last name"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          data-testid="input-last-name"
+                        />
+                      </div>
                     </div>
                   </div>
 

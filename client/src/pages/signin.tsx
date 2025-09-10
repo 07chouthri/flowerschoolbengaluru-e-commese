@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, User, Lock, ShoppingBag, GraduationCap, Star } from "lucide-react";
+import { ArrowLeft, Mail, Lock, ShoppingBag, GraduationCap, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -12,14 +12,14 @@ import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
 
 export default function SignIn() {
   const [formData, setFormData] = useState({
-    username: "",
+    email: "",
     password: ""
   });
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
   const signinMutation = useMutation({
-    mutationFn: async (userData: { username: string; password: string }) => {
+    mutationFn: async (userData: { email: string; password: string }) => {
       return await apiRequest("/api/auth/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -45,7 +45,7 @@ export default function SignIn() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.username || !formData.password) {
+    if (!formData.email || !formData.password) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -55,7 +55,7 @@ export default function SignIn() {
     }
 
     signinMutation.mutate({
-      username: formData.username,
+      email: formData.email,
       password: formData.password,
     });
   };
@@ -145,19 +145,19 @@ export default function SignIn() {
               <CardContent className="space-y-6">
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="username" className="text-gray-700 font-medium">Username</Label>
+                    <Label htmlFor="email" className="text-gray-700 font-medium">Email Address</Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
-                        id="username"
-                        name="username"
-                        type="text"
+                        id="email"
+                        name="email"
+                        type="email"
                         required
                         className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                        placeholder="Enter your username"
-                        value={formData.username}
+                        placeholder="your.email@example.com"
+                        value={formData.email}
                         onChange={handleInputChange}
-                        data-testid="input-username"
+                        data-testid="input-email"
                       />
                     </div>
                   </div>

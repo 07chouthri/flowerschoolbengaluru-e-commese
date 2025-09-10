@@ -12,9 +12,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userData = insertUserSchema.parse(req.body);
       
       // Check if user already exists
-      const existingUser = await storage.getUserByUsername(userData.username);
+      const existingUser = await storage.getUserByEmail(userData.email);
       if (existingUser) {
-        return res.status(400).json({ message: "Username already exists" });
+        return res.status(400).json({ message: "Email already exists" });
       }
 
       // Hash password
@@ -22,8 +22,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create user
       const user = await storage.createUser({
-        username: userData.username,
         email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
         phone: userData.phone,
         password: hashedPassword,
       });
@@ -42,14 +43,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/signin", async (req, res) => {
     try {
-      const { username, password } = req.body;
+      const { email, password } = req.body;
       
-      if (!username || !password) {
-        return res.status(400).json({ message: "Username and password are required" });
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
       }
 
       // Find user
-      const user = await storage.getUserByUsername(username);
+      const user = await storage.getUserByEmail(email);
       if (!user) {
         return res.status(401).json({ message: "Invalid credentials" });
       }

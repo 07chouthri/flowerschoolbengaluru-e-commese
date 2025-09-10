@@ -5,10 +5,15 @@ import { z } from "zod";
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  email: text("email").notNull(),
-  phone: text("phone").notNull(),
+  email: varchar("email").notNull().unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  phone: varchar("phone"),
   password: text("password").notNull(),
+  userType: varchar("user_type"),
+  profileImageUrl: varchar("profile_image_url"),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at"),
 });
 
 export const products = pgTable("products", {
@@ -84,8 +89,9 @@ export const blogPosts = pgTable("blog_posts", {
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
   email: true,
+  firstName: true,
+  lastName: true,
   phone: true,
   password: true,
 });
