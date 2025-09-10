@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertOrderSchema, insertEnrollmentSchema, insertUserSchema } from "@shared/schema";
+import { insertOrderSchema, insertEnrollmentSchema, insertUserSchema, updateUserProfileSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import twilio from "twilio";
@@ -384,6 +384,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Reset password error:", error);
       res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
+  // Profile Management
+  app.get("/api/profile", async (req, res) => {
+    try {
+      const user = await getUserFromSession(req);
+      if (!user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      // Return user profile without password
+      const { password: _, ...userProfile } = user;
+      res.json(userProfile);
+    } catch (error) {
+      console.error("Get profile error:", error);
+      res.status(500).json({ message: "Failed to get profile" });
+    }
+  });
+
+  app.put("/api/profile", async (req, res) => {
+    try {
+      const user = await getUserFromSession(req);
+      if (!user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      // Validate profile data
+      const profileData = updateUserProfileSchema.parse(req.body);
+      
+      // Update user profile
+      const updatedUser = await storage.updateUserProfile(user.id, profileData);
+      
+      // Return updated profile without password
+      const { password: _, ...userProfile } = updatedUser;
+      res.json({ user: userProfile, message: "Profile updated successfully" });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid profile data", errors: error.errors });
+      }
+      console.error("Update profile error:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  app.delete("/api/profile", async (req, res) => {
+    try {
+      const user = await getUserFromSession(req);
+      if (!user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      // Delete user account
+      await storage.deleteUser(user.id);
+      
+      // Clear session
+      const sessionToken = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.sessionToken;
+      if (sessionToken) {
+        sessions.delete(sessionToken);
+      }
+      res.clearCookie('sessionToken');
+      
+      res.json({ message: "Account deleted successfully" });
+    } catch (error) {
+      console.error("Delete profile error:", error);
+      res.status(500).json({ message: "Failed to delete account" });
     }
   });
 

@@ -10,6 +10,8 @@ export interface IStorage {
   getUserByPhone(phone: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
+  updateUserProfile(id: string, profile: Partial<User>): Promise<User>;
+  deleteUser(id: string): Promise<void>;
   
   // Products
   getAllProducts(): Promise<Product[]>;
@@ -257,6 +259,24 @@ export class MemStorage implements IStorage {
     return updatedUser;
   }
 
+  async updateUserProfile(id: string, profile: Partial<User>): Promise<User> {
+    const user = this.users.get(id);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    const updatedUser = { ...user, ...profile, updatedAt: new Date() };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    const user = this.users.get(id);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    this.users.delete(id);
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
     const user: User = { 
@@ -267,6 +287,10 @@ export class MemStorage implements IStorage {
       phone: insertUser.phone ?? null,
       userType: null,
       profileImageUrl: null,
+      defaultAddress: null,
+      deliveryAddress: null,
+      country: null,
+      state: null,
       createdAt: null,
       updatedAt: null
     };
