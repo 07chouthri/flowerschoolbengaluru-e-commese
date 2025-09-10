@@ -12,7 +12,7 @@ const sessions: Map<string, { userId: string; expires: number }> = new Map();
 // Simple in-memory OTP storage
 const otpStorage: Map<string, { otp: string; expires: number; verified: boolean }> = new Map();
 
-// Initialize Twilio client
+// Initialize Twilio client for Verify service
 const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
@@ -23,28 +23,45 @@ const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Helper function to send SMS
-const sendSMS = async (phone: string, message: string) => {
+// Helper function to send OTP via Twilio Verify
+const sendVerificationCode = async (phone: string) => {
   try {
-    // Ensure the Twilio phone number has proper country code format
-    const fromNumber = process.env.TWILIO_PHONE_NUMBER?.startsWith('+') 
-      ? process.env.TWILIO_PHONE_NUMBER 
-      : `+1${process.env.TWILIO_PHONE_NUMBER}`;
+    console.log(`[VERIFY DEBUG] Attempting to send verification code:`);
+    console.log(`[VERIFY DEBUG] TO: ${phone}`);
+    console.log(`[VERIFY DEBUG] Service SID: ${process.env.TWILIO_VERIFY_SERVICE_SID}`);
     
-    console.log(`[SMS DEBUG] Attempting to send SMS:`);
-    console.log(`[SMS DEBUG] FROM: ${fromNumber}`);
-    console.log(`[SMS DEBUG] TO: ${phone}`);
-    console.log(`[SMS DEBUG] TWILIO_PHONE_NUMBER env: ${process.env.TWILIO_PHONE_NUMBER}`);
+    const verification = await twilioClient.verify.v2.services(process.env.TWILIO_VERIFY_SERVICE_SID!)
+      .verifications
+      .create({
+        to: phone,
+        channel: 'sms'
+      });
     
-    await twilioClient.messages.create({
-      body: message,
-      from: fromNumber,
-      to: phone,
-    });
-    console.log(`[SMS SUCCESS] SMS sent successfully to ${phone}`);
+    console.log(`[VERIFY SUCCESS] Verification sent successfully to ${phone}, Status: ${verification.status}`);
     return true;
   } catch (error) {
-    console.error("SMS sending error:", error);
+    console.error("Verification sending error:", error);
+    return false;
+  }
+};
+
+// Helper function to verify OTP
+const verifyCode = async (phone: string, code: string) => {
+  try {
+    console.log(`[VERIFY DEBUG] Attempting to verify code:`);
+    console.log(`[VERIFY DEBUG] Phone: ${phone}, Code: ${code}`);
+    
+    const verificationCheck = await twilioClient.verify.v2.services(process.env.TWILIO_VERIFY_SERVICE_SID!)
+      .verificationChecks
+      .create({
+        to: phone,
+        code: code
+      });
+    
+    console.log(`[VERIFY SUCCESS] Verification status: ${verificationCheck.status}`);
+    return verificationCheck.status === 'approved';
+  } catch (error) {
+    console.error("Verification check error:", error);
     return false;
   }
 };
@@ -238,12 +255,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           `Your verification code is: ${otp}. This code will expire in 10 minutes.`
         );
       } else {
-        // Format phone number for SMS
+        // Format phone number for SMS using Twilio Verify
         const formattedPhone = contact.startsWith('+') ? contact : `+91${contact}`;
-        sent = await sendSMS(
-          formattedPhone,
-          `Your Bouquet Bar verification code is: ${otp}. Expires in 10 minutes.`
-        );
+        sent = await sendVerificationCode(formattedPhone);
+        // Don't store OTP for phone since Twilio Verify handles it
+        if (sent) {
+          otpStorage.delete(contact); // Remove from local storage since Twilio handles it
+        }
       }
 
       if (!sent) {
@@ -266,23 +284,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Contact, OTP, and contact type are required" });
       }
 
-      const storedOtp = otpStorage.get(contact);
-      if (!storedOtp) {
-        return res.status(400).json({ message: "No OTP found for this contact" });
+      let isValid = false;
+      
+      if (contactType === "email") {
+        // Use local OTP storage for email
+        const storedOtp = otpStorage.get(contact);
+        if (!storedOtp) {
+          return res.status(400).json({ message: "No OTP found for this contact" });
+        }
+
+        if (storedOtp.expires < Date.now()) {
+          otpStorage.delete(contact);
+          return res.status(400).json({ message: "OTP has expired" });
+        }
+
+        if (storedOtp.otp !== otp) {
+          return res.status(400).json({ message: "Invalid OTP" });
+        }
+
+        // Mark OTP as verified
+        storedOtp.verified = true;
+        otpStorage.set(contact, storedOtp);
+        isValid = true;
+      } else {
+        // Use Twilio Verify for phone numbers
+        const formattedPhone = contact.startsWith('+') ? contact : `+91${contact}`;
+        isValid = await verifyCode(formattedPhone, otp);
+        
+        if (isValid) {
+          // Store verification status for password reset
+          otpStorage.set(contact, {
+            otp: otp,
+            expires: Date.now() + (10 * 60 * 1000), // 10 minutes
+            verified: true
+          });
+        }
       }
 
-      if (storedOtp.expires < Date.now()) {
-        otpStorage.delete(contact);
-        return res.status(400).json({ message: "OTP has expired" });
+      if (!isValid) {
+        return res.status(400).json({ message: "Invalid or expired OTP" });
       }
-
-      if (storedOtp.otp !== otp) {
-        return res.status(400).json({ message: "Invalid OTP" });
-      }
-
-      // Mark OTP as verified
-      storedOtp.verified = true;
-      otpStorage.set(contact, storedOtp);
 
       res.json({ message: "OTP verified successfully" });
     } catch (error) {
