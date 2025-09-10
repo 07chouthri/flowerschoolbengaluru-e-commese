@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
-import type { Product } from '@shared/schema';
+import { useState, useCallback, useEffect } from 'react';
+import { apiRequest } from '@/lib/queryClient';
+import type { Product, Cart } from '@shared/schema';
 
 interface CartItem extends Product {
   quantity: number;
@@ -9,13 +10,17 @@ interface CartState {
   items: CartItem[];
   totalItems: number;
   totalPrice: number;
+  isLoading: boolean;
+  error: string | null;
 }
 
-export function useCart() {
+export function useCart(userId?: string) {
   const [cart, setCart] = useState<CartState>({
     items: [],
     totalItems: 0,
     totalPrice: 0,
+    isLoading: false,
+    error: null,
   });
 
   const calculateTotals = useCallback((items: CartItem[]) => {
@@ -24,73 +29,211 @@ export function useCart() {
     return { totalItems, totalPrice };
   }, []);
 
-  const addToCart = useCallback((product: Product, quantity: number = 1) => {
-    setCart(prevCart => {
-      const existingItemIndex = prevCart.items.findIndex(item => item.id === product.id);
+  // Load cart from backend when userId is available
+  const loadCart = useCallback(async () => {
+    if (!userId) return;
+
+    setCart(prev => ({ ...prev, isLoading: true, error: null }));
+    
+    try {
+      const cartItems = await apiRequest(`/api/cart/${userId}`) as (Cart & { product: Product })[];
       
-      let newItems: CartItem[];
-      if (existingItemIndex > -1) {
-        // Update existing item quantity
-        newItems = prevCart.items.map((item, index) => 
-          index === existingItemIndex 
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      } else {
-        // Add new item
-        newItems = [...prevCart.items, { ...product, quantity }];
+      const formattedItems: CartItem[] = cartItems.map(item => ({
+        ...item.product,
+        quantity: item.quantity
+      }));
+      
+      const { totalItems, totalPrice } = calculateTotals(formattedItems);
+      
+      setCart({
+        items: formattedItems,
+        totalItems,
+        totalPrice,
+        isLoading: false,
+        error: null,
+      });
+    } catch (error) {
+      console.error('Error loading cart:', error);
+      setCart(prev => ({ 
+        ...prev, 
+        isLoading: false, 
+        error: 'Failed to load cart' 
+      }));
+    }
+  }, [userId, calculateTotals]);
+
+  // Load cart on mount and when userId changes
+  useEffect(() => {
+    loadCart();
+  }, [loadCart]);
+
+  const addToCart = useCallback(async (product: Product, quantity: number = 1) => {
+    if (userId) {
+      // Backend persistence
+      setCart(prev => ({ ...prev, isLoading: true, error: null }));
+      
+      try {
+        await apiRequest(`/api/cart/${userId}/add`, {
+          method: 'POST',
+          body: JSON.stringify({ productId: product.id, quantity }),
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        // Reload cart after adding
+        await loadCart();
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+        setCart(prev => ({ 
+          ...prev, 
+          isLoading: false, 
+          error: 'Failed to add item to cart' 
+        }));
       }
+    } else {
+      // Local state fallback
+      setCart(prevCart => {
+        const existingItemIndex = prevCart.items.findIndex(item => item.id === product.id);
+        
+        let newItems: CartItem[];
+        if (existingItemIndex > -1) {
+          newItems = prevCart.items.map((item, index) => 
+            index === existingItemIndex 
+              ? { ...item, quantity: item.quantity + quantity }
+              : item
+          );
+        } else {
+          newItems = [...prevCart.items, { ...product, quantity }];
+        }
 
-      const { totalItems, totalPrice } = calculateTotals(newItems);
+        const { totalItems, totalPrice } = calculateTotals(newItems);
+        
+        return {
+          ...prevCart,
+          items: newItems,
+          totalItems,
+          totalPrice,
+        };
+      });
+    }
+  }, [userId, calculateTotals, loadCart]);
+
+  const removeFromCart = useCallback(async (productId: string) => {
+    if (userId) {
+      // Backend persistence
+      setCart(prev => ({ ...prev, isLoading: true, error: null }));
       
-      return {
-        items: newItems,
-        totalItems,
-        totalPrice,
-      };
-    });
-  }, [calculateTotals]);
+      try {
+        await apiRequest(`/api/cart/${userId}/remove/${productId}`, {
+          method: 'DELETE'
+        });
+        
+        // Reload cart after removing
+        await loadCart();
+      } catch (error) {
+        console.error('Error removing from cart:', error);
+        setCart(prev => ({ 
+          ...prev, 
+          isLoading: false, 
+          error: 'Failed to remove item from cart' 
+        }));
+      }
+    } else {
+      // Local state fallback
+      setCart(prevCart => {
+        const newItems = prevCart.items.filter(item => item.id !== productId);
+        const { totalItems, totalPrice } = calculateTotals(newItems);
+        
+        return {
+          ...prevCart,
+          items: newItems,
+          totalItems,
+          totalPrice,
+        };
+      });
+    }
+  }, [userId, calculateTotals, loadCart]);
 
-  const removeFromCart = useCallback((productId: string) => {
-    setCart(prevCart => {
-      const newItems = prevCart.items.filter(item => item.id !== productId);
-      const { totalItems, totalPrice } = calculateTotals(newItems);
-      
-      return {
-        items: newItems,
-        totalItems,
-        totalPrice,
-      };
-    });
-  }, [calculateTotals]);
-
-  const updateQuantity = useCallback((productId: string, quantity: number) => {
+  const updateQuantity = useCallback(async (productId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      await removeFromCart(productId);
       return;
     }
 
-    setCart(prevCart => {
-      const newItems = prevCart.items.map(item =>
-        item.id === productId ? { ...item, quantity } : item
-      );
-      const { totalItems, totalPrice } = calculateTotals(newItems);
+    if (userId) {
+      // Backend persistence
+      setCart(prev => ({ ...prev, isLoading: true, error: null }));
       
-      return {
-        items: newItems,
-        totalItems,
-        totalPrice,
-      };
-    });
-  }, [calculateTotals, removeFromCart]);
+      try {
+        await apiRequest(`/api/cart/${userId}/update`, {
+          method: 'PUT',
+          body: JSON.stringify({ productId, quantity }),
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        // Reload cart after updating
+        await loadCart();
+      } catch (error) {
+        console.error('Error updating cart quantity:', error);
+        setCart(prev => ({ 
+          ...prev, 
+          isLoading: false, 
+          error: 'Failed to update cart item' 
+        }));
+      }
+    } else {
+      // Local state fallback
+      setCart(prevCart => {
+        const newItems = prevCart.items.map(item =>
+          item.id === productId ? { ...item, quantity } : item
+        );
+        const { totalItems, totalPrice } = calculateTotals(newItems);
+        
+        return {
+          ...prevCart,
+          items: newItems,
+          totalItems,
+          totalPrice,
+        };
+      });
+    }
+  }, [userId, calculateTotals, removeFromCart, loadCart]);
 
-  const clearCart = useCallback(() => {
-    setCart({
-      items: [],
-      totalItems: 0,
-      totalPrice: 0,
-    });
-  }, []);
+  const clearCart = useCallback(async () => {
+    if (userId) {
+      // Backend persistence
+      setCart(prev => ({ ...prev, isLoading: true, error: null }));
+      
+      try {
+        await apiRequest(`/api/cart/${userId}/clear`, {
+          method: 'DELETE'
+        });
+        
+        setCart(prev => ({
+          ...prev,
+          items: [],
+          totalItems: 0,
+          totalPrice: 0,
+          isLoading: false,
+          error: null,
+        }));
+      } catch (error) {
+        console.error('Error clearing cart:', error);
+        setCart(prev => ({ 
+          ...prev, 
+          isLoading: false, 
+          error: 'Failed to clear cart' 
+        }));
+      }
+    } else {
+      // Local state fallback
+      setCart(prev => ({
+        ...prev,
+        items: [],
+        totalItems: 0,
+        totalPrice: 0,
+      }));
+    }
+  }, [userId]);
 
   const getItemQuantity = useCallback((productId: string): number => {
     const item = cart.items.find(item => item.id === productId);
@@ -101,15 +244,23 @@ export function useCart() {
     return cart.items.some(item => item.id === productId);
   }, [cart.items]);
 
+  const clearError = useCallback(() => {
+    setCart(prev => ({ ...prev, error: null }));
+  }, []);
+
   return {
     items: cart.items,
     totalItems: cart.totalItems,
     totalPrice: cart.totalPrice,
+    isLoading: cart.isLoading,
+    error: cart.error,
     addToCart,
     removeFromCart,
     updateQuantity,
     clearCart,
     getItemQuantity,
     isInCart,
+    clearError,
+    loadCart,
   };
 }

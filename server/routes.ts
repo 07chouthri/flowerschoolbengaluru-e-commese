@@ -524,6 +524,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cart Operations
+  app.get("/api/cart/:userId", async (req, res) => {
+    try {
+      const cartItems = await storage.getUserCart(req.params.userId);
+      res.json(cartItems);
+    } catch (error) {
+      console.error("Error fetching user cart:", error);
+      res.status(500).json({ message: "Failed to fetch cart" });
+    }
+  });
+
+  app.post("/api/cart/:userId/add", async (req, res) => {
+    try {
+      const { productId, quantity } = req.body;
+      const cartItem = await storage.addToCart(req.params.userId, productId, quantity);
+      res.json(cartItem);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      res.status(500).json({ message: "Failed to add to cart" });
+    }
+  });
+
+  app.put("/api/cart/:userId/update", async (req, res) => {
+    try {
+      const { productId, quantity } = req.body;
+      const cartItem = await storage.updateCartItemQuantity(req.params.userId, productId, quantity);
+      res.json(cartItem);
+    } catch (error) {
+      console.error("Error updating cart item:", error);
+      res.status(500).json({ message: "Failed to update cart item" });
+    }
+  });
+
+  app.delete("/api/cart/:userId/remove/:productId", async (req, res) => {
+    try {
+      await storage.removeFromCart(req.params.userId, req.params.productId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing from cart:", error);
+      res.status(500).json({ message: "Failed to remove from cart" });
+    }
+  });
+
+  app.delete("/api/cart/:userId/clear", async (req, res) => {
+    try {
+      await storage.clearUserCart(req.params.userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+      res.status(500).json({ message: "Failed to clear cart" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
