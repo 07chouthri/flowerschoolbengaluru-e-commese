@@ -186,35 +186,8 @@ export default function Shop() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
       {/* Top Bar */}
-      <div className="bg-white border-b shadow-sm sticky top-0 z-50">
+      <div className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Location and User Actions */}
-          <div className="flex items-center justify-between py-3 border-b">
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-6 h-4 bg-green-500 rounded-sm flex items-center justify-center">
-                <div className="w-3 h-2 bg-orange-500 rounded-full"></div>
-              </div>
-              <span className="font-medium">Deliver to</span>
-              <span className="font-bold">Tamilnadu</span>
-              <ChevronDown className="w-4 h-4" />
-              <span className="text-gray-600 ml-2">Salem, Tamilnadu, 636114</span>
-            </div>
-            
-            <div className="flex items-center gap-6 text-sm">
-              <div className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                <span>Same Day</span>
-              </div>
-              <span>INR</span>
-              <span>Corporate</span>
-              <div className="flex items-center gap-1">
-                <ShoppingCart className="w-4 h-4" />
-                <span>Cart</span>
-              </div>
-              <span>VASU CHOU...</span>
-              <span>More</span>
-            </div>
-          </div>
           
           {/* Main Navigation */}
           <div className="flex items-center justify-between py-4">
@@ -222,7 +195,7 @@ export default function Shop() {
               <img 
                 src={bouquetBarLogo}
                 alt="Bouquet Bar Logo"
-                className="w-12 h-auto"
+                className="w-20 h-auto"
               />
               <div className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
                 Bouquet Bar
