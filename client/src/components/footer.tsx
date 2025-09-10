@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Instagram, Youtube, MessageCircle, Facebook } from "lucide-react";
-import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
+import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
 
 export default function Footer() {
   const scrollToSection = (sectionId: string) => {
