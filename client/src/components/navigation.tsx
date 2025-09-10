@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Menu, X, User, UserPlus } from "lucide-react";
+import { Menu, X, User, UserPlus, LogOut } from "lucide-react";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
 
 export default function Navigation() {
@@ -11,12 +13,43 @@ export default function Navigation() {
   const [isScrollingUp, setIsScrollingUp] = useState(false);
   const [lastScrollTop, setLastScrollTop] = useState(0);
   const [location, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Get current user data
   const { data: user } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
   });
+
+  // Logout mutation
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("/api/auth/signout", {
+        method: "POST",
+      });
+    },
+    onSuccess: () => {
+      // Clear user data from cache
+      queryClient.setQueryData(["/api/auth/user"], null);
+      toast({
+        title: "Logged out successfully",
+        description: "You have been signed out.",
+      });
+      setLocation("/");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to log out",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -123,6 +156,16 @@ export default function Navigation() {
                     <User className="w-4 h-4 mr-2" />
                     Account
                   </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleLogout}
+                    disabled={logoutMutation.isPending}
+                    data-testid="button-logout"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    {logoutMutation.isPending ? 'Logging out...' : 'Log Out'}
+                  </Button>
                 </div>
               ) : (
                 <>
@@ -215,15 +258,27 @@ export default function Navigation() {
                         {user.firstName || 'User'}!
                       </span>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start" 
-                      onClick={() => setLocation('/shop')}
-                      data-testid="button-mobile-account"
-                    >
-                      <User className="w-4 h-4 mr-2" />
-                      Account
-                    </Button>
+                    <div className="space-y-2">
+                      <Button 
+                        variant="ghost" 
+                        className="w-full justify-start" 
+                        onClick={() => setLocation('/shop')}
+                        data-testid="button-mobile-account"
+                      >
+                        <User className="w-4 h-4 mr-2" />
+                        Account
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start" 
+                        onClick={handleLogout}
+                        disabled={logoutMutation.isPending}
+                        data-testid="button-mobile-logout"
+                      >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        {logoutMutation.isPending ? 'Logging out...' : 'Log Out'}
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <>
