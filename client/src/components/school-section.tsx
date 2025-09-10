@@ -40,11 +40,11 @@ export default function SchoolSection() {
   };
 
   return (
-    <section id="school" className="py-24 bg-white">
+    <section id="school" className="py-24 bg-gradient-to-b from-white to-pink-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-20">
-          <h2 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-8 tracking-tight">Flower School</h2>
-          <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto font-light">Master the art of floral design with expert guidance and professional certification</p>
+          <h2 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent mb-8 tracking-tight">Flower School</h2>
+          <p className="text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto font-light">Master the art of floral design with expert guidance and professional certification</p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">

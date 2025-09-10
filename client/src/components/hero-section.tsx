@@ -11,7 +11,7 @@ export default function HeroSection() {
   };
 
   return (
-    <section id="home" className="min-h-screen bg-white pt-24 pb-20">
+    <section id="home" className="min-h-screen bg-gradient-to-br from-pink-50 to-rose-100 pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-20 items-center">
           <div className="space-y-8">
@@ -71,7 +71,7 @@ export default function HeroSection() {
           </div>
           
           <div className="relative">
-            <div className="relative bg-gray-50 rounded-2xl p-8 shadow-lg">
+            <div className="relative bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-pink-200">
               <div className="relative overflow-hidden rounded-2xl">
                 <img 
                   src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600" 
@@ -82,7 +82,7 @@ export default function HeroSection() {
               </div>
               
               {/* Professional certification badge with enhanced design */}
-              <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-xl shadow-xl border-2 border-gray-100">
+              <div className="absolute -bottom-6 -right-6 bg-gradient-to-br from-pink-500 to-rose-500 text-white p-6 rounded-xl shadow-xl">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                     <Star className="w-5 h-5 text-primary fill-current" />

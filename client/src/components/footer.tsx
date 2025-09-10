@@ -18,7 +18,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-gray-50 text-gray-900 border-t border-gray-200">
+    <footer className="bg-gradient-to-br from-pink-100 to-rose-100 text-gray-900 border-t border-pink-200">
       <div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           {/* Professional Brand Section */}
@@ -34,7 +34,7 @@ export default function Footer() {
                 <p className="text-lg text-gray-600 font-medium">Bengaluru, India</p>
               </div>
             </div>
-            <div className="w-24 h-1 bg-primary mx-auto mb-6 rounded-full"></div>
+            <div className="w-24 h-1 bg-gradient-to-r from-pink-500 to-rose-500 mx-auto mb-6 rounded-full"></div>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed font-light">
               India's premier floral design institute and online flower marketplace. 
               Transforming passion into expertise through professional floral education and premium flower collections.
@@ -42,7 +42,7 @@ export default function Footer() {
           </div>
           
           {/* Professional Separator */}
-          <div className="w-full h-px bg-gray-700 mb-12"></div>
+          <div className="w-full h-px bg-gradient-to-r from-transparent via-pink-300 to-transparent mb-12"></div>
           
           <div className="grid md:grid-cols-4 gap-10 mb-16">
             {/* Company Information */}
