@@ -31,10 +31,10 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-purple-50 to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-100">
       <div className="flex min-h-screen">
         {/* Left Side - Branding */}
-        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-orange-200/80 via-purple-200/60 to-teal-200/80 relative overflow-hidden">
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-pink-200/80 via-rose-200/60 to-pink-300/80 relative overflow-hidden">
           <div className="flex flex-col justify-center px-12 relative z-10">
             <div className="mb-8">
               <img src={logoPath} alt="Bouquet Bar Logo" className="h-28 w-auto mb-6" />
@@ -218,7 +218,7 @@ export default function SignUp() {
 
                   <Button 
                     type="submit" 
-                    className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3"
+                    className="w-full font-semibold py-3 text-lg"
                     data-testid="button-signup"
                   >
                     Create Account
