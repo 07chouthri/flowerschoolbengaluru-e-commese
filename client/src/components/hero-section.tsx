@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingBag, GraduationCap, Star, Sparkles } from "lucide-react";
-import { CreativeButton, SectionDivider } from "@/components/creative-enhancements";
+import { ShoppingBag, GraduationCap, Star, ArrowRight } from "lucide-react";
 
 export default function HeroSection() {
   const scrollToSection = (sectionId: string) => {
@@ -12,24 +11,23 @@ export default function HeroSection() {
   };
 
   return (
-    <section id="home" className="min-h-screen bg-gradient-to-br from-white via-orange-50/20 to-purple-50/10 pt-24 pb-16 flex items-center">
+    <section id="home" className="min-h-screen bg-white pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-16 items-center min-h-[600px]">
+        <div className="grid lg:grid-cols-2 gap-20 items-center">
           <div className="space-y-8">
-            {/* Professional badge */}
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
+            <Badge variant="secondary" className="inline-flex items-center gap-2 text-sm font-medium mb-6">
               <div className="w-2 h-2 bg-primary rounded-full"></div>
               India's Premier Floral Institute
-            </div>
+            </Badge>
             
-            <h1 className="text-5xl md:text-6xl font-bold leading-[1.1] text-gray-900">
-              Fresh Flowers &<br />
-              <span className="text-primary">Professional</span><br />
-              Floral Education
+            <h1 className="text-6xl md:text-7xl font-extrabold leading-[0.95] text-gray-900 tracking-tight">
+              Fresh Flowers<br />
+              & Professional<br />
+              <span className="text-primary">Floral Education</span>
             </h1>
             
-            <p className="text-xl text-gray-600 leading-relaxed max-w-lg">
-              Transform your passion for flowers into expertise. Shop premium flowers and master the art of floral design with India's leading institute in Bengaluru.
+            <p className="text-xl md:text-2xl text-gray-600 leading-relaxed max-w-xl font-light">
+              Transform your passion for flowers into expertise. Shop premium flowers and master the art of floral design with India's leading institute.
             </p>
             
             {/* Professional stats */}
@@ -48,31 +46,32 @@ export default function HeroSection() {
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-4">
-              <CreativeButton 
+            <div className="flex flex-col sm:flex-row gap-6 pt-4">
+              <Button 
+                size="lg"
                 onClick={() => scrollToSection('shop')}
-                variant="primary"
-                className="text-lg font-semibold"
+                className="text-lg px-8 py-4 h-auto font-semibold"
                 data-testid="button-hero-shop"
               >
-                <ShoppingBag className="w-5 h-5 mr-2" />
+                <ShoppingBag className="w-5 h-5 mr-3" />
                 Shop Flowers
-                <Sparkles className="w-4 h-4 ml-2" />
-              </CreativeButton>
-              <CreativeButton 
+                <ArrowRight className="w-5 h-5 ml-3" />
+              </Button>
+              <Button 
+                variant="outline"
+                size="lg"
                 onClick={() => scrollToSection('school')}
-                variant="secondary"
-                className="text-lg font-semibold"
+                className="text-lg px-8 py-4 h-auto font-semibold border-2"
                 data-testid="button-hero-classes"
               >
-                <GraduationCap className="w-5 h-5 mr-2" />
+                <GraduationCap className="w-5 h-5 mr-3" />
                 Explore Courses
-              </CreativeButton>
+              </Button>
             </div>
           </div>
           
           <div className="relative">
-            <div className="relative bg-white/90 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
+            <div className="relative bg-gray-50 rounded-2xl p-8 shadow-lg">
               <div className="relative overflow-hidden rounded-2xl">
                 <img 
                   src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600" 
@@ -83,7 +82,7 @@ export default function HeroSection() {
               </div>
               
               {/* Professional certification badge with enhanced design */}
-              <div className="absolute -bottom-4 -right-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-gray-100 hover:scale-105 transition-all duration-300">
+              <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-xl shadow-xl border-2 border-gray-100">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                     <Star className="w-5 h-5 text-primary fill-current" />
@@ -103,7 +102,6 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
-      <SectionDivider variant="wave" />
     </section>
   );
 }
