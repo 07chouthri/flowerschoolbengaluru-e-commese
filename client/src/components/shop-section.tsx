@@ -3,13 +3,16 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ShoppingCart, Plus, Eye } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
+import { useToast } from "@/hooks/use-toast";
 import type { Product } from "@shared/schema";
 
 export default function ShopSection() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const { addToCart } = useCart();
+  const { toast } = useToast();
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ['/api/products', selectedCategory === "all" ? "" : selectedCategory],
@@ -31,6 +34,11 @@ export default function ShopSection() {
 
   const handleAddToCart = (product: Product) => {
     addToCart(product);
+    toast({
+      title: "Added to Cart! 🛒",
+      description: `${product.name} has been added to your cart.`,
+      duration: 2000,
+    });
   };
 
   return (
@@ -78,46 +86,111 @@ export default function ShopSection() {
             {products.map((product) => (
               <Card 
                 key={product.id} 
-                className="card-shadow hover:shadow-xl transition-all group overflow-hidden card-hover-lift flower-float"
+                className="card-shadow hover:shadow-xl transition-all group overflow-hidden card-hover-lift flower-float cursor-pointer"
                 data-testid={`card-product-${product.id}`}
               >
-                <div className="relative overflow-hidden rounded-t-xl">
-                  <img 
-                    src={product.image} 
-                    alt={product.name} 
-                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500" 
-                  />
-                  {/* Product overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <Dialog>
+                  <DialogTrigger className="w-full text-left">
+                    <div className="relative overflow-hidden rounded-t-xl">
+                      <img 
+                        src={product.image} 
+                        alt={product.name} 
+                        className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500" 
+                      />
+                      {/* Product overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      
+                      {/* View details button */}
+                      <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <Badge className="bg-blue-500 text-white text-xs backdrop-blur-sm">
+                          <Eye className="w-3 h-3 mr-1" />
+                          View Details
+                        </Badge>
+                      </div>
+                      
+                      {/* Professional badge */}
+                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <Badge className="bg-white/90 text-black text-xs backdrop-blur-sm">Premium</Badge>
+                      </div>
+                      
+                      {/* Shimmer effect */}
+                      <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700"></div>
+                    </div>
+                    <CardContent className="p-6">
+                      <h3 className="text-lg font-semibold mb-2" data-testid={`text-product-name-${product.id}`}>
+                        {product.name}
+                      </h3>
+                      <p className="text-muted-foreground text-sm mb-4" data-testid={`text-product-description-${product.id}`}>
+                        {product.description}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl font-bold text-primary" data-testid={`text-product-price-${product.id}`}>
+                          ₹{parseFloat(product.price).toLocaleString('en-IN')}
+                        </span>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddToCart(product);
+                            }}
+                            data-testid={`button-add-to-cart-${product.id}`}
+                            className="hover:bg-primary/90"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </DialogTrigger>
                   
-                  {/* Professional badge */}
-                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <Badge className="bg-white/90 text-black text-xs backdrop-blur-sm">Premium</Badge>
-                  </div>
-                  
-                  {/* Shimmer effect */}
-                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700"></div>
-                </div>
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-2" data-testid={`text-product-name-${product.id}`}>
-                    {product.name}
-                  </h3>
-                  <p className="text-muted-foreground text-sm mb-4" data-testid={`text-product-description-${product.id}`}>
-                    {product.description}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-primary" data-testid={`text-product-price-${product.id}`}>
-                      ₹{parseFloat(product.price).toLocaleString('en-IN')}
-                    </span>
-                    <Button 
-                      size="icon"
-                      onClick={() => handleAddToCart(product)}
-                      data-testid={`button-add-to-cart-${product.id}`}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardContent>
+                  {/* Product Detail Dialog */}
+                  <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                      <DialogTitle className="text-2xl font-bold">{product.name}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-6">
+                      <div className="relative overflow-hidden rounded-lg">
+                        <img 
+                          src={product.image} 
+                          alt={product.name} 
+                          className="w-full h-64 object-cover" 
+                        />
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-2">Description</h4>
+                          <p className="text-gray-600 leading-relaxed">{product.description}</p>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="text-3xl font-bold text-primary">
+                              ₹{parseFloat(product.price).toLocaleString('en-IN')}
+                            </span>
+                            <p className="text-sm text-gray-500 mt-1">Free delivery across Bengaluru</p>
+                          </div>
+                          <Badge variant="secondary" className="capitalize">{product.category}</Badge>
+                        </div>
+                        
+                        <div className="flex gap-3 pt-4">
+                          <Button 
+                            className="flex-1" 
+                            onClick={() => handleAddToCart(product)}
+                            data-testid={`button-add-to-cart-detail-${product.id}`}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add to Cart
+                          </Button>
+                          <Button variant="outline" className="flex-1">
+                            Buy Now
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </Card>
             ))}
           </div>
