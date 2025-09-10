@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertOrderSchema, insertEnrollmentSchema, insertUserSchema } from "@shared/schema";
+import { insertOrderSchema, insertEnrollmentSchema, insertUserSchema, insertPhoneUserSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import twilio from "twilio";
@@ -10,7 +10,13 @@ import twilio from "twilio";
 const sessions: Map<string, { userId: string; expires: number }> = new Map();
 
 // Simple in-memory OTP storage
-const otpStorage: Map<string, { otp: string; expires: number; verified: boolean }> = new Map();
+const otpStorage: Map<string, { 
+  otp: string; 
+  expires: number; 
+  verified: boolean;
+  userData?: { firstName: string; lastName: string; phone: string };
+  userId?: string;
+}> = new Map();
 
 // Initialize Twilio client
 const twilioClient = twilio(
@@ -188,6 +194,198 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Signout error:", error);
       res.status(500).json({ message: "Failed to sign out" });
+    }
+  });
+
+  // Phone-Only Authentication Routes
+
+  // Send OTP for new user signup
+  app.post("/api/auth/send-signup-otp", async (req, res) => {
+    try {
+      const { firstName, lastName, phone } = req.body;
+      
+      if (!firstName || !lastName || !phone) {
+        return res.status(400).json({ message: "First name, last name, and phone are required" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByPhone(phone);
+      if (existingUser) {
+        return res.status(400).json({ message: "Phone number already registered" });
+      }
+
+      // Generate OTP
+      const otp = generateOTP();
+      const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutes
+
+      // Store OTP with user data
+      otpStorage.set(phone, {
+        otp,
+        expires: expiresAt,
+        verified: false,
+        userData: { firstName, lastName, phone }
+      });
+
+      // Send SMS
+      const sent = await sendSMS(
+        phone,
+        `Welcome to Bouquet Bar! Your verification code is: ${otp}. Expires in 10 minutes.`
+      );
+
+      if (!sent) {
+        return res.status(500).json({ message: "Failed to send OTP" });
+      }
+
+      res.json({ message: "OTP sent to your phone" });
+    } catch (error) {
+      console.error("Send signup OTP error:", error);
+      res.status(500).json({ message: "Failed to send OTP" });
+    }
+  });
+
+  // Verify OTP and create user account
+  app.post("/api/auth/verify-signup-otp", async (req, res) => {
+    try {
+      const { firstName, lastName, phone, otp } = req.body;
+      
+      if (!firstName || !lastName || !phone || !otp) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+
+      const storedOtp = otpStorage.get(phone);
+      if (!storedOtp) {
+        return res.status(400).json({ message: "No OTP found for this phone number" });
+      }
+
+      if (storedOtp.expires < Date.now()) {
+        otpStorage.delete(phone);
+        return res.status(400).json({ message: "OTP has expired" });
+      }
+
+      if (storedOtp.otp !== otp) {
+        return res.status(400).json({ message: "Invalid OTP" });
+      }
+
+      // Create user without password
+      const userData = insertPhoneUserSchema.parse({
+        firstName,
+        lastName,
+        phone,
+        password: "" // No password for phone-only auth
+      });
+      const user = await storage.createUser(userData);
+
+      // Clean up OTP
+      otpStorage.delete(phone);
+
+      // Return success
+      res.status(201).json({ 
+        user: { id: user.id, firstName: user.firstName, lastName: user.lastName, phone: user.phone }, 
+        message: "Account created successfully" 
+      });
+    } catch (error) {
+      console.error("Verify signup OTP error:", error);
+      res.status(500).json({ message: "Failed to create account" });
+    }
+  });
+
+  // Send OTP for login
+  app.post("/api/auth/send-login-otp", async (req, res) => {
+    try {
+      const { phone } = req.body;
+      
+      if (!phone) {
+        return res.status(400).json({ message: "Phone number is required" });
+      }
+
+      // Check if user exists
+      const user = await storage.getUserByPhone(phone);
+      if (!user) {
+        return res.status(404).json({ message: "Phone number not registered" });
+      }
+
+      // Generate OTP
+      const otp = generateOTP();
+      const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutes
+
+      // Store OTP
+      otpStorage.set(phone, {
+        otp,
+        expires: expiresAt,
+        verified: false,
+        userId: user.id
+      });
+
+      // Send SMS
+      const sent = await sendSMS(
+        phone,
+        `Your Bouquet Bar login code is: ${otp}. Expires in 10 minutes.`
+      );
+
+      if (!sent) {
+        return res.status(500).json({ message: "Failed to send OTP" });
+      }
+
+      res.json({ message: "OTP sent to your phone" });
+    } catch (error) {
+      console.error("Send login OTP error:", error);
+      res.status(500).json({ message: "Failed to send OTP" });
+    }
+  });
+
+  // Verify OTP and log user in
+  app.post("/api/auth/verify-login-otp", async (req, res) => {
+    try {
+      const { phone, otp } = req.body;
+      
+      if (!phone || !otp) {
+        return res.status(400).json({ message: "Phone number and OTP are required" });
+      }
+
+      const storedOtp = otpStorage.get(phone);
+      if (!storedOtp) {
+        return res.status(400).json({ message: "No OTP found for this phone number" });
+      }
+
+      if (storedOtp.expires < Date.now()) {
+        otpStorage.delete(phone);
+        return res.status(400).json({ message: "OTP has expired" });
+      }
+
+      if (storedOtp.otp !== otp) {
+        return res.status(400).json({ message: "Invalid OTP" });
+      }
+
+      // Get user
+      const user = await storage.getUser(storedOtp.userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Create session
+      const sessionToken = generateSessionToken();
+      const sessionExpiresAt = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
+      sessions.set(sessionToken, { userId: user.id, expires: sessionExpiresAt });
+
+      // Set cookie
+      res.cookie('sessionToken', sessionToken, { 
+        httpOnly: true, 
+        secure: false, // set to true in production with HTTPS
+        maxAge: 7 * 24 * 60 * 60 * 1000 
+      });
+
+      // Clean up OTP
+      otpStorage.delete(phone);
+
+      // Return user without password
+      res.json({ 
+        user: { id: user.id, firstName: user.firstName, lastName: user.lastName, phone: user.phone }, 
+        message: "Signed in successfully", 
+        sessionToken 
+      });
+    } catch (error) {
+      console.error("Verify login OTP error:", error);
+      res.status(500).json({ message: "Failed to verify OTP" });
     }
   });
 

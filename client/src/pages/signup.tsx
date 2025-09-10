@@ -15,18 +15,17 @@ export default function SignUp() {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    email: "",
     phone: "",
-    password: "",
-    confirmPassword: ""
+    otp: ""
   });
   const [countryCode, setCountryCode] = useState("+91");
+  const [step, setStep] = useState<"details" | "otp">("details");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
   const signupMutation = useMutation({
-    mutationFn: async (userData: { firstName: string; lastName: string; email: string; phone: string; password: string }) => {
-      return await apiRequest("/api/auth/signup", {
+    mutationFn: async (userData: { firstName: string; lastName: string; phone: string }) => {
+      return await apiRequest("/api/auth/send-signup-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
@@ -34,8 +33,32 @@ export default function SignUp() {
     },
     onSuccess: (data) => {
       toast({
-        title: "Success!",
-        description: "Account created successfully. Please sign in.",
+        title: "OTP Sent! 📱",
+        description: "Check your phone for the verification code.",
+      });
+      setStep("otp");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send OTP",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const verifySignupMutation = useMutation({
+    mutationFn: async (data: { firstName: string; lastName: string; phone: string; otp: string }) => {
+      return await apiRequest("/api/auth/verify-signup-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Account Created! 🎉",
+        description: "You can now sign in with your phone number.",
       });
       setLocation("/signin");
     },
@@ -48,33 +71,44 @@ export default function SignUp() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSendOtp = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (formData.password !== formData.confirmPassword) {
+    if (!formData.firstName || !formData.lastName || !formData.phone) {
       toast({
         title: "Error",
-        description: "Passwords do not match",
+        description: "Please fill in all fields",
         variant: "destructive",
       });
       return;
     }
 
-    if (formData.password.length < 6) {
-      toast({
-        title: "Error", 
-        description: "Password must be at least 6 characters long",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    const fullPhone = countryCode + formData.phone;
     signupMutation.mutate({
       firstName: formData.firstName,
       lastName: formData.lastName,
-      email: formData.email,
-      phone: countryCode + formData.phone,
-      password: formData.password,
+      phone: fullPhone,
+    });
+  };
+
+  const handleVerifyOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.otp || formData.otp.length !== 6) {
+      toast({
+        title: "Error",
+        description: "Please enter the 6-digit OTP",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const fullPhone = countryCode + formData.phone;
+    verifySignupMutation.mutate({
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phone: fullPhone,
+      otp: formData.otp,
     });
   };
 
@@ -146,145 +180,160 @@ export default function SignUp() {
               <CardHeader className="text-center pb-4">
                 <CardTitle className="text-2xl font-bold text-gray-900">Create Account</CardTitle>
                 <CardDescription className="text-gray-600">
-                  Enter your details to join our floral community
+                  {step === "details" ? "Enter your details to get started" : "Verify your phone number"}
                 </CardDescription>
               </CardHeader>
               
               <CardContent className="space-y-6">
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="grid grid-cols-2 gap-4">
+                {step === "details" ? (
+                  <form onSubmit={handleSendOtp} className="space-y-5">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName" className="text-gray-700 font-medium">First Name</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            id="firstName"
+                            name="firstName"
+                            type="text"
+                            required
+                            className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
+                            placeholder="First name"
+                            value={formData.firstName}
+                            onChange={handleInputChange}
+                            data-testid="input-first-name"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName" className="text-gray-700 font-medium">Last Name</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            id="lastName"
+                            name="lastName"
+                            type="text"
+                            required
+                            className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
+                            placeholder="Last name"
+                            value={formData.lastName}
+                            onChange={handleInputChange}
+                            data-testid="input-last-name"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="firstName" className="text-gray-700 font-medium">First Name</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="firstName"
-                          name="firstName"
-                          type="text"
-                          required
-                          className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                          placeholder="First name"
-                          value={formData.firstName}
-                          onChange={handleInputChange}
-                          data-testid="input-first-name"
-                        />
+                      <Label htmlFor="phone" className="text-gray-700 font-medium">Phone Number</Label>
+                      <div className="flex gap-2">
+                        <Select value={countryCode} onValueChange={setCountryCode}>
+                          <SelectTrigger className="w-[100px] border-gray-200 focus:border-primary">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="+91">+91</SelectItem>
+                            <SelectItem value="+1">+1</SelectItem>
+                            <SelectItem value="+44">+44</SelectItem>
+                            <SelectItem value="+65">+65</SelectItem>
+                            <SelectItem value="+971">+971</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <div className="relative flex-1">
+                          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            id="phone"
+                            name="phone"
+                            type="tel"
+                            required
+                            className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
+                            placeholder="98765 43210"
+                            value={formData.phone}
+                            onChange={handleInputChange}
+                            data-testid="input-phone"
+                          />
+                        </div>
                       </div>
+                      <p className="text-sm text-gray-500 mt-1">
+                        We'll send you a verification code via SMS
+                      </p>
                     </div>
+
+                    <Button 
+                      type="submit" 
+                      className="w-full text-lg py-3 h-auto font-semibold"
+                      disabled={signupMutation.isPending}
+                      data-testid="button-send-signup-otp"
+                    >
+                      {signupMutation.isPending ? "Sending OTP..." : "Send OTP"}
+                    </Button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleVerifyOtp} className="space-y-5">
+                    <div className="text-center space-y-2">
+                      <h3 className="text-lg font-semibold text-gray-900">Verify Your Phone</h3>
+                      <p className="text-sm text-gray-600">
+                        Enter the 6-digit code sent to {countryCode} {formData.phone}
+                      </p>
+                    </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="lastName" className="text-gray-700 font-medium">Last Name</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="lastName"
-                          name="lastName"
-                          type="text"
-                          required
-                          className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                          placeholder="Last name"
-                          value={formData.lastName}
-                          onChange={handleInputChange}
-                          data-testid="input-last-name"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-gray-700 font-medium">Email Address</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Label htmlFor="otp" className="text-gray-700 font-medium">Verification Code</Label>
                       <Input
-                        id="email"
-                        name="email"
-                        type="email"
+                        id="otp"
+                        name="otp"
+                        type="text"
+                        maxLength={6}
                         required
-                        className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                        placeholder="your.email@example.com"
-                        value={formData.email}
+                        className="text-center text-lg tracking-widest border-gray-200 focus:border-primary focus:ring-primary/20"
+                        placeholder="000000"
+                        value={formData.otp}
                         onChange={handleInputChange}
-                        data-testid="input-email"
+                        data-testid="input-signup-otp"
                       />
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-gray-700 font-medium">Phone Number</Label>
-                    <div className="flex gap-2">
-                      <Select value={countryCode} onValueChange={setCountryCode}>
-                        <SelectTrigger className="w-[100px] border-gray-200 focus:border-primary">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="+91">+91</SelectItem>
-                          <SelectItem value="+1">+1</SelectItem>
-                          <SelectItem value="+44">+44</SelectItem>
-                          <SelectItem value="+65">+65</SelectItem>
-                          <SelectItem value="+971">+971</SelectItem>
-                          <SelectItem value="+86">+86</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <div className="relative flex-1">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="phone"
-                          name="phone"
-                          type="tel"
-                          required
-                          className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                          placeholder="98765 43210"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          data-testid="input-phone"
-                        />
-                      </div>
+                    <div className="space-y-3">
+                      <Button 
+                        type="submit" 
+                        className="w-full font-semibold py-3 text-lg"
+                        disabled={verifySignupMutation.isPending}
+                        data-testid="button-verify-signup-otp"
+                      >
+                        {verifySignupMutation.isPending ? "Creating Account..." : "Verify & Create Account"}
+                      </Button>
+
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          setStep("details");
+                          setFormData({ ...formData, otp: "" });
+                        }}
+                        data-testid="button-change-details"
+                      >
+                        Change Details
+                      </Button>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-gray-700 font-medium">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="password"
-                        name="password"
-                        type="password"
-                        required
-                        className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                        placeholder="Create a strong password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        data-testid="input-password"
-                      />
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        className="text-sm text-primary hover:text-primary/80 font-medium"
+                        onClick={() => signupMutation.mutate({
+                          firstName: formData.firstName,
+                          lastName: formData.lastName,
+                          phone: countryCode + formData.phone,
+                        })}
+                        disabled={signupMutation.isPending}
+                        data-testid="button-resend-signup-otp"
+                      >
+                        {signupMutation.isPending ? "Sending..." : "Resend OTP"}
+                      </button>
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" className="text-gray-700 font-medium">Confirm Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        type="password"
-                        required
-                        className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                        placeholder="Confirm your password"
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange}
-                        data-testid="input-confirm-password"
-                      />
-                    </div>
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full text-lg py-3 h-auto font-semibold"
-                    disabled={signupMutation.isPending}
-                    data-testid="button-signup"
-                  >
-                    {signupMutation.isPending ? "Creating Account..." : "Create Account"}
-                  </Button>
-                </form>
+                  </form>
+                )}
 
 
                 <div className="text-center pt-4 border-t border-gray-100">
