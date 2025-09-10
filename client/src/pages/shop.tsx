@@ -343,6 +343,10 @@ export default function Shop() {
                     <p className="text-gray-600 mb-6">{section.subtitle}</p>
                     <Button 
                       className="font-semibold"
+                      onClick={() => {
+                        // Scroll to products section
+                        document.querySelector('#products-section')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
                       data-testid={`button-hero-${index}`}
                     >
                       {section.buttonText}
@@ -492,7 +496,20 @@ export default function Shop() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {giftCategories.map((category, index) => (
-              <Card key={index} className="overflow-hidden hover-elevate" data-testid={`card-category-${index}`}>
+              <Card 
+                key={index} 
+                className="overflow-hidden hover-elevate cursor-pointer" 
+                onClick={() => {
+                  // Set search query based on category title
+                  const searchTerm = category.title.toLowerCase().includes('gift') ? 'gift' : 
+                                   category.title.toLowerCase().includes('birthday') ? 'birthday' :
+                                   category.title.toLowerCase().includes('anniversary') ? 'anniversary' :
+                                   category.title.toLowerCase().includes('cake') ? 'cake' : '';
+                  setSearchQuery(searchTerm);
+                  document.querySelector('#products-section')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                data-testid={`card-category-${index}`}
+              >
                 <div className="relative h-32">
                   <img 
                     src={category.image}
@@ -512,7 +529,7 @@ export default function Shop() {
       </section>
 
       {/* Products Section */}
-      <section className="py-12">
+      <section id="products-section" className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold">
@@ -586,13 +603,34 @@ export default function Shop() {
                         {product.category}
                       </Badge>
                     </div>
-                    <Button 
-                      className="w-full" 
-                      disabled={!product.inStock}
-                      data-testid={`button-add-cart-${product.id}`}
-                    >
-                      {product.inStock ? 'Add to Cart' : 'Out of Stock'}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {isInCart(product.id) ? (
+                        <div className="flex items-center justify-between w-full">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleAddToCart(product)}
+                            disabled={!product.inStock}
+                            className="flex-1"
+                            data-testid={`button-add-more-${product.id}`}
+                          >
+                            Add More ({getItemQuantity(product.id)})
+                          </Button>
+                          <Badge variant="secondary" className="ml-2">
+                            In Cart
+                          </Badge>
+                        </div>
+                      ) : (
+                        <Button 
+                          className="w-full" 
+                          onClick={() => handleAddToCart(product)}
+                          disabled={!product.inStock}
+                          data-testid={`button-add-cart-${product.id}`}
+                        >
+                          {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+                        </Button>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ))}
