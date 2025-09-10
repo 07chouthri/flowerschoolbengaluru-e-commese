@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Link } from "wouter";
 import { ArrowLeft, Mail, Lock, ShoppingBag, GraduationCap, Star } from "lucide-react";
-import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484651264.png";
+import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
 
 export default function SignIn() {
   const [formData, setFormData] = useState({
