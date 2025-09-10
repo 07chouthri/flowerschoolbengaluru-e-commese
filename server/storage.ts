@@ -1,4 +1,6 @@
 import { type User, type InsertUser, type Product, type InsertProduct, type Course, type InsertCourse, type Order, type InsertOrder, type Enrollment, type InsertEnrollment, type Testimonial, type InsertTestimonial, type BlogPost, type InsertBlogPost } from "@shared/schema";
+import { z } from "zod";
+import { insertPhoneUserSchema } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { DatabaseStorage } from "./database-storage";
 
@@ -8,7 +10,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByPhone(phone: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  createUser(user: InsertUser | z.infer<typeof insertPhoneUserSchema>): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
   
   // Products
@@ -250,9 +252,16 @@ export class MemStorage implements IStorage {
     return updatedUser;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createUser(insertUser: InsertUser | z.infer<typeof insertPhoneUserSchema>): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id };
+    const user: User = { 
+      ...insertUser, 
+      id, 
+      email: insertUser.email || null,
+      password: insertUser.password || "",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
     this.users.set(id, user);
     return user;
   }

@@ -102,8 +102,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email already exists" });
       }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      // Hash password if provided
+      const hashedPassword = userData.password ? await bcrypt.hash(userData.password!, 10) : "";
       
       // Create user
       const user = await storage.createUser({
@@ -140,7 +140,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      // Verify password
+      // Verify password if user has one
+      if (!user.password) {
+        return res.status(401).json({ message: "This account uses phone verification. Please use phone login." });
+      }
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
         return res.status(401).json({ message: "Invalid credentials" });
@@ -357,7 +360,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get user
-      const user = await storage.getUser(storedOtp.userId);
+      const userId = storedOtp.userId;
+      if (!userId) {
+        return res.status(400).json({ message: "Invalid OTP session" });
+      }
+      const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
