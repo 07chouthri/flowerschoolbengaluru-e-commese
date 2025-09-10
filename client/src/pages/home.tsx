@@ -20,8 +20,8 @@ export default function Home() {
       <ScrollIndicator />
       <FloatingElements />
       <Navigation />
-      <HeroSection />
       <FreshFlowersSection />
+      <HeroSection />
       <FeatureImageSection />
       <AboutSection />
       <ShopSection />
