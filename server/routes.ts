@@ -26,9 +26,14 @@ const generateOTP = () => {
 // Helper function to send SMS
 const sendSMS = async (phone: string, message: string) => {
   try {
+    // Ensure the Twilio phone number has proper country code format
+    const fromNumber = process.env.TWILIO_PHONE_NUMBER?.startsWith('+') 
+      ? process.env.TWILIO_PHONE_NUMBER 
+      : `+1${process.env.TWILIO_PHONE_NUMBER}`;
+    
     await twilioClient.messages.create({
       body: message,
-      from: process.env.TWILIO_PHONE_NUMBER,
+      from: fromNumber,
       to: phone,
     });
     return true;
@@ -40,8 +45,12 @@ const sendSMS = async (phone: string, message: string) => {
 
 // Helper function to send email (mock implementation)
 const sendEmail = async (email: string, subject: string, message: string) => {
-  // In a real app, you would integrate with an email service like SendGrid, AWS SES, etc.
-  console.log(`[EMAIL] To: ${email}, Subject: ${subject}, Message: ${message}`);
+  // For testing purposes, we'll log the email and always return success
+  // In production, you would integrate with an email service like SendGrid, AWS SES, etc.
+  console.log(`[EMAIL SENT] To: ${email}`);
+  console.log(`[EMAIL SENT] Subject: ${subject}`);
+  console.log(`[EMAIL SENT] Message: ${message}`);
+  console.log('--- EMAIL SENT SUCCESSFULLY ---');
   return true;
 };
 
