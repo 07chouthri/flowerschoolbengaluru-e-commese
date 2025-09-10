@@ -1,5 +1,6 @@
 import Navigation from "@/components/navigation";
 import HeroSection from "@/components/hero-section";
+import FreshFlowersSection from "@/components/fresh-flowers-section";
 import FeatureImageSection from "@/components/feature-image-section";
 import AboutSection from "@/components/about-section";
 import ShopSection from "@/components/shop-section";
@@ -20,6 +21,7 @@ export default function Home() {
       <FloatingElements />
       <Navigation />
       <HeroSection />
+      <FreshFlowersSection />
       <FeatureImageSection />
       <AboutSection />
       <ShopSection />
