@@ -109,9 +109,9 @@ export function CreativeButton({
   [key: string]: any;
 }) {
   const variants = {
-    primary: 'bg-gradient-to-r from-orange-300 to-purple-400 hover:from-orange-400 hover:to-purple-500 text-white shadow-lg hover:shadow-xl',
-    secondary: 'bg-gradient-to-r from-teal-300 to-purple-400 hover:from-teal-400 hover:to-purple-500 text-white shadow-lg hover:shadow-xl',
-    accent: 'bg-gradient-to-r from-orange-200 to-teal-300 hover:from-orange-300 hover:to-teal-400 text-white shadow-lg hover:shadow-xl'
+    primary: 'bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl',
+    secondary: 'bg-gradient-to-r from-pink-300 to-purple-400 hover:from-pink-400 hover:to-purple-500 text-white shadow-lg hover:shadow-xl',
+    accent: 'bg-gradient-to-r from-pink-400 to-purple-500 hover:from-pink-500 hover:to-purple-600 text-white shadow-lg hover:shadow-xl'
   };
 
   return (
