@@ -12,7 +12,7 @@ export default function HeroSection() {
   };
 
   return (
-    <section id="home" className="bg-gradient-to-br from-orange-50 via-purple-50 to-teal-50 pt-24 pb-16">
+    <section id="home" className="min-h-screen bg-gradient-to-br from-white via-orange-50/20 to-purple-50/10 pt-24 pb-16 flex items-center">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center min-h-[600px]">
           <div className="space-y-8">
@@ -72,7 +72,7 @@ export default function HeroSection() {
           </div>
           
           <div className="relative">
-            <div className="relative bg-gradient-to-br from-orange-100/70 via-purple-100/60 to-teal-100/70 rounded-3xl p-8 backdrop-blur-sm border border-orange-200/50 shadow-xl">
+            <div className="relative bg-white/90 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
               <div className="relative overflow-hidden rounded-2xl">
                 <img 
                   src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600" 
@@ -83,10 +83,10 @@ export default function HeroSection() {
               </div>
               
               {/* Professional certification badge with enhanced design */}
-              <div className="absolute -bottom-4 -right-4 bg-white/95 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-pink-100 hover:scale-105 transition-all duration-300">
+              <div className="absolute -bottom-4 -right-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-gray-100 hover:scale-105 transition-all duration-300">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-pink-100 to-purple-100 rounded-lg flex items-center justify-center">
-                    <Star className="w-6 h-6 text-pink-600 fill-current animate-pulse" />
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Star className="w-5 h-5 text-primary fill-current" />
                   </div>
                   <div>
                     <div className="font-semibold text-gray-900">Certified Institute</div>
