@@ -31,7 +31,7 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-pink-50/20 to-gray-50/20">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
       <div className="flex min-h-screen">
         {/* Left Side - Branding */}
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/10 to-secondary/10 relative overflow-hidden">

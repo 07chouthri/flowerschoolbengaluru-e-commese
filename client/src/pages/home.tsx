@@ -15,7 +15,7 @@ import { FloatingElements, ScrollIndicator } from "@/components/creative-enhance
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 text-foreground relative overflow-hidden">
       <ScrollIndicator />
       <FloatingElements />
       <Navigation />
