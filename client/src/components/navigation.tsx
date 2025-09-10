@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Menu, X, User, UserPlus } from "lucide-react";
@@ -7,6 +7,27 @@ import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 
 export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrollingUp, setIsScrollingUp] = useState(false);
+  const [lastScrollTop, setLastScrollTop] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      
+      if (currentScrollTop > lastScrollTop && currentScrollTop > 100) {
+        // Scrolling down
+        setIsScrollingUp(false);
+      } else if (currentScrollTop < lastScrollTop) {
+        // Scrolling up
+        setIsScrollingUp(true);
+      }
+      
+      setLastScrollTop(currentScrollTop <= 0 ? 0 : currentScrollTop);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollTop]);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -17,7 +38,7 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="fixed top-0 w-full bg-card/95 backdrop-blur-sm z-50 border-b border-border">
+    <nav className={`fixed top-0 w-full bg-card/95 backdrop-blur-sm z-50 border-b border-border transition-transform duration-300 ${isScrollingUp ? '-translate-y-full' : 'translate-y-0'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center space-x-3">
@@ -79,7 +100,7 @@ export default function Navigation() {
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button className="text-sm button-glow bg-gradient-to-r from-pink-600 to-green-600 hover:from-pink-500 hover:to-green-500" data-testid="button-signup">
+                <Button className="text-sm button-glow bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600" data-testid="button-signup">
                   <UserPlus className="w-4 h-4 mr-2" />
                   Sign Up
                 </Button>
@@ -153,7 +174,7 @@ export default function Navigation() {
                   </Button>
                 </Link>
                 <Link href="/signup">
-                  <Button className="w-full button-glow bg-gradient-to-r from-pink-600 to-green-600 hover:from-pink-500 hover:to-green-500" data-testid="button-mobile-signup">
+                  <Button className="w-full button-glow bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600" data-testid="button-mobile-signup">
                     <UserPlus className="w-4 h-4 mr-2" />
                     Sign Up
                   </Button>
