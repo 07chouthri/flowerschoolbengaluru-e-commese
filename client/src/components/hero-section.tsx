@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingBag, GraduationCap, Star, ArrowRight, Flower, Users, Award, Calendar, Truck, Gift } from "lucide-react";
+import { Link } from "wouter";
 import bouquetBarLogo from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
 import flowerSchoolLogo from "@assets/Flower_School_Logo_1757484169081.png";
 
@@ -63,14 +64,15 @@ export default function HeroSection() {
                 Browse our exclusive collection of fresh flowers, bouquets, and arrangements
               </p>
               
-              <Button 
-                size="lg"
-                onClick={() => scrollToSection('shop')}
-                className="w-full text-lg py-4 h-auto font-semibold mb-8"
-                data-testid="button-visit-shop"
-              >
-                Visit Shop Now
-              </Button>
+              <Link href="/shop">
+                <Button 
+                  size="lg"
+                  className="w-full text-lg py-4 h-auto font-semibold mb-8"
+                  data-testid="button-visit-shop"
+                >
+                  Visit Shop Now
+                </Button>
+              </Link>
             </div>
             
             {/* Features */}
