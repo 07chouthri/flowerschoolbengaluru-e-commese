@@ -12,7 +12,7 @@ export default function HeroSection() {
   };
 
   return (
-    <section id="home" className="bg-gradient-to-br from-pink-50 via-purple-50 to-pink-100 pt-24 pb-16">
+    <section id="home" className="bg-gradient-to-br from-orange-50 via-purple-50 to-teal-50 pt-24 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center min-h-[600px]">
           <div className="space-y-8">
@@ -72,7 +72,7 @@ export default function HeroSection() {
           </div>
           
           <div className="relative">
-            <div className="relative bg-gradient-to-br from-pink-100/70 to-purple-100/70 rounded-3xl p-8 backdrop-blur-sm border border-pink-200/50 shadow-xl">
+            <div className="relative bg-gradient-to-br from-orange-100/70 via-purple-100/60 to-teal-100/70 rounded-3xl p-8 backdrop-blur-sm border border-orange-200/50 shadow-xl">
               <div className="relative overflow-hidden rounded-2xl">
                 <img 
                   src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600" 
