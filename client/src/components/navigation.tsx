@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Menu, X, User, UserPlus } from "lucide-react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
 
 export default function Navigation() {
@@ -10,6 +11,12 @@ export default function Navigation() {
   const [isScrollingUp, setIsScrollingUp] = useState(false);
   const [lastScrollTop, setLastScrollTop] = useState(0);
   const [location, setLocation] = useLocation();
+  
+  // Get current user data
+  const { data: user } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -99,23 +106,45 @@ export default function Navigation() {
 
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex items-center space-x-3">
-              <Button 
-                variant="ghost" 
-                className="text-sm" 
-                onClick={() => setLocation('/signin')}
-                data-testid="button-signin"
-              >
-                <User className="w-4 h-4 mr-2" />
-                Sign In
-              </Button>
-              <Button 
-                className="text-sm" 
-                onClick={() => setLocation('/signup')}
-                data-testid="button-signup"
-              >
-                <UserPlus className="w-4 h-4 mr-2" />
-                Sign Up
-              </Button>
+              {user ? (
+                <div className="flex items-center gap-3">
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Welcome,</span>
+                    <span className="font-semibold text-primary ml-1">
+                      {user.firstName || 'User'}!
+                    </span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setLocation('/shop')}
+                    data-testid="button-account"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Account
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Button 
+                    variant="ghost" 
+                    className="text-sm" 
+                    onClick={() => setLocation('/signin')}
+                    data-testid="button-signin"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Sign In
+                  </Button>
+                  <Button 
+                    className="text-sm" 
+                    onClick={() => setLocation('/signup')}
+                    data-testid="button-signup"
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Sign Up
+                  </Button>
+                </>
+              )}
             </div>
             <Button
               variant="ghost"
@@ -176,25 +205,47 @@ export default function Navigation() {
                 Contact
               </button>
               
-              {/* Mobile Auth Buttons */}
+              {/* Mobile Auth Section */}
               <div className="border-t border-border pt-4 mt-4 space-y-3">
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-start" 
-                  onClick={() => setLocation('/signin')}
-                  data-testid="button-mobile-signin"
-                >
-                  <User className="w-4 h-4 mr-2" />
-                  Sign In
-                </Button>
-                <Button 
-                  className="w-full" 
-                  onClick={() => setLocation('/signup')}
-                  data-testid="button-mobile-signup"
-                >
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Sign Up
-                </Button>
+                {user ? (
+                  <div className="text-center">
+                    <div className="text-sm mb-3">
+                      <span className="text-muted-foreground">Welcome,</span>
+                      <span className="font-semibold text-primary ml-1">
+                        {user.firstName || 'User'}!
+                      </span>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start" 
+                      onClick={() => setLocation('/shop')}
+                      data-testid="button-mobile-account"
+                    >
+                      <User className="w-4 h-4 mr-2" />
+                      Account
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start" 
+                      onClick={() => setLocation('/signin')}
+                      data-testid="button-mobile-signin"
+                    >
+                      <User className="w-4 h-4 mr-2" />
+                      Sign In
+                    </Button>
+                    <Button 
+                      className="w-full" 
+                      onClick={() => setLocation('/signup')}
+                      data-testid="button-mobile-signup"
+                    >
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Sign Up
+                    </Button>
+                  </>
+                )}
               </div>
               
             </div>
