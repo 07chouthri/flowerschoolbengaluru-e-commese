@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
+import type { User as UserType } from "@shared/schema";
 
 export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -17,7 +18,7 @@ export default function Navigation() {
   const queryClient = useQueryClient();
   
   // Get current user data
-  const { data: user } = useQuery({
+  const { data: user } = useQuery<UserType>({
     queryKey: ["/api/auth/user"],
     retry: false,
   });
