@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Product, type InsertProduct, type Course, type InsertCourse, type Order, type InsertOrder, type Enrollment, type InsertEnrollment, type Testimonial, type InsertTestimonial, type BlogPost, type InsertBlogPost } from "@shared/schema";
+import { type User, type InsertUser, type Product, type InsertProduct, type Course, type InsertCourse, type Order, type InsertOrder, type Enrollment, type InsertEnrollment, type Testimonial, type InsertTestimonial, type BlogPost, type InsertBlogPost, type Cart, type InsertCart } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { DatabaseStorage } from "./database-storage";
 
@@ -42,6 +42,13 @@ export interface IStorage {
   getAllBlogPosts(): Promise<BlogPost[]>;
   getBlogPost(id: string): Promise<BlogPost | undefined>;
   createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
+  
+  // Cart Operations
+  getUserCart(userId: string): Promise<(Cart & { product: Product })[]>;
+  addToCart(userId: string, productId: string, quantity: number): Promise<Cart>;
+  updateCartItemQuantity(userId: string, productId: string, quantity: number): Promise<Cart>;
+  removeFromCart(userId: string, productId: string): Promise<void>;
+  clearUserCart(userId: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -402,6 +409,48 @@ export class MemStorage implements IStorage {
     };
     this.blogPosts.set(id, post);
     return post;
+  }
+
+  // Cart Operations (MemStorage implementation - not used in production)
+  async getUserCart(userId: string): Promise<(Cart & { product: Product })[]> {
+    // MemStorage implementation - returns empty array
+    return [];
+  }
+
+  async addToCart(userId: string, productId: string, quantity: number): Promise<Cart> {
+    // MemStorage implementation - returns dummy cart item
+    const id = randomUUID();
+    return {
+      id,
+      userId,
+      productId,
+      quantity,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+
+  async updateCartItemQuantity(userId: string, productId: string, quantity: number): Promise<Cart> {
+    // MemStorage implementation - returns dummy cart item
+    const id = randomUUID();
+    return {
+      id,
+      userId,
+      productId,
+      quantity,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+
+  async removeFromCart(userId: string, productId: string): Promise<void> {
+    // MemStorage implementation - no-op
+    return;
+  }
+
+  async clearUserCart(userId: string): Promise<void> {
+    // MemStorage implementation - no-op
+    return;
   }
 }
 
