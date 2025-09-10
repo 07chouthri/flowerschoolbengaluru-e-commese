@@ -367,73 +367,204 @@ export default function Shop() {
         </div>
       </section>
 
-      {/* Advanced Filters */}
-      <section className="py-8 bg-gray-50">
+      {/* Enhanced Advanced Filters */}
+      <section className="py-8 bg-gradient-to-r from-pink-50 via-purple-50 to-pink-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="flex flex-wrap items-center gap-6">
-              <div className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-gray-600" />
-                <span className="font-medium text-gray-900">Filters:</span>
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-pink-100">
+            {/* Filter Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-purple-500 rounded-lg flex items-center justify-center">
+                  <Filter className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Advanced Filters</h3>
+                  <p className="text-sm text-gray-600">Find your perfect flowers</p>
+                </div>
               </div>
-              
-              {/* Sort By */}
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">Sort by:</label>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-40" data-testid="select-sort">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name">Name A-Z</SelectItem>
-                    <SelectItem value="price-low">Price: Low to High</SelectItem>
-                    <SelectItem value="price-high">Price: High to Low</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="text-sm text-gray-600">
+                {filteredProducts.length} of {products.length} products
               </div>
+            </div>
 
-              {/* Price Range */}
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">Price Range:</label>
-                <div className="flex items-center gap-3 w-48">
-                  <span className="text-sm text-gray-600">₹{priceRange[0]}</span>
-                  <Slider
-                    value={priceRange}
-                    onValueChange={setPriceRange}
-                    max={2000}
-                    step={50}
-                    className="flex-1"
-                    data-testid="slider-price-range"
-                  />
-                  <span className="text-sm text-gray-600">₹{priceRange[1]}</span>
+            {/* Filter Controls Grid */}
+            <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-6">
+              {/* Search & Sort */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-semibold text-gray-800 mb-2 block">Search</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="Search flowers..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 border-gray-200 focus:border-pink-300 focus:ring-pink-200"
+                      data-testid="input-search"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-semibold text-gray-800 mb-2 block">Sort by</label>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="border-gray-200 focus:border-pink-300 focus:ring-pink-200" data-testid="select-sort">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name">Name A-Z</SelectItem>
+                      <SelectItem value="price-low">Price: Low to High</SelectItem>
+                      <SelectItem value="price-high">Price: High to Low</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
-              {/* In Stock Only */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="inStock"
-                  checked={showInStockOnly}
-                  onChange={(e) => setShowInStockOnly(e.target.checked)}
-                  className="rounded border-gray-300"
-                  data-testid="checkbox-in-stock"
-                />
-                <label htmlFor="inStock" className="text-sm font-medium text-gray-700">
-                  In Stock Only
-                </label>
+              {/* Category Selection */}
+              <div>
+                <label className="text-sm font-semibold text-gray-800 mb-2 block">Category</label>
+                <div className="space-y-2">
+                  {["all", "roses", "orchids", "wedding", "seasonal"].map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                        selectedCategory === category
+                          ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md"
+                          : "bg-gray-50 text-gray-700 hover:bg-gray-100 hover-elevate"
+                      }`}
+                      data-testid={`button-category-${category}`}
+                    >
+                      {category === "all" ? "All Categories" : category.charAt(0).toUpperCase() + category.slice(1)}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* Clear Filters */}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={clearFilters}
-                data-testid="button-clear-filters"
-              >
-                Clear All
-              </Button>
+              {/* Price Range */}
+              <div>
+                <label className="text-sm font-semibold text-gray-800 mb-2 block">Price Range</label>
+                <div className="space-y-4">
+                  <div className="px-3 py-2 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between text-sm font-medium text-gray-700 mb-2">
+                      <span>₹{priceRange[0].toLocaleString()}</span>
+                      <span>to</span>
+                      <span>₹{priceRange[1].toLocaleString()}</span>
+                    </div>
+                    <Slider
+                      value={priceRange}
+                      onValueChange={setPriceRange}
+                      max={5000}
+                      step={100}
+                      className="w-full"
+                      data-testid="slider-price-range"
+                    />
+                  </div>
+                  
+                  {/* Quick Price Filters */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: "Under ₹1K", range: [0, 1000] },
+                      { label: "₹1K - ₹2K", range: [1000, 2000] },
+                      { label: "₹2K - ₹3K", range: [2000, 3000] },
+                      { label: "Above ₹3K", range: [3000, 5000] }
+                    ].map((preset) => (
+                      <button
+                        key={preset.label}
+                        onClick={() => setPriceRange(preset.range)}
+                        className={`px-2 py-1 text-xs rounded-md font-medium transition-all ${
+                          priceRange[0] === preset.range[0] && priceRange[1] === preset.range[1]
+                            ? "bg-pink-500 text-white"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                        data-testid={`button-price-preset-${preset.label.replace(/[₹\s-]/g, '')}`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Filters */}
+              <div>
+                <label className="text-sm font-semibold text-gray-800 mb-2 block">Additional Filters</label>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <input
+                      type="checkbox"
+                      id="inStock"
+                      checked={showInStockOnly}
+                      onChange={(e) => setShowInStockOnly(e.target.checked)}
+                      className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
+                      data-testid="checkbox-in-stock"
+                    />
+                    <label htmlFor="inStock" className="text-sm font-medium text-gray-700 cursor-pointer">
+                      In Stock Only
+                    </label>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={clearFilters}
+                      className="w-full border-gray-200 hover:border-pink-300 hover:text-pink-600"
+                      data-testid="button-clear-filters"
+                    >
+                      Clear All Filters
+                    </Button>
+                    
+                    {(searchQuery || selectedCategory !== "all" || priceRange[0] !== 0 || priceRange[1] !== 5000 || showInStockOnly) && (
+                      <div className="text-xs text-gray-500 text-center">
+                        Active filters applied
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
+
+            {/* Active Filter Tags */}
+            {(searchQuery || selectedCategory !== "all" || showInStockOnly) && (
+              <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t border-gray-100">
+                <span className="text-sm font-medium text-gray-600">Active filters:</span>
+                {searchQuery && (
+                  <Badge variant="secondary" className="bg-pink-100 text-pink-700">
+                    Search: "{searchQuery}"
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="ml-1 hover:text-pink-900"
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                )}
+                {selectedCategory !== "all" && (
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                    Category: {selectedCategory}
+                    <button
+                      onClick={() => setSelectedCategory("all")}
+                      className="ml-1 hover:text-purple-900"
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                )}
+                {showInStockOnly && (
+                  <Badge variant="secondary" className="bg-green-100 text-green-700">
+                    In Stock Only
+                    <button
+                      onClick={() => setShowInStockOnly(false)}
+                      className="ml-1 hover:text-green-900"
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </section>
