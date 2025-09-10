@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, User, Mail, Phone, Lock } from "lucide-react";
+import { ArrowLeft, User, Mail, Phone, Lock, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -19,6 +20,7 @@ export default function SignUp() {
     password: "",
     confirmPassword: ""
   });
+  const [countryCode, setCountryCode] = useState("+91");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -71,7 +73,7 @@ export default function SignUp() {
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,
-      phone: formData.phone,
+      phone: countryCode + formData.phone,
       password: formData.password,
     });
   };
@@ -207,19 +209,34 @@ export default function SignUp() {
 
                   <div className="space-y-2">
                     <Label htmlFor="phone" className="text-gray-700 font-medium">Phone Number</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="phone"
-                        name="phone"
-                        type="tel"
-                        required
-                        className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                        placeholder="+91 98765 43210"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        data-testid="input-phone"
-                      />
+                    <div className="flex gap-2">
+                      <Select value={countryCode} onValueChange={setCountryCode}>
+                        <SelectTrigger className="w-[100px] border-gray-200 focus:border-primary">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="+91">+91</SelectItem>
+                          <SelectItem value="+1">+1</SelectItem>
+                          <SelectItem value="+44">+44</SelectItem>
+                          <SelectItem value="+65">+65</SelectItem>
+                          <SelectItem value="+971">+971</SelectItem>
+                          <SelectItem value="+86">+86</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="relative flex-1">
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="phone"
+                          name="phone"
+                          type="tel"
+                          required
+                          className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
+                          placeholder="98765 43210"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          data-testid="input-phone"
+                        />
+                      </div>
                     </div>
                   </div>
 

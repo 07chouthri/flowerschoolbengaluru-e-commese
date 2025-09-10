@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link, useLocation } from "wouter";
 import { ArrowLeft, Mail, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +16,7 @@ export default function ForgotPassword() {
     contact: "",
     contactType: "email" // "email" or "phone"
   });
+  const [countryCode, setCountryCode] = useState("+91");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -75,7 +77,7 @@ export default function ForgotPassword() {
     }
 
     forgotPasswordMutation.mutate({
-      contact: formData.contact,
+      contact: formData.contactType === "phone" ? countryCode + formData.contact : formData.contact,
       contactType: formData.contactType,
     });
   };
@@ -164,24 +166,52 @@ export default function ForgotPassword() {
                     <Label htmlFor="contact" className="text-gray-700 font-medium">
                       Email Address or Phone Number
                     </Label>
-                    <div className="relative">
-                      {formData.contactType === "email" ? (
+                    {formData.contactType === "email" ? (
+                      <div className="relative">
                         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      ) : (
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      )}
-                      <Input
-                        id="contact"
-                        name="contact"
-                        type="text"
-                        required
-                        className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                        placeholder="your.email@example.com or +91 9876543210"
-                        value={formData.contact}
-                        onChange={handleInputChange}
-                        data-testid="input-contact"
-                      />
-                    </div>
+                        <Input
+                          id="contact"
+                          name="contact"
+                          type="email"
+                          required
+                          className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
+                          placeholder="your.email@example.com"
+                          value={formData.contact}
+                          onChange={handleInputChange}
+                          data-testid="input-contact"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Select value={countryCode} onValueChange={setCountryCode}>
+                          <SelectTrigger className="w-[100px] border-gray-200 focus:border-primary">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="+91">+91</SelectItem>
+                            <SelectItem value="+1">+1</SelectItem>
+                            <SelectItem value="+44">+44</SelectItem>
+                            <SelectItem value="+65">+65</SelectItem>
+                            <SelectItem value="+971">+971</SelectItem>
+                            <SelectItem value="+86">+86</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <div className="relative flex-1">
+                          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            id="contact"
+                            name="contact"
+                            type="tel"
+                            required
+                            className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
+                            placeholder="9876543210"
+                            value={formData.contact}
+                            onChange={handleInputChange}
+                            data-testid="input-contact"
+                          />
+                        </div>
+                      </div>
+                    )}
                     <p className="text-xs text-gray-500">
                       {formData.contactType === "email" 
                         ? "We'll send a verification code to your email" 
