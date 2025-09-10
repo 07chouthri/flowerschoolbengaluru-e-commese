@@ -36,7 +36,8 @@ export function useCart(userId?: string) {
     setCart(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
-      const cartItems = await apiRequest(`/api/cart/${userId}`) as (Cart & { product: Product })[];
+      const response = await apiRequest(`/api/cart/${userId}`);
+      const cartItems = await response.json() as (Cart & { product: Product })[];
       
       const formattedItems: CartItem[] = cartItems.map(item => ({
         ...item.product,
@@ -73,11 +74,12 @@ export function useCart(userId?: string) {
       setCart(prev => ({ ...prev, isLoading: true, error: null }));
       
       try {
-        await apiRequest(`/api/cart/${userId}/add`, {
+        const response = await apiRequest(`/api/cart/${userId}/add`, {
           method: 'POST',
           body: JSON.stringify({ productId: product.id, quantity }),
           headers: { 'Content-Type': 'application/json' }
         });
+        await response.json();
         
         // Reload cart after adding
         await loadCart();
@@ -123,9 +125,10 @@ export function useCart(userId?: string) {
       setCart(prev => ({ ...prev, isLoading: true, error: null }));
       
       try {
-        await apiRequest(`/api/cart/${userId}/remove/${productId}`, {
+        const response = await apiRequest(`/api/cart/${userId}/remove/${productId}`, {
           method: 'DELETE'
         });
+        await response.json();
         
         // Reload cart after removing
         await loadCart();
@@ -164,11 +167,12 @@ export function useCart(userId?: string) {
       setCart(prev => ({ ...prev, isLoading: true, error: null }));
       
       try {
-        await apiRequest(`/api/cart/${userId}/update`, {
+        const response = await apiRequest(`/api/cart/${userId}/update`, {
           method: 'PUT',
           body: JSON.stringify({ productId, quantity }),
           headers: { 'Content-Type': 'application/json' }
         });
+        await response.json();
         
         // Reload cart after updating
         await loadCart();
@@ -204,9 +208,10 @@ export function useCart(userId?: string) {
       setCart(prev => ({ ...prev, isLoading: true, error: null }));
       
       try {
-        await apiRequest(`/api/cart/${userId}/clear`, {
+        const response = await apiRequest(`/api/cart/${userId}/clear`, {
           method: 'DELETE'
         });
+        await response.json();
         
         setCart(prev => ({
           ...prev,

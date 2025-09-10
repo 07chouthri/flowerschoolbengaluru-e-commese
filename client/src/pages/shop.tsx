@@ -36,7 +36,14 @@ export default function Shop() {
   const [showInStockOnly, setShowInStockOnly] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { addToCart, totalItems, isInCart, getItemQuantity } = useCart();
+  
+  // Get current user data first
+  const { data: user } = useQuery<User>({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+  });
+  
+  const { addToCart, totalItems, isInCart, getItemQuantity } = useCart(user?.id);
   
   // Get products data
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
@@ -85,12 +92,6 @@ export default function Shop() {
     setPriceRange([0, 2000]);
     setShowInStockOnly(false);
   };
-  
-  // Get current user data
-  const { data: user } = useQuery<User>({
-    queryKey: ["/api/auth/user"],
-    retry: false,
-  });
 
   // Logout mutation
   const logoutMutation = useMutation({
@@ -577,25 +578,32 @@ export default function Shop() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProducts.map((product, index) => (
                 <Card key={product.id} className="overflow-hidden hover-elevate" data-testid={`card-product-${product.id}`}>
-                  <div className="relative">
-                    <img 
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-64 object-cover"
-                    />
-                    <button className="absolute top-4 right-4 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover-elevate">
-                      <Heart className="w-4 h-4 text-gray-600" />
-                    </button>
-                    {!product.inStock && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <Badge variant="secondary" className="bg-white text-black">
-                          Out of Stock
-                        </Badge>
-                      </div>
-                    )}
-                  </div>
+                  <Link href={`/product/${product.id}`}>
+                    <div className="relative cursor-pointer">
+                      <img 
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-64 object-cover"
+                      />
+                      <button 
+                        className="absolute top-4 right-4 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover-elevate"
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        <Heart className="w-4 h-4 text-gray-600" />
+                      </button>
+                      {!product.inStock && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <Badge variant="secondary" className="bg-white text-black">
+                            Out of Stock
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  </Link>
                   <CardContent className="p-4">
-                    <h3 className="font-semibold text-gray-900 mb-2">{product.name}</h3>
+                    <Link href={`/product/${product.id}`}>
+                      <h3 className="font-semibold text-gray-900 mb-2 cursor-pointer hover:text-pink-600 transition-colors">{product.name}</h3>
+                    </Link>
                     <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-xl font-bold text-primary">₹{product.price}</span>
@@ -604,32 +612,34 @@ export default function Shop() {
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2">
-                      {isInCart(product.id) ? (
-                        <div className="flex items-center justify-between w-full">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleAddToCart(product)}
-                            disabled={!product.inStock}
-                            className="flex-1"
-                            data-testid={`button-add-more-${product.id}`}
-                          >
-                            Add More ({getItemQuantity(product.id)})
-                          </Button>
-                          <Badge variant="secondary" className="ml-2">
-                            In Cart
-                          </Badge>
-                        </div>
-                      ) : (
+                      <div className="flex gap-1 flex-1">
                         <Button 
-                          className="w-full" 
-                          onClick={() => handleAddToCart(product)}
+                          size="sm"
+                          variant="outline"
+                          asChild
+                          className="flex-1"
+                          data-testid={`button-view-details-${product.id}`}
+                        >
+                          <Link href={`/product/${product.id}`}>
+                            View Details
+                          </Link>
+                        </Button>
+                        <Button 
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleAddToCart(product);
+                          }}
                           disabled={!product.inStock}
+                          className="flex-1"
                           data-testid={`button-add-cart-${product.id}`}
                         >
-                          {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+                          {isInCart(product.id) ? 
+                            `+${getItemQuantity(product.id)}` : 
+                            (product.inStock ? 'Add to Cart' : 'Out of Stock')
+                          }
                         </Button>
-                      )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
