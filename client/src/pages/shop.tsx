@@ -362,6 +362,77 @@ export default function Shop() {
         </div>
       </section>
 
+      {/* Advanced Filters */}
+      <section className="py-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-lg p-6 shadow-sm">
+            <div className="flex flex-wrap items-center gap-6">
+              <div className="flex items-center gap-2">
+                <Filter className="w-5 h-5 text-gray-600" />
+                <span className="font-medium text-gray-900">Filters:</span>
+              </div>
+              
+              {/* Sort By */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700">Sort by:</label>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-40" data-testid="select-sort">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Name A-Z</SelectItem>
+                    <SelectItem value="price-low">Price: Low to High</SelectItem>
+                    <SelectItem value="price-high">Price: High to Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Price Range */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700">Price Range:</label>
+                <div className="flex items-center gap-3 w-48">
+                  <span className="text-sm text-gray-600">₹{priceRange[0]}</span>
+                  <Slider
+                    value={priceRange}
+                    onValueChange={setPriceRange}
+                    max={2000}
+                    step={50}
+                    className="flex-1"
+                    data-testid="slider-price-range"
+                  />
+                  <span className="text-sm text-gray-600">₹{priceRange[1]}</span>
+                </div>
+              </div>
+
+              {/* In Stock Only */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="inStock"
+                  checked={showInStockOnly}
+                  onChange={(e) => setShowInStockOnly(e.target.checked)}
+                  className="rounded border-gray-300"
+                  data-testid="checkbox-in-stock"
+                />
+                <label htmlFor="inStock" className="text-sm font-medium text-gray-700">
+                  In Stock Only
+                </label>
+              </div>
+
+              {/* Clear Filters */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={clearFilters}
+                data-testid="button-clear-filters"
+              >
+                Clear All
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Search Gifts Quicker Section */}
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
