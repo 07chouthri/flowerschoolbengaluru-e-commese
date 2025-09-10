@@ -5,17 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Mail, Phone } from "lucide-react";
+import { ArrowLeft, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
 
 export default function ForgotPassword() {
-  const [formData, setFormData] = useState({
-    contact: "",
-    contactType: "email" // "email" or "phone"
-  });
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [countryCode, setCountryCode] = useState("+91");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -31,10 +28,11 @@ export default function ForgotPassword() {
     onSuccess: (data) => {
       toast({
         title: "OTP Sent!",
-        description: `Verification code sent to your ${formData.contactType}`,
+        description: "Verification code sent to your phone via SMS",
       });
       // Navigate to OTP verification with contact info
-      setLocation(`/verify-otp?contact=${encodeURIComponent(formData.contact)}&type=${formData.contactType}`);
+      const fullPhoneNumber = countryCode + phoneNumber;
+      setLocation(`/verify-otp?contact=${encodeURIComponent(fullPhoneNumber)}&type=phone`);
     },
     onError: (error: any) => {
       toast({
@@ -48,46 +46,48 @@ export default function ForgotPassword() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.contact) {
+    if (!phoneNumber) {
       toast({
         title: "Error",
-        description: "Please enter your email or phone number",
+        description: "Please enter your phone number",
         variant: "destructive",
       });
       return;
     }
 
-    // Basic validation
-    if (formData.contactType === "email" && !formData.contact.includes("@")) {
+    // Validate phone number (10 digits for Indian numbers)
+    const cleanPhone = phoneNumber.replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
       toast({
         title: "Error",
-        description: "Please enter a valid email address",
+        description: "Please enter a valid 10-digit phone number",
         variant: "destructive",
       });
       return;
     }
 
-    if (formData.contactType === "phone" && formData.contact.length < 10) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid phone number",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    const fullPhoneNumber = countryCode + cleanPhone;
     forgotPasswordMutation.mutate({
-      contact: formData.contactType === "phone" ? countryCode + formData.contact : formData.contact,
-      contactType: formData.contactType,
+      contact: fullPhoneNumber,
+      contactType: "phone",
     });
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setFormData({
-      contact: value,
-      contactType: value.includes("@") ? "email" : "phone"
-    });
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    // Only allow numbers, spaces, and dashes for formatting
+    value = value.replace(/[^\d\s-]/g, '');
+    
+    // Format as XXX XXX XXXX for better readability
+    if (value.length <= 10) {
+      if (value.length > 6) {
+        value = value.replace(/(\d{3})(\d{3})(\d{0,4})/, '$1 $2 $3');
+      } else if (value.length > 3) {
+        value = value.replace(/(\d{3})(\d{0,3})/, '$1 $2');
+      }
+    }
+    
+    setPhoneNumber(value);
   };
 
   return (
@@ -102,27 +102,29 @@ export default function ForgotPassword() {
                 <span className="block text-pink-600">Password?</span>
               </h1>
               <p className="text-xl lg:text-2xl mb-8 text-pink-800">
-                No worries! We'll send you a verification code to reset your password securely.
+                No worries! We'll send you a secure verification code via SMS to reset your password.
               </p>
               
               <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                    <Mail className="w-6 h-6 text-pink-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg text-pink-900">Email Verification</h3>
-                    <p className="text-pink-700">Get OTP via email instantly</p>
-                  </div>
-                </div>
-                
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
                     <Phone className="w-6 h-6 text-pink-600" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg text-pink-900">SMS Verification</h3>
-                    <p className="text-pink-700">Receive OTP via text message</p>
+                    <p className="text-pink-700">Instant OTP delivery to your phone</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                    <div className="w-6 h-6 bg-pink-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">✓</span>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg text-pink-900">Secure & Fast</h3>
+                    <p className="text-pink-700">Protected with Twilio Verify service</p>
                   </div>
                 </div>
               </div>
@@ -156,66 +158,48 @@ export default function ForgotPassword() {
               <CardHeader className="text-center pb-4">
                 <CardTitle className="text-2xl font-bold text-gray-900">Forgot Password</CardTitle>
                 <CardDescription className="text-gray-600">
-                  Enter your email or phone number to receive a verification code
+                  Enter your phone number to receive a verification code via SMS
                 </CardDescription>
               </CardHeader>
               
               <CardContent className="space-y-6">
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="contact" className="text-gray-700 font-medium">
-                      Email Address or Phone Number
+                    <Label htmlFor="phone" className="text-gray-700 font-medium">
+                      Phone Number
                     </Label>
-                    {formData.contactType === "email" ? (
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <div className="flex gap-2">
+                      <Select value={countryCode} onValueChange={setCountryCode}>
+                        <SelectTrigger className="w-[100px] border-gray-200 focus:border-primary">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="+91">🇮🇳 +91</SelectItem>
+                          <SelectItem value="+1">🇺🇸 +1</SelectItem>
+                          <SelectItem value="+44">🇬🇧 +44</SelectItem>
+                          <SelectItem value="+65">🇸🇬 +65</SelectItem>
+                          <SelectItem value="+971">🇦🇪 +971</SelectItem>
+                          <SelectItem value="+86">🇨🇳 +86</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="relative flex-1">
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
-                          id="contact"
-                          name="contact"
-                          type="email"
+                          id="phone"
+                          name="phone"
+                          type="tel"
                           required
-                          className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                          placeholder="your.email@example.com"
-                          value={formData.contact}
-                          onChange={handleInputChange}
-                          data-testid="input-contact"
+                          className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20 text-lg"
+                          placeholder="987 654 3210"
+                          value={phoneNumber}
+                          onChange={handlePhoneChange}
+                          maxLength={13}
+                          data-testid="input-phone"
                         />
                       </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <Select value={countryCode} onValueChange={setCountryCode}>
-                          <SelectTrigger className="w-[100px] border-gray-200 focus:border-primary">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="+91">+91</SelectItem>
-                            <SelectItem value="+1">+1</SelectItem>
-                            <SelectItem value="+44">+44</SelectItem>
-                            <SelectItem value="+65">+65</SelectItem>
-                            <SelectItem value="+971">+971</SelectItem>
-                            <SelectItem value="+86">+86</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <div className="relative flex-1">
-                          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="contact"
-                            name="contact"
-                            type="tel"
-                            required
-                            className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                            placeholder="9876543210"
-                            value={formData.contact}
-                            onChange={handleInputChange}
-                            data-testid="input-contact"
-                          />
-                        </div>
-                      </div>
-                    )}
+                    </div>
                     <p className="text-xs text-gray-500">
-                      {formData.contactType === "email" 
-                        ? "We'll send a verification code to your email" 
-                        : "We'll send a verification code via SMS"}
+                      We'll send a verification code via SMS to this number
                     </p>
                   </div>
 
