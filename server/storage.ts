@@ -252,7 +252,17 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id };
+    const user: User = { 
+      ...insertUser, 
+      id, 
+      firstName: insertUser.firstName ?? null,
+      lastName: insertUser.lastName ?? null,
+      phone: insertUser.phone ?? null,
+      userType: null,
+      profileImageUrl: null,
+      createdAt: null,
+      updatedAt: null
+    };
     this.users.set(id, user);
     return user;
   }
@@ -276,7 +286,13 @@ export class MemStorage implements IStorage {
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
     const id = randomUUID();
-    const product: Product = { ...insertProduct, id, createdAt: new Date() };
+    const product: Product = { 
+      ...insertProduct, 
+      id, 
+      createdAt: new Date(),
+      inStock: insertProduct.inStock ?? null,
+      featured: insertProduct.featured ?? null
+    };
     this.products.set(id, product);
     return product;
   }
@@ -291,7 +307,13 @@ export class MemStorage implements IStorage {
 
   async createCourse(insertCourse: InsertCourse): Promise<Course> {
     const id = randomUUID();
-    const course: Course = { ...insertCourse, id, createdAt: new Date() };
+    const course: Course = { 
+      ...insertCourse, 
+      id, 
+      createdAt: new Date(),
+      popular: insertCourse.popular ?? null,
+      nextBatch: insertCourse.nextBatch ?? null
+    };
     this.courses.set(id, course);
     return course;
   }
@@ -306,7 +328,14 @@ export class MemStorage implements IStorage {
 
   async createOrder(insertOrder: InsertOrder): Promise<Order> {
     const id = randomUUID();
-    const order: Order = { ...insertOrder, id, status: "pending", createdAt: new Date() };
+    const order: Order = { 
+      ...insertOrder, 
+      id, 
+      status: "pending", 
+      createdAt: new Date(),
+      occasion: insertOrder.occasion ?? null,
+      requirements: insertOrder.requirements ?? null
+    };
     this.orders.set(id, order);
     return order;
   }
@@ -321,7 +350,14 @@ export class MemStorage implements IStorage {
 
   async createEnrollment(insertEnrollment: InsertEnrollment): Promise<Enrollment> {
     const id = randomUUID();
-    const enrollment: Enrollment = { ...insertEnrollment, id, status: "pending", createdAt: new Date() };
+    const enrollment: Enrollment = { 
+      ...insertEnrollment, 
+      id, 
+      status: "pending", 
+      createdAt: new Date(),
+      batch: insertEnrollment.batch ?? null,
+      questions: insertEnrollment.questions ?? null
+    };
     this.enrollments.set(id, enrollment);
     return enrollment;
   }
@@ -336,7 +372,12 @@ export class MemStorage implements IStorage {
 
   async createTestimonial(insertTestimonial: InsertTestimonial): Promise<Testimonial> {
     const id = randomUUID();
-    const testimonial: Testimonial = { ...insertTestimonial, id, createdAt: new Date() };
+    const testimonial: Testimonial = { 
+      ...insertTestimonial, 
+      id, 
+      createdAt: new Date(),
+      image: insertTestimonial.image ?? null
+    };
     this.testimonials.set(id, testimonial);
     return testimonial;
   }
