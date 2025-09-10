@@ -11,13 +11,14 @@ import BlogSection from "@/components/blog-section";
 import ContactSection from "@/components/contact-section";
 import Footer from "@/components/footer";
 import FloatingWhatsapp from "@/components/floating-whatsapp";
-import { FloatingElements, ScrollIndicator } from "@/components/creative-enhancements";
+import { LogoFloatingPetals, ScrollRevealElements, LogoScrollIndicator } from "@/components/creative-enhancements";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
-      <ScrollIndicator />
-      <FloatingElements />
+    <div className="min-h-screen bg-gradient-to-br from-orange-50/30 via-white to-teal-50/30 text-foreground relative overflow-hidden">
+      <LogoScrollIndicator />
+      <LogoFloatingPetals />
+      <ScrollRevealElements />
       <Navigation />
       <HeroSection />
       <FeatureImageSection />

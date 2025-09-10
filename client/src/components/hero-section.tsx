@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingBag, GraduationCap, Star, Sparkles } from "lucide-react";
-import { CreativeButton, SectionDivider } from "@/components/creative-enhancements";
+import { CreativeButton, LogoSectionDivider } from "@/components/creative-enhancements";
 
 export default function HeroSection() {
   const scrollToSection = (sectionId: string) => {
@@ -54,7 +54,7 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
-      <SectionDivider variant="wave" />
+      <LogoSectionDivider variant="floral" />
     </section>
   );
 }
