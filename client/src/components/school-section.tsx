@@ -40,47 +40,87 @@ export default function SchoolSection() {
   };
 
   return (
-    <section id="school" className="section-padding bg-accent/50">
+    <section id="school" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Enroll Today CTA Section */}
+        <div className="relative mb-20 rounded-3xl overflow-hidden">
+          <div 
+            className="relative h-96 bg-cover bg-center"
+            style={{
+              backgroundImage: 'url(https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600)'
+            }}
+          >
+            <div className="absolute inset-0 bg-black/50"></div>
+            <div className="relative h-full flex items-center justify-center text-center text-white">
+              <div className="max-w-4xl mx-auto px-6">
+                <h1 className="text-4xl md:text-5xl font-bold mb-6">
+                  Enroll Today and Let Your Creativity Blossom
+                </h1>
+                <p className="text-xl mb-8 max-w-2xl mx-auto">
+                  Ready to embark on your floral journey? Explore our course offerings, meet our instructors, and take the first 
+                  step towards realizing your dreams of becoming a skilled floral artisan. Whether you're looking to launch a 
+                  business or simply explore your passion for flowers, FlowerSchool is here to support you every step of the way.
+                </p>
+                <Button 
+                  size="lg"
+                  className="bg-primary hover:bg-primary/90 text-white px-8 py-4 text-lg font-semibold rounded-xl"
+                  onClick={scrollToContact}
+                  data-testid="button-enroll-now-hero"
+                >
+                  Enroll now
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Flower School</h2>
-          <p className="text-xl text-muted-foreground">Master the art of floral design with expert guidance</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Flower School</h2>
+          <p className="text-xl text-gray-600">Master the art of floral design with expert guidance</p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
           <div className="space-y-8">
-            <h3 className="text-2xl md:text-3xl font-bold text-foreground">Why Choose Our School?</h3>
+            <div className="text-sm font-medium text-gray-600 tracking-wider uppercase mb-4">
+              WHY US
+            </div>
+            <h3 className="text-3xl md:text-4xl font-bold text-primary">The best learning experience</h3>
             
-            <div className="space-y-6">
-              <div className="flex items-start space-x-4">
-                <UserCheck className="w-8 h-8 text-secondary mt-1 flex-shrink-0" />
-                <div>
-                  <h4 className="text-lg font-semibold">Certified Expert Trainers</h4>
-                  <p className="text-muted-foreground">Learn from internationally certified floral designers with 15+ years experience</p>
-                </div>
-              </div>
+            <div className="space-y-8">
+              <p className="text-lg text-gray-600 leading-relaxed">
+                Welcome to Bouquet Bar's Programs page, where your floral journey begins. Discover our comprehensive courses and 
+                workshops designed to inspire creativity, hone skills, and cultivate your passion for floral design.
+              </p>
               
-              <div className="flex items-start space-x-4">
-                <HandHeart className="w-8 h-8 text-secondary mt-1 flex-shrink-0" />
-                <div>
-                  <h4 className="text-lg font-semibold">Hands-on Practice</h4>
-                  <p className="text-muted-foreground">Real flower arrangements, practical sessions, and portfolio building</p>
+              <div className="grid grid-cols-1 gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <span className="text-orange-600 text-xl">👨‍🏫</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-800">Experienced Instructors</h4>
+                    <p className="text-gray-600 text-sm">Learn from seasoned florists with years of industry experience</p>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex items-start space-x-4">
-                <Award className="w-8 h-8 text-secondary mt-1 flex-shrink-0" />
-                <div>
-                  <h4 className="text-lg font-semibold">International Certification</h4>
-                  <p className="text-muted-foreground">Globally recognized certificates to boost your floral design career</p>
+                
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <span className="text-orange-600 text-xl">✋</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-800">Hands-On Learning</h4>
+                    <p className="text-gray-600 text-sm">Gain practical skills through hands-on experience with a variety of flowers and materials</p>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex items-start space-x-4">
-                <Briefcase className="w-8 h-8 text-secondary mt-1 flex-shrink-0" />
-                <div>
-                  <h4 className="text-lg font-semibold">Career Support</h4>
-                  <p className="text-muted-foreground">Job placement assistance and business setup guidance</p>
+                
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <span className="text-orange-600 text-xl">📅</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-800">Flexible Scheduling</h4>
+                    <p className="text-gray-600 text-sm">Choose from a range of course options and schedules to fit your busy lifestyle</p>
+                  </div>
                 </div>
               </div>
             </div>
