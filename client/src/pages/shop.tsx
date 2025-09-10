@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { 
   Search, 
   MapPin, 
@@ -24,26 +26,65 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import bouquetBarLogo from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 import { type Product, type User } from "@shared/schema";
+import { useCart } from "@/hooks/use-cart";
 
 export default function Shop() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [sortBy, setSortBy] = useState("name");
+  const [priceRange, setPriceRange] = useState([0, 2000]);
+  const [showInStockOnly, setShowInStockOnly] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { addToCart, totalItems, isInCart, getItemQuantity } = useCart();
   
   // Get products data
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
   
-  // Filter products based on search and category
-  const filteredProducts = products.filter((product: Product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || 
-                           product.category.toLowerCase() === selectedCategory.toLowerCase();
-    return matchesSearch && matchesCategory;
-  });
+  // Filter and sort products based on search, category, price, and stock
+  const filteredProducts = products
+    .filter((product: Product) => {
+      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           product.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === "all" || 
+                             product.category.toLowerCase() === selectedCategory.toLowerCase();
+      const productPrice = parseFloat(product.price);
+      const matchesPrice = productPrice >= priceRange[0] && productPrice <= priceRange[1];
+      const matchesStock = !showInStockOnly || product.inStock;
+      return matchesSearch && matchesCategory && matchesPrice && matchesStock;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "price-low":
+          return parseFloat(a.price) - parseFloat(b.price);
+        case "price-high":
+          return parseFloat(b.price) - parseFloat(a.price);
+        case "name":
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
+
+  // Handle add to cart with toast notification
+  const handleAddToCart = (product: Product) => {
+    addToCart(product);
+    toast({
+      title: "Added to Cart! 🛒",
+      description: `${product.name} has been added to your cart.`,
+      duration: 2000,
+    });
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("all");
+    setSortBy("name");
+    setPriceRange([0, 2000]);
+    setShowInStockOnly(false);
+  };
   
   // Get current user data
   const { data: user } = useQuery<User>({
@@ -216,6 +257,15 @@ export default function Shop() {
             </div>
             
             <div className="flex items-center gap-4">
+              <Button variant="outline" size="sm" className="relative" data-testid="button-cart">
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Cart
+                {totalItems > 0 && (
+                  <Badge className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center text-xs">
+                    {totalItems}
+                  </Badge>
+                )}
+              </Button>
               <Button variant="outline" size="sm" data-testid="button-contact">
                 <Phone className="w-4 h-4 mr-2" />
                 Contact
