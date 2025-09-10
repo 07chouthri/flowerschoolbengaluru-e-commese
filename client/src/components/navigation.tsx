@@ -109,7 +109,7 @@ export default function Navigation() {
                 Sign In
               </Button>
               <Button 
-                className="text-sm button-glow bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600" 
+                className="text-sm" 
                 onClick={() => setLocation('/signup')}
                 data-testid="button-signup"
               >
@@ -188,7 +188,7 @@ export default function Navigation() {
                   Sign In
                 </Button>
                 <Button 
-                  className="w-full button-glow bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600" 
+                  className="w-full" 
                   onClick={() => setLocation('/signup')}
                   data-testid="button-mobile-signup"
                 >
