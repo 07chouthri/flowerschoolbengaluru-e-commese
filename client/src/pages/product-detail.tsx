@@ -55,10 +55,90 @@ export default function ProductDetail() {
     );
   }
 
-  // Get related products (same category, excluding current product)
-  const relatedProducts = allProducts?.filter(
-    p => p.category === product.category && p.id !== product.id
-  ).slice(0, 4) || [];
+  // Enhanced related products algorithm
+  const getRelatedProducts = () => {
+    if (!allProducts || allProducts.length === 0) return [];
+    
+    const currentPrice = parseFloat(product.price);
+    const priceRange = currentPrice * 0.3; // 30% price tolerance
+    
+    // Score products based on multiple factors
+    const scoredProducts = allProducts
+      .filter(p => p.id !== product.id && p.inStock) // Exclude current product and out-of-stock items
+      .map(p => {
+        let score = 0;
+        const productPrice = parseFloat(p.price);
+        
+        // Factor 1: Same category (highest priority) - 100 points
+        if (p.category === product.category) {
+          score += 100;
+        }
+        
+        // Factor 2: Similar price range - up to 50 points
+        const priceDiff = Math.abs(productPrice - currentPrice);
+        if (priceDiff <= priceRange) {
+          score += 50 - (priceDiff / priceRange) * 25; // Closer price = higher score
+        }
+        
+        // Factor 3: Featured products get bonus - 25 points
+        if (p.featured) {
+          score += 25;
+        }
+        
+        // Factor 4: Price tier similarity - 20 points
+        const currentTier = currentPrice < 1000 ? 'budget' : currentPrice < 3000 ? 'mid' : 'premium';
+        const productTier = productPrice < 1000 ? 'budget' : productPrice < 3000 ? 'mid' : 'premium';
+        if (currentTier === productTier) {
+          score += 20;
+        }
+        
+        // Factor 5: Alphabetical tiebreaker - small score based on name similarity
+        const nameSimilarity = product.name.toLowerCase().split(' ').some(word => 
+          p.name.toLowerCase().includes(word) || p.description.toLowerCase().includes(word)
+        );
+        if (nameSimilarity) {
+          score += 10;
+        }
+        
+        return { product: p, score };
+      })
+      .sort((a, b) => {
+        // Primary sort by score (descending)
+        if (b.score !== a.score) {
+          return b.score - a.score;
+        }
+        // Secondary sort by price (ascending) for tiebreaker
+        return parseFloat(a.product.price) - parseFloat(b.product.price);
+      })
+      .slice(0, 8) // Get top 8 candidates
+      .map(item => item.product);
+
+    // If we don't have enough same-category products, fill with other categories
+    if (scoredProducts.length < 4) {
+      const additionalProducts = allProducts
+        .filter(p => 
+          p.id !== product.id && 
+          p.inStock && 
+          !scoredProducts.find(sp => sp.id === p.id) // Not already included
+        )
+        .sort((a, b) => {
+          // Prefer featured products
+          if (a.featured && !b.featured) return -1;
+          if (!a.featured && b.featured) return 1;
+          // Then sort by price similarity
+          const aPriceDiff = Math.abs(parseFloat(a.price) - currentPrice);
+          const bPriceDiff = Math.abs(parseFloat(b.price) - currentPrice);
+          return aPriceDiff - bPriceDiff;
+        })
+        .slice(0, 4 - scoredProducts.length);
+      
+      scoredProducts.push(...additionalProducts);
+    }
+    
+    return scoredProducts.slice(0, 4); // Return max 4 products
+  };
+
+  const relatedProducts = getRelatedProducts();
 
   const isInCart = cart.isInCart(product.id);
   const quantity = cart.getItemQuantity(product.id);
