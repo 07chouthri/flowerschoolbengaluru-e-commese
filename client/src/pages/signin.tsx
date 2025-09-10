@@ -3,20 +3,61 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Link } from "wouter";
-import { ArrowLeft, Mail, Lock, ShoppingBag, GraduationCap, Star } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { ArrowLeft, User, Lock, ShoppingBag, GraduationCap, Star } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
 
 export default function SignIn() {
   const [formData, setFormData] = useState({
-    email: "",
+    username: "",
     password: ""
+  });
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
+
+  const signinMutation = useMutation({
+    mutationFn: async (userData: { username: string; password: string }) => {
+      return await apiRequest("/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully signed in.",
+      });
+      setLocation("/");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to sign in",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle signin logic here
-    console.log("Sign in form submitted:", formData);
+    
+    if (!formData.username || !formData.password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    signinMutation.mutate({
+      username: formData.username,
+      password: formData.password,
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,19 +145,19 @@ export default function SignIn() {
               <CardContent className="space-y-6">
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-gray-700 font-medium">Email Address</Label>
+                    <Label htmlFor="username" className="text-gray-700 font-medium">Username</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
-                        id="email"
-                        name="email"
-                        type="email"
+                        id="username"
+                        name="username"
+                        type="text"
                         required
                         className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                        placeholder="your.email@example.com"
-                        value={formData.email}
+                        placeholder="Enter your username"
+                        value={formData.username}
                         onChange={handleInputChange}
-                        data-testid="input-email"
+                        data-testid="input-username"
                       />
                     </div>
                   </div>

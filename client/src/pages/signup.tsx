@@ -3,24 +3,71 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Link } from "wouter";
-import { ArrowLeft, User, Mail, Lock, Phone } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { ArrowLeft, User, Lock } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
+    username: "",
     password: "",
     confirmPassword: ""
+  });
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
+
+  const signupMutation = useMutation({
+    mutationFn: async (userData: { username: string; password: string }) => {
+      return await apiRequest("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Success!",
+        description: "Account created successfully. Please sign in.",
+      });
+      setLocation("/signin");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create account",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle signup logic here
-    console.log("Sign up form submitted:", formData);
+    
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast({
+        title: "Error", 
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    signupMutation.mutate({
+      username: formData.username,
+      password: formData.password,
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,21 +106,11 @@ export default function SignUp() {
               
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-secondary/20 rounded-lg flex items-center justify-center">
-                  <Mail className="w-6 h-6 text-secondary" />
+                  <Lock className="w-6 h-6 text-secondary" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">Premium Access</h3>
                   <p className="text-gray-600">Exclusive courses and flower collections</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
-                  <Lock className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Certification</h3>
-                  <p className="text-gray-600">Government recognized certificates</p>
                 </div>
               </div>
             </div>
@@ -91,7 +128,7 @@ export default function SignUp() {
 
             {/* Back Button */}
             <Link href="/">
-              <Button variant="ghost" className="mb-6 text-gray-600 hover:text-gray-900">
+              <Button variant="ghost" className="mb-6 text-gray-600 hover:text-gray-900" data-testid="button-back">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Home
               </Button>
@@ -107,75 +144,20 @@ export default function SignUp() {
               
               <CardContent className="space-y-6">
                 <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName" className="text-gray-700 font-medium">First Name</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="firstName"
-                          name="firstName"
-                          type="text"
-                          required
-                          className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                          placeholder="First name"
-                          value={formData.firstName}
-                          onChange={handleInputChange}
-                          data-testid="input-first-name"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName" className="text-gray-700 font-medium">Last Name</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="lastName"
-                          name="lastName"
-                          type="text"
-                          required
-                          className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                          placeholder="Last name"
-                          value={formData.lastName}
-                          onChange={handleInputChange}
-                          data-testid="input-last-name"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-gray-700 font-medium">Email Address</Label>
+                    <Label htmlFor="username" className="text-gray-700 font-medium">Username</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
-                        id="email"
-                        name="email"
-                        type="email"
+                        id="username"
+                        name="username"
+                        type="text"
                         required
                         className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                        placeholder="your.email@example.com"
-                        value={formData.email}
+                        placeholder="Choose a username"
+                        value={formData.username}
                         onChange={handleInputChange}
-                        data-testid="input-email"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-gray-700 font-medium">Phone Number</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="phone"
-                        name="phone"
-                        type="tel"
-                        required
-                        className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                        placeholder="+91 98765 43210"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        data-testid="input-phone"
+                        data-testid="input-username"
                       />
                     </div>
                   </div>
@@ -218,18 +200,19 @@ export default function SignUp() {
 
                   <Button 
                     type="submit" 
-                    className="w-full font-semibold py-3 text-lg"
+                    className="w-full text-lg py-3 h-auto font-semibold"
+                    disabled={signupMutation.isPending}
                     data-testid="button-signup"
                   >
-                    Create Account
+                    {signupMutation.isPending ? "Creating Account..." : "Create Account"}
                   </Button>
                 </form>
 
-                <div className="text-center pt-4 border-t border-gray-100">
+                <div className="text-center">
                   <p className="text-gray-600">
                     Already have an account?{" "}
                     <Link href="/signin" className="text-primary hover:text-primary/80 font-semibold">
-                      Sign in here
+                      Sign In
                     </Link>
                   </p>
                 </div>
