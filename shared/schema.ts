@@ -12,6 +12,10 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   userType: varchar("user_type"),
   profileImageUrl: varchar("profile_image_url"),
+  defaultAddress: text("default_address"),
+  deliveryAddress: text("delivery_address"),
+  country: varchar("country"),
+  state: varchar("state"),
   createdAt: timestamp("created_at"),
   updatedAt: timestamp("updated_at"),
 });
@@ -103,6 +107,17 @@ export const insertUserSchema = createInsertSchema(users).pick({
   lastName: true,
   phone: true,
   password: true,
+});
+
+export const updateUserProfileSchema = createInsertSchema(users).pick({
+  firstName: true,
+  lastName: true,
+  phone: true,
+  defaultAddress: true,
+  deliveryAddress: true,
+  country: true,
+  state: true,
+  profileImageUrl: true,
 });
 
 export const insertProductSchema = createInsertSchema(products).omit({
