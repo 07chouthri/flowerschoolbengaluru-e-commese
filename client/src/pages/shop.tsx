@@ -14,20 +14,55 @@ import {
   Star,
   Filter,
   ChevronDown,
-  Phone
+  Phone,
+  LogOut
 } from "lucide-react";
 import { Link } from "wouter";
 import Footer from "@/components/footer";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Shop() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Get current user data
   const { data: user } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
   });
+
+  // Logout mutation
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("/api/auth/signout", {
+        method: "POST",
+      });
+    },
+    onSuccess: () => {
+      // Clear user data from cache
+      queryClient.setQueryData(["/api/auth/user"], null);
+      toast({
+        title: "Logged out successfully",
+        description: "You have been signed out.",
+      });
+      // Navigate to home page
+      window.location.href = "/";
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to log out",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
 
   const categories = [
     "Birthday", "Occasions", "Anniversary", "Flowers", "Cakes", 
@@ -198,6 +233,16 @@ export default function Shop() {
                   <Button variant="outline" size="sm" data-testid="button-account">
                     <User className="w-4 h-4 mr-2" />
                     Account
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleLogout}
+                    disabled={logoutMutation.isPending}
+                    data-testid="button-logout"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    {logoutMutation.isPending ? 'Logging out...' : 'Log Out'}
                   </Button>
                 </div>
               ) : (
