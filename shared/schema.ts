@@ -5,11 +5,11 @@ import { z } from "zod";
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
+  email: varchar("email").notNull().unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
-  phone: varchar("phone").unique(),
-  password: text("password").default(""),
+  phone: varchar("phone"),
+  password: text("password").notNull(),
   userType: varchar("user_type"),
   profileImageUrl: varchar("profile_image_url"),
   createdAt: timestamp("created_at"),
@@ -95,13 +95,6 @@ export const insertUserSchema = createInsertSchema(users).pick({
   phone: true,
   password: true,
 });
-
-export const insertPhoneUserSchema = createInsertSchema(users).pick({
-  firstName: true,
-  lastName: true,
-  phone: true,
-  password: true,
-}).partial({ password: true });
 
 export const insertProductSchema = createInsertSchema(products).omit({
   id: true,

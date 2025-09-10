@@ -3,60 +3,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Phone, ShoppingBag, GraduationCap, Star } from "lucide-react";
+import { ArrowLeft, Mail, Lock, ShoppingBag, GraduationCap, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
+import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
 
 export default function SignIn() {
   const [formData, setFormData] = useState({
-    phone: "",
-    otp: ""
+    email: "",
+    password: ""
   });
-  const [countryCode, setCountryCode] = useState("+91");
-  const [step, setStep] = useState<"phone" | "otp">("phone");
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
-  const sendOtpMutation = useMutation({
-    mutationFn: async (phone: string) => {
-      return await apiRequest("/api/auth/send-login-otp", {
+  const signinMutation = useMutation({
+    mutationFn: async (userData: { email: string; password: string }) => {
+      return await apiRequest("/api/auth/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "OTP Sent! 📱",
-        description: "Check your phone for the verification code.",
-      });
-      setStep("otp");
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send OTP",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const verifyOtpMutation = useMutation({
-    mutationFn: async (data: { phone: string; otp: string }) => {
-      return await apiRequest("/api/auth/verify-login-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(userData),
       });
     },
     onSuccess: (data) => {
       toast({
-        title: "Welcome back! 🎉",
+        title: "Welcome back!",
         description: "You have successfully signed in.",
       });
       setLocation("/");
@@ -64,44 +36,27 @@ export default function SignIn() {
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Invalid OTP",
+        description: error.message || "Failed to sign in",
         variant: "destructive",
       });
     },
   });
 
-  const handleSendOtp = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.phone) {
+    if (!formData.email || !formData.password) {
       toast({
         title: "Error",
-        description: "Please enter your phone number",
+        description: "Please fill in all fields",
         variant: "destructive",
       });
       return;
     }
 
-    const fullPhone = countryCode + formData.phone;
-    sendOtpMutation.mutate(fullPhone);
-  };
-
-  const handleVerifyOtp = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.otp || formData.otp.length !== 6) {
-      toast({
-        title: "Error",
-        description: "Please enter the 6-digit OTP",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const fullPhone = countryCode + formData.phone;
-    verifyOtpMutation.mutate({
-      phone: fullPhone,
-      otp: formData.otp,
+    signinMutation.mutate({
+      email: formData.email,
+      password: formData.password,
     });
   };
 
@@ -183,119 +138,84 @@ export default function SignIn() {
               <CardHeader className="text-center pb-4">
                 <CardTitle className="text-2xl font-bold text-gray-900">Sign In</CardTitle>
                 <CardDescription className="text-gray-600">
-                  Enter your phone number to receive an OTP
+                  Enter your credentials to access your account
                 </CardDescription>
               </CardHeader>
               
               <CardContent className="space-y-6">
-                {step === "phone" ? (
-                  <form onSubmit={handleSendOtp} className="space-y-5">
-                    <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-gray-700 font-medium">Phone Number</Label>
-                      <div className="flex gap-2">
-                        <Select value={countryCode} onValueChange={setCountryCode}>
-                          <SelectTrigger className="w-[100px] border-gray-200 focus:border-primary">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="+91">+91</SelectItem>
-                            <SelectItem value="+1">+1</SelectItem>
-                            <SelectItem value="+44">+44</SelectItem>
-                            <SelectItem value="+65">+65</SelectItem>
-                            <SelectItem value="+971">+971</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <div className="relative flex-1">
-                          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="phone"
-                            name="phone"
-                            type="tel"
-                            required
-                            className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                            placeholder="98765 43210"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            data-testid="input-phone"
-                          />
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-1">
-                        We'll send you a verification code via SMS
-                      </p>
-                    </div>
-
-                    <Button 
-                      type="submit" 
-                      className="w-full font-semibold py-3 text-lg"
-                      disabled={sendOtpMutation.isPending}
-                      data-testid="button-send-otp"
-                    >
-                      {sendOtpMutation.isPending ? "Sending OTP..." : "Send OTP"}
-                    </Button>
-                  </form>
-                ) : (
-                  <form onSubmit={handleVerifyOtp} className="space-y-5">
-                    <div className="text-center space-y-2">
-                      <h3 className="text-lg font-semibold text-gray-900">Verify Your Phone</h3>
-                      <p className="text-sm text-gray-600">
-                        Enter the 6-digit code sent to {countryCode} {formData.phone}
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="otp" className="text-gray-700 font-medium">Verification Code</Label>
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-gray-700 font-medium">Email Address</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
-                        id="otp"
-                        name="otp"
-                        type="text"
-                        maxLength={6}
+                        id="email"
+                        name="email"
+                        type="email"
                         required
-                        className="text-center text-lg tracking-widest border-gray-200 focus:border-primary focus:ring-primary/20"
-                        placeholder="000000"
-                        value={formData.otp}
+                        className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
+                        placeholder="your.email@example.com"
+                        value={formData.email}
                         onChange={handleInputChange}
-                        data-testid="input-otp"
+                        data-testid="input-email"
                       />
                     </div>
+                  </div>
 
-                    <div className="space-y-3">
-                      <Button 
-                        type="submit" 
-                        className="w-full font-semibold py-3 text-lg"
-                        disabled={verifyOtpMutation.isPending}
-                        data-testid="button-verify-otp"
-                      >
-                        {verifyOtpMutation.isPending ? "Verifying..." : "Verify & Sign In"}
-                      </Button>
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-gray-700 font-medium">Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="password"
+                        name="password"
+                        type="password"
+                        required
+                        className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
+                        placeholder="Enter your password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        data-testid="input-password"
+                      />
+                    </div>
+                  </div>
 
-                      <Button 
-                        type="button"
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => {
-                          setStep("phone");
-                          setFormData({ phone: formData.phone, otp: "" });
-                        }}
-                        data-testid="button-change-phone"
-                      >
-                        Change Phone Number
-                      </Button>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <input
+                        id="remember-me"
+                        name="remember-me"
+                        type="checkbox"
+                        className="h-4 w-4 text-primary focus:ring-primary/20 border-gray-300 rounded"
+                        data-testid="checkbox-remember"
+                      />
+                      <Label htmlFor="remember-me" className="ml-2 text-sm text-gray-700">
+                        Remember me
+                      </Label>
                     </div>
 
-                    <div className="text-center">
-                      <button
-                        type="button"
-                        className="text-sm text-primary hover:text-primary/80 font-medium"
-                        onClick={() => sendOtpMutation.mutate(countryCode + formData.phone)}
-                        disabled={sendOtpMutation.isPending}
-                        data-testid="button-resend-otp"
-                      >
-                        {sendOtpMutation.isPending ? "Sending..." : "Resend OTP"}
-                      </button>
+                    <div className="text-sm">
+                      <Link href="/forgot-password">
+                        <button
+                          type="button"
+                          className="text-primary hover:text-primary/80 font-medium"
+                          data-testid="link-forgot-password"
+                        >
+                          Forgot password?
+                        </button>
+                      </Link>
                     </div>
-                  </form>
-                )}
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    className="w-full font-semibold py-3 text-lg"
+                    disabled={signinMutation.isPending}
+                    data-testid="button-signin"
+                  >
+                    {signinMutation.isPending ? "Signing in..." : "Sign In"}
+                  </Button>
+                </form>
 
 
                 <div className="text-center pt-4 border-t border-gray-100">
