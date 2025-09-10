@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingBag, GraduationCap, Star, ArrowRight, Flower, Users, Award, Calendar, Truck, Gift } from "lucide-react";
 import { Link } from "wouter";
-import bouquetBarLogo from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
+import bouquetBarLogo from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 import flowerSchoolLogo from "@assets/Flower_School_Logo_1757484169081.png";
 
 export default function HeroSection() {

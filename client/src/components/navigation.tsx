@@ -6,7 +6,7 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
+import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 import type { User as UserType } from "@shared/schema";
 
 export default function Navigation() {
