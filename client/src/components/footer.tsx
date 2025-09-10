@@ -30,12 +30,12 @@ export default function Footer() {
                 className="h-16 w-auto" 
               />
               <div className="text-left">
-                <h2 className="text-3xl font-bold text-gray-900 tracking-wide">Bouquet Bar</h2>
-                <p className="text-lg text-gray-600 font-medium">Bengaluru, India</p>
+                <h2 className="text-3xl font-bold text-white tracking-wide">Bouquet Bar</h2>
+                <p className="text-lg text-gray-300 font-medium">Bengaluru, India</p>
               </div>
             </div>
             <div className="w-24 h-1 bg-primary mx-auto mb-6 rounded-full"></div>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed font-light">
+            <p className="text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed font-light">
               India's premier floral design institute and online flower marketplace. 
               Transforming passion into expertise through professional floral education and premium flower collections.
             </p>
@@ -86,7 +86,7 @@ export default function Footer() {
 
             {/* Navigation Links */}
             <div className="space-y-6">
-              <h4 className="text-xl font-semibold text-gray-900 border-b-2 border-gray-300 pb-2 inline-block">Navigation</h4>
+              <h4 className="text-xl font-semibold text-white border-b-2 border-primary pb-2 inline-block">Navigation</h4>
               <ul className="space-y-3">
                 <li>
                   <button 
