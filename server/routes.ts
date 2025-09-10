@@ -1,10 +1,72 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertOrderSchema, insertEnrollmentSchema } from "@shared/schema";
+import { insertOrderSchema, insertEnrollmentSchema, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Authentication Routes
+  app.post("/api/auth/signup", async (req, res) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      
+      // Create user
+      const user = await storage.createUser({
+        username: userData.username,
+        password: hashedPassword,
+      });
+
+      // Return user without password
+      const { password, ...userWithoutPassword } = user;
+      res.status(201).json({ user: userWithoutPassword, message: "User created successfully" });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid user data", errors: error.errors });
+      }
+      console.error("Signup error:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.post("/api/auth/signin", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+
+      // Find user
+      const user = await storage.getUserByUsername(username);
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Verify password
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Return user without password
+      const { password: _, ...userWithoutPassword } = user;
+      res.json({ user: userWithoutPassword, message: "Signed in successfully" });
+    } catch (error) {
+      console.error("Signin error:", error);
+      res.status(500).json({ message: "Failed to sign in" });
+    }
+  });
+
   // Products
   app.get("/api/products", async (req, res) => {
     try {
