@@ -195,13 +195,15 @@ export default function SignIn() {
                     </div>
 
                     <div className="text-sm">
-                      <button
-                        type="button"
-                        className="text-primary hover:text-primary/80 font-medium"
-                        data-testid="link-forgot-password"
-                      >
-                        Forgot password?
-                      </button>
+                      <Link href="/forgot-password">
+                        <button
+                          type="button"
+                          className="text-primary hover:text-primary/80 font-medium"
+                          data-testid="link-forgot-password"
+                        >
+                          Forgot password?
+                        </button>
+                      </Link>
                     </div>
                   </div>
 
