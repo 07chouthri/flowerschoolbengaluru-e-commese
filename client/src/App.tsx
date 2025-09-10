@@ -11,6 +11,7 @@ import SignUp from "@/pages/signup";
 import SignIn from "@/pages/signin";
 import ForgotPassword from "@/pages/forgot-password";
 import VerifyOtp from "@/pages/verify-otp";
+import MyAccount from "@/pages/my-account";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/signin" component={SignIn} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/verify-otp" component={VerifyOtp} />
+      <Route path="/my-account" component={MyAccount} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -276,10 +276,12 @@ export default function Shop() {
                   <span className="text-sm text-gray-700 font-medium">
                     Hello, {user.firstName || 'User'}!
                   </span>
-                  <Button variant="outline" size="sm" data-testid="button-account">
-                    <UserIcon className="w-4 h-4 mr-2" />
-                    Account
-                  </Button>
+                  <Link href="/my-account">
+                    <Button variant="outline" size="sm" data-testid="button-account">
+                      <UserIcon className="w-4 h-4 mr-2" />
+                      Account
+                    </Button>
+                  </Link>
                   <Button 
                     variant="outline" 
                     size="sm"
