@@ -44,7 +44,7 @@ export default function Navigation() {
   };
 
   return (
-    <nav className={`fixed top-0 w-full bg-card/95 backdrop-blur-sm z-50 border-b border-border transition-transform duration-300 ${isScrollingUp ? '-translate-y-full' : 'translate-y-0'}`}>
+    <nav className={`fixed top-0 w-full bg-card/95 backdrop-blur-sm z-50 transition-transform duration-300 ${isScrollingUp ? '-translate-y-full' : 'translate-y-0'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center space-x-3">
@@ -131,7 +131,7 @@ export default function Navigation() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border">
+          <div className="md:hidden py-4">
             <div className="flex flex-col space-y-4">
               <button 
                 onClick={() => scrollToSection('home')}
