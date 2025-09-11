@@ -868,6 +868,15 @@ export class MemStorage implements IStorage {
       orderData.paymentMethod
     );
 
+    // Debug logging for pricing validation
+    console.log("[ORDER VALIDATION] Pricing comparison:");
+    console.log("- Subtotal:", orderData.subtotal, "vs calculated:", orderData.subtotal);
+    console.log("- Delivery charge:", orderData.deliveryCharge, "vs calculated:", calculatedPricing.deliveryCharge);
+    console.log("- Discount amount:", orderData.discountAmount, "vs calculated:", calculatedPricing.discountAmount);
+    console.log("- Payment charges:", orderData.paymentCharges || 0, "vs calculated:", calculatedPricing.paymentCharges);
+    console.log("- Total:", orderData.total, "vs calculated:", calculatedPricing.total);
+    console.log("- Payment method:", orderData.paymentMethod);
+
     // Validate pricing
     const pricingTolerance = 0.01;
     if (Math.abs(calculatedPricing.deliveryCharge - orderData.deliveryCharge) > pricingTolerance) {
