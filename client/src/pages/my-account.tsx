@@ -735,64 +735,6 @@ export default function MyAccount() {
                     </CardContent>
                   </Card>
                   
-                  <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Settings className="h-5 w-5" />
-                      Preferences
-                    </CardTitle>
-                    <CardDescription>
-                      Customize your experience and notifications
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <h3 className="font-semibold mb-2">Email Notifications</h3>
-                        <p className="text-sm text-gray-600 mb-4">
-                          Choose which emails you'd like to receive
-                        </p>
-                        <div className="space-y-2">
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="order-updates" defaultChecked />
-                            <label htmlFor="order-updates" className="text-sm">Order updates and shipping notifications</label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="promotions" defaultChecked />
-                            <label htmlFor="promotions" className="text-sm">Promotions and special offers</label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="newsletter" />
-                            <label htmlFor="newsletter" className="text-sm">Weekly newsletter</label>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <h3 className="font-semibold mb-2">Language & Region</h3>
-                        <p className="text-sm text-gray-600 mb-4">
-                          Set your preferred language and region
-                        </p>
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="language">Language</Label>
-                            <select id="language" className="w-full mt-1 p-2 border border-gray-300 rounded-md">
-                              <option value="en">English</option>
-                              <option value="hi">Hindi</option>
-                            </select>
-                          </div>
-                          <div>
-                            <Label htmlFor="currency">Currency</Label>
-                            <select id="currency" className="w-full mt-1 p-2 border border-gray-300 rounded-md">
-                              <option value="inr">Indian Rupee (₹)</option>
-                              <option value="usd">US Dollar ($)</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
                 </div>
               )}
 
