@@ -124,7 +124,27 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     paymentCharge: number = 0
   ) => {
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-    const totalPrice = items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+    
+    // Robust price calculation with proper validation and fallbacks
+    const totalPrice = items.reduce((sum, item) => {
+      // Handle different price formats and ensure we get a valid number
+      let itemPrice = 0;
+      if (typeof item.price === 'number') {
+        itemPrice = item.price;
+      } else if (typeof item.price === 'string') {
+        // Remove any currency symbols and parse
+        const cleanPrice = item.price.replace(/[₹$,\s]/g, '');
+        itemPrice = parseFloat(cleanPrice);
+      }
+      
+      // Ensure we have a valid number, fallback to 0 if invalid
+      if (isNaN(itemPrice) || !isFinite(itemPrice)) {
+        console.warn(`Invalid price for item ${item.id}: ${item.price}, using 0`);
+        itemPrice = 0;
+      }
+      
+      return sum + (itemPrice * item.quantity);
+    }, 0);
     
     let recalculatedDiscount = discountAmount;
     
@@ -228,10 +248,13 @@ export function CartProvider({ children, userId }: CartProviderProps) {
           const { totalItems, totalPrice, finalAmount, recalculatedDiscount } = calculateTotals(
             items, 
             prev.appliedCoupon, 
-            prev.discountAmount
+            prev.discountAmount,
+            prev.deliveryCharge,
+            prev.paymentCharge
           );
           
           return {
+            ...prev,
             items,
             totalItems,
             totalPrice,
@@ -240,7 +263,6 @@ export function CartProvider({ children, userId }: CartProviderProps) {
             finalAmount,
             isLoading: false,
             error: null,
-            couponError: prev.couponError,
           };
         });
       } catch (error) {
@@ -260,7 +282,8 @@ export function CartProvider({ children, userId }: CartProviderProps) {
         if (savedCart) {
           const items = JSON.parse(savedCart);
           const { totalItems, totalPrice, finalAmount } = calculateTotals(items, coupon, discountAmount);
-          setCart({
+          setCart(prev => ({
+            ...prev,
             items,
             totalItems,
             totalPrice,
@@ -270,7 +293,7 @@ export function CartProvider({ children, userId }: CartProviderProps) {
             isLoading: false,
             error: null,
             couponError: null,
-          });
+          }));
           
           // Note: Coupon will be revalidated if user applies it again
           // We don't auto-revalidate to avoid infinite loops
