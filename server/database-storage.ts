@@ -7,6 +7,7 @@ import {
   testimonials, 
   blogPosts,
   carts,
+  favorites,
   type User, 
   type InsertUser, 
   type Product, 
@@ -22,7 +23,9 @@ import {
   type BlogPost, 
   type InsertBlogPost,
   type Cart,
-  type InsertCart 
+  type InsertCart,
+  type Favorite,
+  type InsertFavorite 
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
@@ -267,5 +270,60 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(carts)
       .where(eq(carts.userId, userId));
+  }
+
+  // Additional Orders methods
+  async getUserOrders(userId: string): Promise<Order[]> {
+    return await db.select().from(orders).where(eq(orders.userId, userId));
+  }
+
+  async updateOrderStatus(id: string, status: string): Promise<Order> {
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({ status })
+      .where(eq(orders.id, id))
+      .returning();
+    return updatedOrder;
+  }
+
+  // Favorites methods
+  async getUserFavorites(userId: string): Promise<(Favorite & { product: Product })[]> {
+    const favoriteItems = await db
+      .select({
+        id: favorites.id,
+        userId: favorites.userId,
+        productId: favorites.productId,
+        createdAt: favorites.createdAt,
+        product: products
+      })
+      .from(favorites)
+      .innerJoin(products, eq(favorites.productId, products.id))
+      .where(eq(favorites.userId, userId));
+    return favoriteItems;
+  }
+
+  async addToFavorites(userId: string, productId: string): Promise<Favorite> {
+    const [newFavorite] = await db
+      .insert(favorites)
+      .values({
+        userId,
+        productId
+      })
+      .returning();
+    return newFavorite;
+  }
+
+  async removeFromFavorites(userId: string, productId: string): Promise<void> {
+    await db
+      .delete(favorites)
+      .where(and(eq(favorites.userId, userId), eq(favorites.productId, productId)));
+  }
+
+  async isProductFavorited(userId: string, productId: string): Promise<boolean> {
+    const [favorite] = await db
+      .select()
+      .from(favorites)
+      .where(and(eq(favorites.userId, userId), eq(favorites.productId, productId)));
+    return !!favorite;
   }
 }

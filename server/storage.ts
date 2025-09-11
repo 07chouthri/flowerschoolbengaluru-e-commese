@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Product, type InsertProduct, type Course, type InsertCourse, type Order, type InsertOrder, type Enrollment, type InsertEnrollment, type Testimonial, type InsertTestimonial, type BlogPost, type InsertBlogPost, type Cart, type InsertCart } from "@shared/schema";
+import { type User, type InsertUser, type Product, type InsertProduct, type Course, type InsertCourse, type Order, type InsertOrder, type Enrollment, type InsertEnrollment, type Testimonial, type InsertTestimonial, type BlogPost, type InsertBlogPost, type Cart, type InsertCart, type Favorite, type InsertFavorite } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { DatabaseStorage } from "./database-storage";
 
@@ -28,7 +28,15 @@ export interface IStorage {
   // Orders
   getAllOrders(): Promise<Order[]>;
   getOrder(id: string): Promise<Order | undefined>;
+  getUserOrders(userId: string): Promise<Order[]>;
   createOrder(order: InsertOrder): Promise<Order>;
+  updateOrderStatus(id: string, status: string): Promise<Order>;
+  
+  // Favorites
+  getUserFavorites(userId: string): Promise<(Favorite & { product: Product })[]>;
+  addToFavorites(userId: string, productId: string): Promise<Favorite>;
+  removeFromFavorites(userId: string, productId: string): Promise<void>;
+  isProductFavorited(userId: string, productId: string): Promise<boolean>;
   
   // Enrollments
   getAllEnrollments(): Promise<Enrollment[]>;
@@ -365,7 +373,10 @@ export class MemStorage implements IStorage {
       status: "pending", 
       createdAt: new Date(),
       occasion: insertOrder.occasion ?? null,
-      requirements: insertOrder.requirements ?? null
+      requirements: insertOrder.requirements ?? null,
+      userId: insertOrder.userId ?? null,
+      deliveryAddress: insertOrder.deliveryAddress ?? null,
+      deliveryDate: insertOrder.deliveryDate ?? null
     };
     this.orders.set(id, order);
     return order;
@@ -475,6 +486,66 @@ export class MemStorage implements IStorage {
   async clearUserCart(userId: string): Promise<void> {
     // MemStorage implementation - no-op
     return;
+  }
+
+  // Additional Orders methods
+  async getUserOrders(userId: string): Promise<Order[]> {
+    return Array.from(this.orders.values()).filter(order => order.userId === userId);
+  }
+
+  async updateOrderStatus(id: string, status: string): Promise<Order> {
+    const order = this.orders.get(id);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    const updatedOrder = { ...order, status };
+    this.orders.set(id, updatedOrder);
+    return updatedOrder;
+  }
+
+  // Favorites methods (MemStorage implementation - minimal for development)
+  private favorites: Map<string, Favorite> = new Map();
+
+  async getUserFavorites(userId: string): Promise<(Favorite & { product: Product })[]> {
+    const userFavorites = Array.from(this.favorites.values()).filter(fav => fav.userId === userId);
+    const result: (Favorite & { product: Product })[] = [];
+    
+    for (const favorite of userFavorites) {
+      const product = await this.getProduct(favorite.productId);
+      if (product) {
+        result.push({ ...favorite, product });
+      }
+    }
+    
+    return result;
+  }
+
+  async addToFavorites(userId: string, productId: string): Promise<Favorite> {
+    const id = randomUUID();
+    const favorite: Favorite = {
+      id,
+      userId,
+      productId,
+      createdAt: new Date(),
+    };
+    this.favorites.set(id, favorite);
+    return favorite;
+  }
+
+  async removeFromFavorites(userId: string, productId: string): Promise<void> {
+    const favoriteEntries = Array.from(this.favorites.entries());
+    for (const [id, favorite] of favoriteEntries) {
+      if (favorite.userId === userId && favorite.productId === productId) {
+        this.favorites.delete(id);
+        break;
+      }
+    }
+  }
+
+  async isProductFavorited(userId: string, productId: string): Promise<boolean> {
+    return Array.from(this.favorites.values()).some(
+      fav => fav.userId === userId && fav.productId === productId
+    );
   }
 }
 
