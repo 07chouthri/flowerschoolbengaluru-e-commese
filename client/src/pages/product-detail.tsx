@@ -1,11 +1,13 @@
 import { useRoute, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Heart, Share2, ShoppingCart, Star, Truck, Shield, RotateCcw } from "lucide-react";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Product } from "@shared/schema";
 
 export default function ProductDetail() {
@@ -22,6 +24,71 @@ export default function ProductDetail() {
   });
   
   const cart = useCart();
+  const { toast } = useToast();
+
+  // Check if user is authenticated
+  const { data: user } = useQuery({
+    queryKey: ["/api/auth/user"],
+  });
+
+  // Check if product is favorited
+  const { data: favoriteStatus } = useQuery<{ isFavorited: boolean }>({
+    queryKey: ["/api/favorites", productId, "status"],
+    queryFn: async () => {
+      const response = await apiRequest(`/api/favorites/${productId}/status`);
+      return response.json();
+    },
+    enabled: !!user && !!productId,
+  });
+
+  // Add to favorites mutation
+  const addToFavoritesMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("/api/favorites", {
+        method: "POST",
+        body: JSON.stringify({ productId }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites", productId, "status"] });
+      toast({
+        title: "Added to Favorites",
+        description: "Product saved to your favorites list.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add to favorites",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Remove from favorites mutation
+  const removeFromFavoritesMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest(`/api/favorites/${productId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites", productId, "status"] });
+      toast({
+        title: "Removed from Favorites",
+        description: "Product removed from your favorites list.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove from favorites",
+        variant: "destructive",
+      });
+    },
+  });
 
   if (!match || !productId) {
     return <div>Product not found</div>;
@@ -145,6 +212,70 @@ export default function ProductDetail() {
 
   const handleAddToCart = () => {
     cart.addToCart(product, 1);
+  };
+
+  const handleSaveForLater = () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to save products to your favorites.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const isFavorited = favoriteStatus?.isFavorited;
+    
+    if (isFavorited) {
+      removeFromFavoritesMutation.mutate();
+    } else {
+      addToFavoritesMutation.mutate();
+    }
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const title = product.name;
+    const text = `Check out this beautiful ${product.name} - ${product.description.slice(0, 100)}...`;
+
+    // Try Web Share API first (mobile/modern browsers)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title,
+          text,
+          url,
+        });
+        toast({
+          title: "Shared successfully",
+          description: "Product shared via device sharing options.",
+        });
+      } catch (error) {
+        // User cancelled sharing, don't show error
+        console.log("Share cancelled");
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(url);
+        toast({
+          title: "Link copied",
+          description: "Product link copied to clipboard.",
+        });
+      } catch (error) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        toast({
+          title: "Link copied",
+          description: "Product link copied to clipboard.",
+        });
+      }
+    }
   };
 
   const features = [
@@ -306,11 +437,26 @@ export default function ProductDetail() {
               )}
 
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1">
-                  <Heart className="w-4 h-4 mr-2" />
-                  Save for Later
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1" 
+                  onClick={handleSaveForLater}
+                  disabled={addToFavoritesMutation.isPending || removeFromFavoritesMutation.isPending}
+                  data-testid="button-save-for-later"
+                >
+                  <Heart 
+                    className={`w-4 h-4 mr-2 ${favoriteStatus?.isFavorited ? 'fill-pink-500 text-pink-500' : ''}`} 
+                  />
+                  {favoriteStatus?.isFavorited ? 'Saved' : 'Save for Later'}
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1" 
+                  onClick={handleShare}
+                  data-testid="button-share"
+                >
                   <Share2 className="w-4 h-4 mr-2" />
                   Share
                 </Button>
