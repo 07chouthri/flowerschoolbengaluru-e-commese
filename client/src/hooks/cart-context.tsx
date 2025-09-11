@@ -442,14 +442,17 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     
     if (userId) {
       // Backend persistence for authenticated users
+      console.log(`[ADD TO CART] Using backend persistence for user: ${userId}`);
       setCart(prev => ({ ...prev, isLoading: true, error: null }));
       
       try {
+        console.log(`[ADD TO CART] Making API request to: /api/cart/${userId}/add`);
         const response = await apiRequest(`/api/cart/${userId}/add`, {
           method: 'POST',
           body: JSON.stringify({ productId: product.id, quantity }),
           headers: { 'Content-Type': 'application/json' }
         });
+        console.log(`[ADD TO CART] API response status: ${response.status}`);
         await response.json();
         
         // Reload cart after adding
@@ -468,13 +471,25 @@ export function CartProvider({ children, userId }: CartProviderProps) {
             await revalidateAppliedCoupon(currentCart.totalPrice);
           }, 100);
         }
-      } catch (error) {
-        console.error('Error adding to cart:', error);
+      } catch (error: any) {
+        console.error('[ADD TO CART] Backend error:', error);
+        console.error('[ADD TO CART] Error details:', {
+          message: error.message,
+          status: error.status,
+          response: error.response,
+          stack: error.stack
+        });
         setCart(prev => ({ 
           ...prev, 
           isLoading: false, 
-          error: 'Failed to add item to cart' 
+          error: `Failed to add ${product.name} to cart: ${error.message}` 
         }));
+        
+        toast({
+          title: "Error", 
+          description: `Error adding to cart: ${error.message}`,
+          variant: "destructive",
+        });
       }
     } else {
       // Local state for guest users

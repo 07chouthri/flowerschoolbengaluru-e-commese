@@ -62,7 +62,19 @@ export default function AddressManager({ className, userId }: AddressManagerProp
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGuestMode, setIsGuestMode] = useState(!userId); // Track if in guest mode
+  const [isGuestMode, setIsGuestMode] = useState(!userId);
+
+  // Update guest mode when userId changes and trigger data loading
+  useEffect(() => {
+    const newGuestMode = !userId;
+    setIsGuestMode(newGuestMode);
+    
+    // If user just became authenticated, load their data
+    if (!newGuestMode && userId) {
+      loadAddresses();
+      loadUserProfile();
+    }
+  }, [userId]); // Track if in guest mode
   const [userProfile, setUserProfile] = useState<any>(null); // Store user profile data
 
   // Form state for new/edit address
@@ -118,7 +130,8 @@ export default function AddressManager({ className, userId }: AddressManagerProp
     if (!userId) return;
     
     try {
-      const profile = await apiRequest('/api/profile');
+      const response = await apiRequest('/api/profile');
+      const profile = await response.json();
       setUserProfile(profile);
     } catch (err: any) {
       console.error('Error loading user profile:', err);
@@ -573,7 +586,7 @@ export default function AddressManager({ className, userId }: AddressManagerProp
       </CardHeader>
       <CardContent>
         {/* Authenticated User - Address List */}
-        {userId && addresses.length > 0 ? (
+        {userId && !isGuestMode && !isLoading && addresses.length > 0 ? (
           <RadioGroup
             value={shippingAddress?.id || ""}
             onValueChange={(value) => {
@@ -653,6 +666,23 @@ export default function AddressManager({ className, userId }: AddressManagerProp
               </div>
             ))}
           </RadioGroup>
+        ) : isLoading && userId && !isGuestMode ? (
+          /* Loading State for Authenticated Users */
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
+              <span className="text-sm text-muted-foreground">Loading your saved addresses...</span>
+            </div>
+            {[1, 2].map((i) => (
+              <div key={i} className="flex items-center space-x-3 p-3 border rounded-md animate-pulse">
+                <div className="h-4 w-4 bg-muted rounded-full"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-32 bg-muted rounded"></div>
+                  <div className="h-3 w-48 bg-muted rounded"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           /* Guest User or No Addresses - Address Form */
           <div data-testid="address-form-container">

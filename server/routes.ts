@@ -1237,7 +1237,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delivery Options Routes
   app.get("/api/delivery-options", async (req, res) => {
     try {
-      const deliveryOptions = await storage.getActiveDeliveryOptions();
+      let deliveryOptions = await storage.getActiveDeliveryOptions();
+      
+      // Auto-seed delivery options if none exist
+      if (deliveryOptions.length === 0) {
+        console.log("No delivery options found, bootstrapping default options...");
+        
+        const defaultOptions = [
+          {
+            name: "Standard Delivery",
+            description: "3-5 business days delivery",
+            estimatedDays: "3-5 business days",
+            price: "50.00",
+            isActive: true,
+            sortOrder: 1,
+          },
+          {
+            name: "Express Delivery", 
+            description: "Next day delivery",
+            estimatedDays: "1 business day",
+            price: "150.00",
+            isActive: true,
+            sortOrder: 2,
+          },
+          {
+            name: "Same Day Delivery",
+            description: "Same day delivery within city",
+            estimatedDays: "Same day",
+            price: "250.00", 
+            isActive: true,
+            sortOrder: 3,
+          },
+        ];
+        
+        // Create default delivery options
+        for (const option of defaultOptions) {
+          await storage.createDeliveryOption(option);
+        }
+        
+        // Fetch the newly created options
+        deliveryOptions = await storage.getActiveDeliveryOptions();
+        console.log(`Bootstrapped ${deliveryOptions.length} delivery options`);
+      }
+      
       res.json(deliveryOptions);
     } catch (error) {
       console.error("Error fetching delivery options:", error);

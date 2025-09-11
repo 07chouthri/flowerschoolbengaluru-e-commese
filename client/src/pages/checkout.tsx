@@ -21,7 +21,8 @@ import {
 } from "lucide-react";
 import { useCart } from "@/hooks/cart-context";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
 import AddressManager from "@/components/address-manager";
 import DeliveryOptions from "@/components/delivery-options";
 import PaymentOptions from "@/components/payment-options";
@@ -57,28 +58,17 @@ export default function Checkout() {
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [couponCode, setCouponCode] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('cart');
   const [completedSteps, setCompletedSteps] = useState<CheckoutStep[]>([]);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [, setLocation] = useLocation();
 
-  // Check if user is authenticated
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const userData = await apiRequest('/api/auth/user');
-        setUser(userData);
-      } catch (error) {
-        // User not authenticated, continue as guest
-        setUser(null);
-      } finally {
-        setIsLoadingUser(false);
-      }
-    };
-    checkAuth();
-  }, []);
+  // Fetch user profile using React Query like My Account does
+  const { data: user, isLoading: isLoadingUser } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false, // Don't retry on auth failures
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   // Format price in INR currency
   const formatPrice = (price: number | string) => {
@@ -550,11 +540,16 @@ export default function Checkout() {
                 {/* Shipping Step */}
                 {currentStep === 'shipping' && (
                   <>
-                    {!isLoadingUser && (
+                    {!isLoadingUser ? (
                       <AddressManager 
                         userId={user?.id}
                         className=""
                       />
+                    ) : (
+                      <div className="flex items-center justify-center p-8">
+                        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+                        <span className="ml-2 text-muted-foreground">Loading...</span>
+                      </div>
                     )}
                     
                     <DeliveryOptions className="" />
