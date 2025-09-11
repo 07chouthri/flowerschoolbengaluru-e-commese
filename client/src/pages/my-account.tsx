@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
@@ -77,6 +78,7 @@ interface Order {
 }
 
 export default function MyAccount() {
+  const [, setLocation] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -169,8 +171,8 @@ export default function MyAccount() {
         title: "Account deleted",
         description: "Your account has been deleted successfully.",
       });
-      // Redirect to home page
-      window.location.href = "/";
+      // Redirect to home page  
+      setLocation("/");
     },
     onError: (error: any) => {
       toast({
@@ -902,7 +904,7 @@ export default function MyAccount() {
                           <Heart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
                           <h3 className="text-lg font-semibold text-gray-900 mb-2">No favorites yet</h3>
                           <p className="text-gray-600 mb-4">Save items you love to see them here</p>
-                          <Button onClick={() => window.location.href = "/shop"}>
+                          <Button onClick={() => setLocation("/shop")}>
                             Browse Products
                           </Button>
                         </div>
@@ -915,7 +917,7 @@ export default function MyAccount() {
                                   src={favorite.product?.image || "/placeholder-image.jpg"}
                                   alt={favorite.product?.name || "Product"}
                                   className="w-full h-48 object-cover cursor-pointer"
-                                  onClick={() => window.location.href = `/product/${favorite.productId}`}
+                                  onClick={() => setLocation(`/product/${favorite.productId}`)}
                                 />
                                 <button 
                                   className="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover-elevate"
@@ -939,7 +941,7 @@ export default function MyAccount() {
                               <CardContent className="p-4">
                                 <h3 
                                   className="font-semibold text-gray-900 mb-2 cursor-pointer hover:text-pink-600 transition-colors"
-                                  onClick={() => window.location.href = `/product/${favorite.productId}`}
+                                  onClick={() => setLocation(`/product/${favorite.productId}`)}
                                 >
                                   {favorite.product?.name || "Product Name"}
                                 </h3>
@@ -959,7 +961,7 @@ export default function MyAccount() {
                                     size="sm"
                                     variant="outline"
                                     className="flex-1"
-                                    onClick={() => window.location.href = `/product/${favorite.productId}`}
+                                    onClick={() => setLocation(`/product/${favorite.productId}`)}
                                     data-testid={`button-view-product-${favorite.productId}`}
                                   >
                                     View Product

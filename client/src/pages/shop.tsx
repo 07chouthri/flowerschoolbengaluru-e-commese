@@ -126,7 +126,7 @@ export default function Shop() {
         description: "You have been signed out.",
       });
       // Navigate to home page
-      window.location.href = "/";
+      setLocation("/");
     },
     onError: (error: any) => {
       toast({
@@ -385,7 +385,7 @@ export default function Shop() {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => window.location.href = "/my-account"}
+                    onClick={() => setLocation("/my-account")}
                     data-testid="button-account"
                   >
                     <UserIcon className="w-4 h-4 mr-2" />
@@ -405,7 +405,7 @@ export default function Shop() {
               ) : (
                 <Button 
                   size="sm" 
-                  onClick={() => window.location.href = "/signin"}
+                  onClick={() => setLocation("/signin")}
                   data-testid="button-login"
                 >
                   <UserIcon className="w-4 h-4 mr-2" />
@@ -827,7 +827,7 @@ export default function Shop() {
                       src={product.image}
                       alt={product.name}
                       className="w-full h-64 object-cover cursor-pointer"
-                      onClick={() => window.location.href = `/product/${product.id}`}
+                      onClick={() => setLocation(`/product/${product.id}`)}
                     />
                     <button 
                       className="absolute top-4 right-4 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover-elevate"
@@ -853,7 +853,7 @@ export default function Shop() {
                   <CardContent className="p-4">
                     <h3 
                       className="font-semibold text-gray-900 mb-2 cursor-pointer hover:text-pink-600 transition-colors"
-                      onClick={() => window.location.href = `/product/${product.id}`}
+                      onClick={() => setLocation(`/product/${product.id}`)}
                     >
                       {product.name}
                     </h3>
@@ -870,7 +870,7 @@ export default function Shop() {
                           size="sm"
                           variant="outline"
                           className="flex-1"
-                          onClick={() => window.location.href = `/product/${product.id}`}
+                          onClick={() => setLocation(`/product/${product.id}`)}
                           data-testid={`button-view-details-${product.id}`}
                         >
                           View Details
