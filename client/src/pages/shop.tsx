@@ -195,7 +195,7 @@ export default function Shop() {
 
   // Check if product is favorited
   const isProductFavorited = (productId: string) => {
-    return userFavorites.some((fav: any) => fav.productId === productId);
+    return Array.isArray(userFavorites) && userFavorites.some((fav: any) => fav.productId === productId);
   };
 
   // Handle toggle favorites
@@ -1001,42 +1001,23 @@ export default function Shop() {
                 </div>
 
                 <DialogFooter className="flex-col gap-2">
-                  {!user ? (
-                    <div className="w-full space-y-2">
-                      <p className="text-sm text-gray-600 text-center">
-                        Sign in to complete your order
-                      </p>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          className="flex-1"
-                          onClick={() => window.location.href = "/signin"}
-                          data-testid="button-signin"
-                        >
-                          Sign In
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          className="flex-1"
-                          onClick={() => window.location.href = "/signup"}
-                          data-testid="button-signup"
-                        >
-                          Sign Up
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <Button 
-                      className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
-                      onClick={() => {
-                        setShowCartModal(false);
+                  {/* Always show Checkout button - behavior changes based on login status */}
+                  <Button 
+                    className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
+                    onClick={() => {
+                      setShowCartModal(false);
+                      if (user) {
+                        // User is logged in - go to checkout
                         setLocation('/checkout');
-                      }}
-                      data-testid="button-proceed-checkout-shop"
-                    >
-                      Proceed to Checkout
-                    </Button>
-                  )}
+                      } else {
+                        // User is not logged in - go to signin
+                        setLocation('/signin');
+                      }
+                    }}
+                    data-testid="button-checkout"
+                  >
+                    Checkout
+                  </Button>
                   <Button variant="outline" onClick={() => setShowCartModal(false)} className="w-full">
                     Continue Shopping
                   </Button>
