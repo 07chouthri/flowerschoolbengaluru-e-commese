@@ -685,19 +685,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get current user if authenticated
       let currentUser = null;
-      if (orderData.userId) {
+      try {
         currentUser = await getUserFromSession(req);
-        if (!currentUser || currentUser.id !== orderData.userId) {
-          console.log("[ORDER PLACEMENT] Authentication failed for user:", orderData.userId);
-          return res.status(401).json({ 
-            success: false,
-            message: "Authentication required",
-            errors: ["Invalid or expired session"]
-          });
+        if (currentUser) {
+          console.log("[ORDER PLACEMENT] User authenticated:", currentUser.email);
+        } else {
+          console.log("[ORDER PLACEMENT] Processing guest order");
         }
-        console.log("[ORDER PLACEMENT] User authenticated:", currentUser.email);
-      } else {
-        console.log("[ORDER PLACEMENT] Processing guest order");
+      } catch (error) {
+        console.log("[ORDER PLACEMENT] Authentication check failed, processing as guest order");
+        currentUser = null;
       }
       
       // Validate and process order through comprehensive validation

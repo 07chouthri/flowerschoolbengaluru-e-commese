@@ -15,9 +15,16 @@ export async function apiRequest(
     body?: string;
   }
 ): Promise<Response> {
+  const defaultHeaders: Record<string, string> = {};
+  
+  // Add Content-Type header for requests with body
+  if (options?.body) {
+    defaultHeaders["Content-Type"] = "application/json";
+  }
+
   const res = await fetch(url, {
     method: options?.method || "GET",
-    headers: options?.headers || {},
+    headers: { ...defaultHeaders, ...options?.headers },
     body: options?.body,
     credentials: "include",
   });

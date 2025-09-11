@@ -29,6 +29,7 @@ function Router() {
       <Route path="/order-confirmation/:orderId" component={OrderConfirmation} />
       <Route path="/signup" component={SignUp} />
       <Route path="/signin" component={SignIn} />
+      <Route path="/login" component={SignIn} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/verify-otp" component={VerifyOtp} />
       <Route path="/my-account" component={MyAccount} />

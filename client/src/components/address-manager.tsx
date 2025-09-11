@@ -150,7 +150,8 @@ export default function AddressManager({ className, userId }: AddressManagerProp
     try {
       setIsLoading(true);
       setError(null);
-      const addresses: Address[] = await apiRequest('/api/addresses');
+      const response = await apiRequest('/api/addresses');
+      const addresses: Address[] = await response.json();
       setAddresses(addresses);
       
       // Auto-select default address or first address
@@ -261,10 +262,11 @@ export default function AddressManager({ className, userId }: AddressManagerProp
         try {
           if (editingAddress) {
             // Update existing address
-            savedAddress = await apiRequest(`/api/addresses/${editingAddress.id}`, {
+            const response = await apiRequest(`/api/addresses/${editingAddress.id}`, {
               method: 'PUT',
               body: JSON.stringify(formData),
             });
+            savedAddress = await response.json();
             
             toast({
               title: "Address Updated",
@@ -272,10 +274,11 @@ export default function AddressManager({ className, userId }: AddressManagerProp
             });
           } else {
             // Create new address
-            savedAddress = await apiRequest('/api/addresses', {
+            const response = await apiRequest('/api/addresses', {
               method: 'POST',
               body: JSON.stringify(formData),
             });
+            savedAddress = await response.json();
             
             toast({
               title: "Address Added",

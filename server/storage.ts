@@ -1366,8 +1366,14 @@ export class MemStorage implements IStorage {
       }
 
       // If validation passes, create order with transaction
+      // Override the userId in validatedOrder with the authenticated user's ID
+      const validatedOrderWithUserId = {
+        ...validation.validatedOrder!,
+        userId: userId || null
+      };
+      
       const createdOrder = await this.createOrderWithTransaction(
-        validation.validatedOrder!,
+        validatedOrderWithUserId,
         orderData.couponCode,
         userId
       );
