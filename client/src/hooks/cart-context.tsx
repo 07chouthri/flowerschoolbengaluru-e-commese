@@ -257,7 +257,7 @@ export function CartProvider({ children, userId }: CartProviderProps) {
             apiRequest(`/api/cart/${userId}/add`, {
               method: 'POST',
               body: JSON.stringify({ 
-                productId: guestItem.productId || guestItem.id,
+                productId: guestItem.id,
                 quantity: guestItem.quantity 
               }),
               headers: { 'Content-Type': 'application/json' }
@@ -283,7 +283,20 @@ export function CartProvider({ children, userId }: CartProviderProps) {
 
         // Now load the updated server cart
         const response = await apiRequest(`/api/cart/${userId}`);
-        const items = await response.json();
+        const serverItems = await response.json();
+        
+        // Normalize server cart items: handle both nested and flat structures
+        const items = serverItems.map((cartItem: any) => {
+          // Handle nested structure: { product: {...}, quantity }
+          if (cartItem.product) {
+            return {
+              ...cartItem.product,
+              quantity: cartItem.quantity
+            };
+          }
+          // Handle flat structure (fallback): { id, name, price, quantity, ... }
+          return cartItem;
+        });
         
         // Preserve existing coupon state and recalculate with new items
         setCart(prev => {

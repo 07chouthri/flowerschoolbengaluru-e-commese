@@ -389,7 +389,7 @@ export default function Navigation() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => updateQuantity(item.productId || item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           disabled={isLoading}
                         >
                           <Minus className="h-3 w-3" />
@@ -398,7 +398,7 @@ export default function Navigation() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => updateQuantity(item.productId || item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           disabled={isLoading}
                         >
                           <Plus className="h-3 w-3" />
@@ -406,7 +406,7 @@ export default function Navigation() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => removeFromCart(item.productId || item.id)}
+                          onClick={() => removeFromCart(item.id)}
                           disabled={isLoading}
                           className="ml-2 text-red-600 hover:text-red-700"
                         >
@@ -452,7 +452,11 @@ export default function Navigation() {
                       </div>
                     </div>
                   ) : (
-                    <Button className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
+                    <Button 
+                      className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
+                      onClick={() => { setShowCartModal(false); setLocation('/checkout'); }}
+                      data-testid="button-proceed-checkout"
+                    >
                       Proceed to Checkout
                     </Button>
                   )}
