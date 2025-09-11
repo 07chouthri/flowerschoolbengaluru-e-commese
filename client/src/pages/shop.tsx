@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { 
   Search, 
   MapPin, 
@@ -17,7 +19,11 @@ import {
   Filter,
   ChevronDown,
   Phone,
-  LogOut
+  LogOut,
+  X,
+  Plus,
+  Minus,
+  Trash2
 } from "lucide-react";
 import { Link } from "wouter";
 import Footer from "@/components/footer";
@@ -26,7 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import bouquetBarLogo from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 import { type Product, type User } from "@shared/schema";
-import { useCart } from "@/hooks/use-cart";
+import { useCart } from "@/hooks/cart-context";
 
 export default function Shop() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,6 +40,7 @@ export default function Shop() {
   const [sortBy, setSortBy] = useState("name");
   const [priceRange, setPriceRange] = useState([0, 2000]);
   const [showInStockOnly, setShowInStockOnly] = useState(false);
+  const [showCartModal, setShowCartModal] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -43,7 +50,17 @@ export default function Shop() {
     retry: false,
   });
   
-  const { addToCart, totalItems, isInCart, getItemQuantity } = useCart(user?.id);
+  const { 
+    addToCart, 
+    totalItems, 
+    totalPrice,
+    items,
+    isLoading,
+    isInCart, 
+    getItemQuantity,
+    updateQuantity,
+    removeFromCart 
+  } = useCart();
   
   // Get products data
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
@@ -258,7 +275,13 @@ export default function Shop() {
             </div>
             
             <div className="flex items-center gap-4">
-              <Button variant="outline" size="sm" className="relative" data-testid="button-cart">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="relative" 
+                onClick={() => setShowCartModal(true)}
+                data-testid="button-cart"
+              >
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 Cart
                 {totalItems > 0 && (
@@ -711,32 +734,37 @@ export default function Shop() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProducts.map((product, index) => (
                 <Card key={product.id} className="overflow-hidden hover-elevate" data-testid={`card-product-${product.id}`}>
-                  <Link href={`/product/${product.id}`}>
-                    <div className="relative cursor-pointer">
-                      <img 
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-64 object-cover"
-                      />
-                      <button 
-                        className="absolute top-4 right-4 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover-elevate"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <Heart className="w-4 h-4 text-gray-600" />
-                      </button>
-                      {!product.inStock && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                          <Badge variant="secondary" className="bg-white text-black">
-                            Out of Stock
-                          </Badge>
-                        </div>
-                      )}
-                    </div>
-                  </Link>
+                  <div className="relative">
+                    <img 
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-64 object-cover cursor-pointer"
+                      onClick={() => window.location.href = `/product/${product.id}`}
+                    />
+                    <button 
+                      className="absolute top-4 right-4 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover-elevate"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // TODO: Add to favorites functionality
+                      }}
+                    >
+                      <Heart className="w-4 h-4 text-gray-600" />
+                    </button>
+                    {!product.inStock && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <Badge variant="secondary" className="bg-white text-black">
+                          Out of Stock
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
                   <CardContent className="p-4">
-                    <Link href={`/product/${product.id}`}>
-                      <h3 className="font-semibold text-gray-900 mb-2 cursor-pointer hover:text-pink-600 transition-colors">{product.name}</h3>
-                    </Link>
+                    <h3 
+                      className="font-semibold text-gray-900 mb-2 cursor-pointer hover:text-pink-600 transition-colors"
+                      onClick={() => window.location.href = `/product/${product.id}`}
+                    >
+                      {product.name}
+                    </h3>
                     <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-xl font-bold text-primary">₹{product.price}</span>
@@ -749,13 +777,11 @@ export default function Shop() {
                         <Button 
                           size="sm"
                           variant="outline"
-                          asChild
                           className="flex-1"
+                          onClick={() => window.location.href = `/product/${product.id}`}
                           data-testid={`button-view-details-${product.id}`}
                         >
-                          <Link href={`/product/${product.id}`}>
-                            View Details
-                          </Link>
+                          View Details
                         </Button>
                         <Button 
                           size="sm"
@@ -791,6 +817,126 @@ export default function Shop() {
           </div>
         </div>
       </section>
+
+      {/* Cart Modal */}
+      <Dialog open={showCartModal} onOpenChange={setShowCartModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5" />
+              Shopping Cart ({totalItems} {totalItems === 1 ? 'item' : 'items'})
+            </DialogTitle>
+            <DialogDescription>
+              Review your items and proceed to checkout
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {items.length === 0 ? (
+              <div className="text-center py-8">
+                <ShoppingCart className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Your cart is empty</h3>
+                <p className="text-gray-500 mb-4">Start shopping to add items to your cart</p>
+                <Button onClick={() => setShowCartModal(false)}>
+                  Continue Shopping
+                </Button>
+              </div>
+            ) : (
+              <>
+                {/* Cart Items */}
+                <div className="space-y-3">
+                  {items.map((item: any) => (
+                    <div key={item.id} className="flex items-center gap-4 p-4 border rounded-lg">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">{item.name}</h4>
+                        <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
+                        <p className="text-lg font-bold text-pink-600">₹{parseFloat(item.price).toLocaleString()}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          disabled={isLoading}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-8 text-center font-medium">{item.quantity}</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          disabled={isLoading}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => removeFromCart(item.id)}
+                          disabled={isLoading}
+                          className="ml-2 text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Separator />
+
+                {/* Cart Summary */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal ({totalItems} {totalItems === 1 ? 'item' : 'items'})</span>
+                    <span>₹{totalPrice.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Delivery</span>
+                    <span className="text-green-600">Free</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between text-lg font-bold">
+                    <span>Total</span>
+                    <span className="text-pink-600">₹{totalPrice.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <DialogFooter className="flex-col gap-2">
+                  {!user ? (
+                    <div className="w-full space-y-2">
+                      <p className="text-sm text-gray-600 text-center">
+                        Sign in to complete your order
+                      </p>
+                      <div className="flex gap-2">
+                        <Button variant="outline" className="flex-1" asChild>
+                          <Link href="/signin">Sign In</Link>
+                        </Button>
+                        <Button variant="outline" className="flex-1" asChild>
+                          <Link href="/signup">Sign Up</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
+                      Proceed to Checkout
+                    </Button>
+                  )}
+                  <Button variant="outline" onClick={() => setShowCartModal(false)} className="w-full">
+                    Continue Shopping
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Footer */}
       <Footer />

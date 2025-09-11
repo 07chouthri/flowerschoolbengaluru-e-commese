@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Menu, X, User, UserPlus, LogOut } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { Menu, X, User, UserPlus, LogOut, ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useCart } from "@/hooks/cart-context";
 import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 import type { User as UserType } from "@shared/schema";
 
@@ -13,6 +16,7 @@ export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrollingUp, setIsScrollingUp] = useState(false);
   const [lastScrollTop, setLastScrollTop] = useState(0);
+  const [showCartModal, setShowCartModal] = useState(false);
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -22,6 +26,16 @@ export default function Navigation() {
     queryKey: ["/api/auth/user"],
     retry: false,
   });
+
+  // Cart functionality - now using context, no arguments needed
+  const { 
+    totalItems, 
+    totalPrice,
+    items,
+    isLoading,
+    updateQuantity,
+    removeFromCart 
+  } = useCart();
 
   // Logout mutation
   const logoutMutation = useMutation({
@@ -140,6 +154,23 @@ export default function Navigation() {
           </div>
 
           <div className="flex items-center space-x-4">
+            {/* Cart Button */}
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="relative text-pink-600 border border-pink-300 rounded-full px-4 py-1 text-sm hover:bg-pink-50"
+              onClick={() => setShowCartModal(true)}
+              data-testid="button-cart"
+            >
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              Cart
+              {totalItems > 0 && (
+                <Badge className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center text-xs bg-pink-500 text-white">
+                  {totalItems}
+                </Badge>
+              )}
+            </Button>
+
             <div className="hidden md:flex items-center space-x-3">
               {user ? (
                 <div className="flex items-center gap-3">
@@ -308,6 +339,126 @@ export default function Navigation() {
           </div>
         )}
       </div>
+
+      {/* Cart Modal */}
+      <Dialog open={showCartModal} onOpenChange={setShowCartModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5" />
+              Shopping Cart ({totalItems} {totalItems === 1 ? 'item' : 'items'})
+            </DialogTitle>
+            <DialogDescription>
+              Review your items and proceed to checkout
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {items.length === 0 ? (
+              <div className="text-center py-8">
+                <ShoppingCart className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Your cart is empty</h3>
+                <p className="text-gray-500 mb-4">Start shopping to add items to your cart</p>
+                <Button onClick={() => setShowCartModal(false)}>
+                  Continue Shopping
+                </Button>
+              </div>
+            ) : (
+              <>
+                {/* Cart Items */}
+                <div className="space-y-3">
+                  {items.map((item: any) => (
+                    <div key={item.id} className="flex items-center gap-4 p-4 border rounded-lg">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">{item.name}</h4>
+                        <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
+                        <p className="text-lg font-bold text-pink-600">₹{parseFloat(item.price).toLocaleString()}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          disabled={isLoading}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-8 text-center font-medium">{item.quantity}</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          disabled={isLoading}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => removeFromCart(item.id)}
+                          disabled={isLoading}
+                          className="ml-2 text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Separator />
+
+                {/* Cart Summary */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal ({totalItems} {totalItems === 1 ? 'item' : 'items'})</span>
+                    <span>₹{totalPrice.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Delivery</span>
+                    <span className="text-green-600">Free</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between text-lg font-bold">
+                    <span>Total</span>
+                    <span className="text-pink-600">₹{totalPrice.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <DialogFooter className="flex-col gap-2">
+                  {!user ? (
+                    <div className="w-full space-y-2">
+                      <p className="text-sm text-gray-600 text-center">
+                        Sign in to complete your order
+                      </p>
+                      <div className="flex gap-2">
+                        <Button variant="outline" className="flex-1" onClick={() => { setShowCartModal(false); setLocation('/signin'); }}>
+                          Sign In
+                        </Button>
+                        <Button variant="outline" className="flex-1" onClick={() => { setShowCartModal(false); setLocation('/signup'); }}>
+                          Sign Up
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
+                      Proceed to Checkout
+                    </Button>
+                  )}
+                  <Button variant="outline" onClick={() => setShowCartModal(false)} className="w-full">
+                    Continue Shopping
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </nav>
   );
 }

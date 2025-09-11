@@ -5,14 +5,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ShoppingCart, Plus, Eye } from "lucide-react";
-import { useCart } from "@/hooks/use-cart";
+import { useCart } from "@/hooks/cart-context";
 import { useToast } from "@/hooks/use-toast";
-import type { Product } from "@shared/schema";
+import type { Product, User } from "@shared/schema";
 
 export default function ShopSection() {
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const { addToCart } = useCart();
   const { toast } = useToast();
+
+  // Cart functionality - now using context, no arguments needed
+  const { addToCart } = useCart();
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ['/api/products', selectedCategory === "all" ? "" : selectedCategory],

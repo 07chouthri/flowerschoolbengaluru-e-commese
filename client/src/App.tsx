@@ -1,8 +1,9 @@
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { CartProvider } from "@/hooks/cart-context";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Shop from "@/pages/shop";
@@ -12,6 +13,7 @@ import SignIn from "@/pages/signin";
 import ForgotPassword from "@/pages/forgot-password";
 import VerifyOtp from "@/pages/verify-otp";
 import MyAccount from "@/pages/my-account";
+import type { User } from "@shared/schema";
 
 function Router() {
   return (
@@ -29,13 +31,27 @@ function Router() {
   );
 }
 
-function App() {
+function AppWithCart() {
+  // Get current user data to provide to CartProvider
+  const { data: user } = useQuery<User>({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+  });
+
   return (
-    <QueryClientProvider client={queryClient}>
+    <CartProvider userId={user?.id}>
       <TooltipProvider>
         <Toaster />
         <Router />
       </TooltipProvider>
+    </CartProvider>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppWithCart />
     </QueryClientProvider>
   );
 }
