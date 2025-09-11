@@ -348,11 +348,21 @@ export default function Navigation() {
 
       {/* Cart Modal */}
       <Dialog open={showCartModal} onOpenChange={setShowCartModal}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto [&>button]:hidden">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShoppingCart className="h-5 w-5" />
-              Shopping Cart ({totalItems} {totalItems === 1 ? 'item' : 'items'})
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5" />
+                Shopping Cart ({totalItems} {totalItems === 1 ? 'item' : 'items'})
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowCartModal(false)}
+                className="h-auto p-2"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </DialogTitle>
             <DialogDescription>
               Review your items and proceed to checkout
@@ -436,7 +446,7 @@ export default function Navigation() {
                   </div>
                 </div>
 
-                <DialogFooter className="flex-col gap-2">
+                <div className="flex flex-col gap-2 pt-4">
                   {!user ? (
                     <div className="w-full space-y-2">
                       <p className="text-sm text-gray-600 text-center">
@@ -454,7 +464,11 @@ export default function Navigation() {
                   ) : (
                     <Button 
                       className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
-                      onClick={() => { setShowCartModal(false); setLocation('/checkout'); }}
+                      onClick={() => { 
+                        console.log('Proceed to Checkout clicked!'); 
+                        setShowCartModal(false); 
+                        setLocation('/checkout'); 
+                      }}
                       data-testid="button-proceed-checkout"
                     >
                       Proceed to Checkout
@@ -463,7 +477,7 @@ export default function Navigation() {
                   <Button variant="outline" onClick={() => setShowCartModal(false)} className="w-full">
                     Continue Shopping
                   </Button>
-                </DialogFooter>
+                </div>
               </>
             )}
           </div>
