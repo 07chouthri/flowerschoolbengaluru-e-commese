@@ -3,7 +3,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Product, Address, DeliveryOption } from "@shared/schema";
 
-export type PaymentMethod = 'card' | 'upi' | 'netbanking' | 'cod';
+export type PaymentMethod = 'card' | 'upi' | 'netbanking' | 'cod' | 'qrcode';
 
 export interface PaymentData {
   selectedMethod: PaymentMethod | null;
@@ -23,6 +23,10 @@ export interface PaymentData {
   };
   codData?: {
     confirmed: boolean;
+  };
+  qrcodeData?: {
+    confirmed: boolean;
+    amount: number;
   };
 }
 
@@ -891,7 +895,7 @@ export function CartProvider({ children, userId }: CartProviderProps) {
   // Payment methods
   const setPaymentMethod = useCallback((method: PaymentMethod | null) => {
     setCart(prev => {
-      const paymentCharge = method === 'cod' ? 50 : 0; // COD charge
+      const paymentCharge = method === 'cod' ? 50 : 0; // COD charge, QR code is free
       const { totalItems, totalPrice, finalAmount } = calculateTotals(
         prev.items,
         prev.appliedCoupon,
@@ -952,6 +956,8 @@ export function CartProvider({ children, userId }: CartProviderProps) {
         return !!(paymentData.netbankingData?.bankName);
       case 'cod':
         return !!(paymentData.codData?.confirmed);
+      case 'qrcode':
+        return !!(paymentData.qrcodeData?.confirmed);
       default:
         return false;
     }

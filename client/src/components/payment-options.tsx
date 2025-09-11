@@ -15,7 +15,8 @@ import {
   Building2, 
   Banknote,
   Check,
-  AlertCircle 
+  AlertCircle,
+  QrCode
 } from "lucide-react";
 import { useCart, type PaymentMethod, type PaymentData } from "@/hooks/cart-context";
 import { useToast } from "@/hooks/use-toast";
@@ -70,10 +71,16 @@ const codPaymentSchema = z.object({
   confirmed: z.boolean().refine(val => val, "Please confirm COD payment"),
 });
 
+const qrcodePaymentSchema = z.object({
+  confirmed: z.boolean().refine(val => val, "Please confirm QR Code payment"),
+  amount: z.number().min(1, "Amount must be specified"),
+});
+
 type CardFormData = z.infer<typeof cardPaymentSchema>;
 type UPIFormData = z.infer<typeof upiPaymentSchema>;
 type NetbankingFormData = z.infer<typeof netbankingPaymentSchema>;
 type CODFormData = z.infer<typeof codPaymentSchema>;
+type QRCodeFormData = z.infer<typeof qrcodePaymentSchema>;
 
 // Indian banks for netbanking
 const INDIAN_BANKS = [
@@ -120,6 +127,13 @@ const PAYMENT_METHODS = [
     description: 'Pay when your order arrives',
     icon: Banknote,
     fees: 50,
+  },
+  {
+    id: 'qrcode' as PaymentMethod,
+    title: 'QR Code',
+    description: 'Scan QR code to pay instantly',
+    icon: QrCode,
+    fees: 0,
   },
 ];
 
@@ -464,6 +478,85 @@ export default function PaymentOptions({ onPaymentComplete }: PaymentOptionsProp
     );
   };
 
+  // QR Code Payment Form Component  
+  const QRCodePaymentForm = () => {
+    const { finalAmount } = useCart();
+    const form = useForm<QRCodeFormData>({
+      resolver: zodResolver(qrcodePaymentSchema),
+      defaultValues: {
+        confirmed: paymentData.qrcodeData?.confirmed || false,
+        amount: finalAmount,
+      },
+    });
+
+    const handleSubmit = (data: QRCodeFormData) => {
+      updatePaymentData({
+        qrcodeData: data,
+      });
+      setValidationErrors([]);
+      toast({
+        title: "QR Code Payment Ready",
+        description: "QR Code payment has been selected",
+      });
+    };
+
+    // Generate QR Code data (in real implementation, this would come from payment gateway)
+    const qrCodeData = `upi://pay?pa=bouquetbar@paytm&pn=Bouquet%20Bar&am=${finalAmount}&cu=INR&tn=Payment%20for%20order`;
+
+    return (
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <Alert>
+          <QrCode className="h-4 w-4" />
+          <AlertDescription>
+            Scan the QR code with any UPI app to pay ₹{finalAmount.toLocaleString()} instantly. No additional charges.
+          </AlertDescription>
+        </Alert>
+
+        {/* QR Code Display */}
+        <div className="flex justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+          <div className="text-center">
+            <QrCode className="h-24 w-24 mx-auto mb-2 text-gray-400" />
+            <p className="text-sm text-gray-600 mb-2">QR Code for ₹{finalAmount.toLocaleString()}</p>
+            <p className="text-xs text-gray-500">Scan with any UPI app</p>
+          </div>
+        </div>
+
+        {/* Payment Instructions */}
+        <div className="text-sm text-gray-600 space-y-2">
+          <p className="font-medium">How to pay:</p>
+          <ol className="list-decimal list-inside space-y-1 text-sm">
+            <li>Open any UPI app (PhonePe, Paytm, GPay, etc.)</li>
+            <li>Tap on "Scan QR Code"</li>
+            <li>Scan the QR code above</li>
+            <li>Verify the amount and complete payment</li>
+          </ol>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="qrcode-confirm"
+            data-testid="checkbox-qrcode-confirm"
+            {...form.register("confirmed")}
+            className="rounded border-border"
+          />
+          <Label htmlFor="qrcode-confirm" className="text-sm">
+            I confirm that I want to pay via QR Code scan
+          </Label>
+        </div>
+        {form.formState.errors.confirmed && (
+          <p className="text-sm text-destructive mt-1">
+            {form.formState.errors.confirmed.message}
+          </p>
+        )}
+
+        <Button type="submit" className="w-full" data-testid="button-confirm-qrcode">
+          Confirm QR Code Payment
+        </Button>
+      </form>
+    );
+  };
+
   // Handle payment method selection
   const handleMethodSelect = (method: PaymentMethod) => {
     setPaymentMethod(method);
@@ -549,6 +642,7 @@ export default function PaymentOptions({ onPaymentComplete }: PaymentOptionsProp
               {paymentData.selectedMethod === 'upi' && <UPIPaymentForm />}
               {paymentData.selectedMethod === 'netbanking' && <NetBankingForm />}
               {paymentData.selectedMethod === 'cod' && <CODPaymentForm />}
+              {paymentData.selectedMethod === 'qrcode' && <QRCodePaymentForm />}
             </div>
           </>
         )}
