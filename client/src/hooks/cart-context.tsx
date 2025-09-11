@@ -437,6 +437,9 @@ export function CartProvider({ children, userId }: CartProviderProps) {
       return;
     }
     
+    console.log(`[ADD TO CART] Starting - Product: ${product.name}, Quantity: ${quantity}, User: ${userId || 'guest'}`);
+    console.log('[ADD TO CART] Current cart items:', cart.items.map(item => `${item.name}: ${item.quantity}`));
+    
     if (userId) {
       // Backend persistence for authenticated users
       setCart(prev => ({ ...prev, isLoading: true, error: null }));
