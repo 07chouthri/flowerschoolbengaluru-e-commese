@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Link, useLocation } from "wouter";
 import { ArrowLeft, Mail, Lock, ShoppingBag, GraduationCap, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
 
@@ -17,6 +17,7 @@ export default function SignIn() {
   });
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
 
   const signinMutation = useMutation({
     mutationFn: async (userData: { email: string; password: string }) => {
@@ -26,7 +27,12 @@ export default function SignIn() {
         body: JSON.stringify(userData),
       });
     },
-    onSuccess: (data) => {
+    onSuccess: async (response) => {
+      const data = await response.json();
+      // Set user data in cache to trigger cart sync
+      queryClient.setQueryData(["/api/auth/user"], data.user);
+      // Invalidate auth queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/auth"] });
       toast({
         title: "Welcome back!",
         description: "You have successfully signed in.",

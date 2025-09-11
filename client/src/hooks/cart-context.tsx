@@ -237,9 +237,51 @@ export function CartProvider({ children, userId }: CartProviderProps) {
   // Load cart from backend or localStorage
   const loadCart = useCallback(async () => {
     if (userId) {
-      // Authenticated user - load from backend
+      // Authenticated user - load from backend and merge guest cart if exists
       setCart(prev => ({ ...prev, isLoading: true, error: null }));
       try {
+        // Check for guest cart items to merge
+        const guestCartItems = localStorage.getItem('guest-cart');
+        let guestItems: CartItem[] = [];
+        if (guestCartItems) {
+          try {
+            guestItems = JSON.parse(guestCartItems);
+          } catch (error) {
+            console.error('Error parsing guest cart:', error);
+          }
+        }
+
+        // Add guest cart items to server cart with robust error handling
+        const mergeResults = await Promise.allSettled(
+          guestItems.map(guestItem => 
+            apiRequest(`/api/cart/${userId}/add`, {
+              method: 'POST',
+              body: JSON.stringify({ 
+                productId: guestItem.productId || guestItem.id,
+                quantity: guestItem.quantity 
+              }),
+              headers: { 'Content-Type': 'application/json' }
+            })
+          )
+        );
+
+        // Count successful merges
+        const successfulMerges = mergeResults.filter(result => result.status === 'fulfilled').length;
+        const failedMerges = mergeResults.filter(result => result.status === 'rejected').length;
+
+        // Only clear guest cart if all items were successfully merged
+        if (guestItems.length > 0) {
+          if (failedMerges === 0) {
+            localStorage.removeItem('guest-cart');
+            localStorage.removeItem('guest-coupon');
+            localStorage.removeItem('guest-shipping');
+          } else {
+            console.warn(`Failed to merge ${failedMerges} out of ${guestItems.length} guest cart items`);
+            // Keep guest cart intact for failed items - user can retry later
+          }
+        }
+
+        // Now load the updated server cart
         const response = await apiRequest(`/api/cart/${userId}`);
         const items = await response.json();
         
@@ -1034,7 +1076,7 @@ export function CartProvider({ children, userId }: CartProviderProps) {
   // Load cart when component mounts or userId changes
   useEffect(() => {
     loadCart();
-  }, [loadCart]);
+  }, [loadCart, userId]); // Added userId dependency to reload cart on auth changes
 
   const value: CartContextType = {
     ...cart,

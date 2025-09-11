@@ -47,6 +47,9 @@ export default function Navigation() {
     onSuccess: () => {
       // Clear user data from cache
       queryClient.setQueryData(["/api/auth/user"], null);
+      // Invalidate all cart-related queries to clear cart state
+      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth"] });
       toast({
         title: "Logged out successfully",
         description: "You have been signed out.",
