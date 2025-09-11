@@ -155,21 +155,24 @@ export default function Navigation() {
 
           <div className="flex items-center space-x-4">
             {/* Cart Button */}
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="relative text-pink-600 border border-pink-300 rounded-full px-4 py-1 text-sm hover:bg-pink-50"
-              onClick={() => setShowCartModal(true)}
-              data-testid="button-cart"
-            >
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Cart
-              {totalItems > 0 && (
-                <Badge className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center text-xs bg-pink-500 text-white">
-                  {totalItems}
-                </Badge>
-              )}
-            </Button>
+            {/* Hide cart on landing page (homepage) */}
+            {location !== "/" && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="relative text-pink-600 border border-pink-300 rounded-full px-4 py-1 text-sm hover:bg-pink-50"
+                onClick={() => setShowCartModal(true)}
+                data-testid="button-cart"
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Cart
+                {totalItems > 0 && (
+                  <Badge className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center text-xs bg-pink-500 text-white">
+                    {totalItems}
+                  </Badge>
+                )}
+              </Button>
+            )}
 
             <div className="hidden md:flex items-center space-x-3">
               {user ? (
@@ -383,7 +386,7 @@ export default function Navigation() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.productId || item.id, item.quantity - 1)}
                           disabled={isLoading}
                         >
                           <Minus className="h-3 w-3" />
@@ -392,7 +395,7 @@ export default function Navigation() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.productId || item.id, item.quantity + 1)}
                           disabled={isLoading}
                         >
                           <Plus className="h-3 w-3" />
@@ -400,7 +403,7 @@ export default function Navigation() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => removeFromCart(item.id)}
+                          onClick={() => removeFromCart(item.productId || item.id)}
                           disabled={isLoading}
                           className="ml-2 text-red-600 hover:text-red-700"
                         >
