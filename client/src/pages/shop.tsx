@@ -140,6 +140,82 @@ export default function Shop() {
     logoutMutation.mutate();
   };
 
+  // Favorites mutations
+  const addToFavoritesMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      return apiRequest("/api/favorites", {
+        method: "POST",
+        body: JSON.stringify({ productId }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      toast({
+        title: "Added to Favorites",
+        description: "Product saved to your favorites list.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add to favorites",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const removeFromFavoritesMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      return apiRequest(`/api/favorites/${productId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      toast({
+        title: "Removed from Favorites",
+        description: "Product removed from your favorites list.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove from favorites",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Get user favorites to check status
+  const { data: userFavorites = [] } = useQuery({
+    queryKey: ["/api/favorites"],
+    enabled: !!user,
+  });
+
+  // Check if product is favorited
+  const isProductFavorited = (productId: string) => {
+    return userFavorites.some((fav: any) => fav.productId === productId);
+  };
+
+  // Handle toggle favorites
+  const handleToggleFavorite = (productId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to save favorites.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isProductFavorited(productId)) {
+      removeFromFavoritesMutation.mutate(productId);
+    } else {
+      addToFavoritesMutation.mutate(productId);
+    }
+  };
+
   const categories = [
     "Birthday", "Occasions", "Anniversary", "Flowers", "Cakes", 
     "Personalised", "Plants", "Chocolates", "Luxe", "Combos", 
@@ -299,12 +375,15 @@ export default function Shop() {
                   <span className="text-sm text-gray-700 font-medium">
                     Hello, {user.firstName || 'User'}!
                   </span>
-                  <Link href="/my-account">
-                    <Button variant="outline" size="sm" data-testid="button-account">
-                      <UserIcon className="w-4 h-4 mr-2" />
-                      Account
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => window.location.href = "/my-account"}
+                    data-testid="button-account"
+                  >
+                    <UserIcon className="w-4 h-4 mr-2" />
+                    Account
+                  </Button>
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -317,12 +396,14 @@ export default function Shop() {
                   </Button>
                 </div>
               ) : (
-                <Link href="/signin">
-                  <Button size="sm" data-testid="button-login">
-                    <UserIcon className="w-4 h-4 mr-2" />
-                    Login
-                  </Button>
-                </Link>
+                <Button 
+                  size="sm" 
+                  onClick={() => window.location.href = "/signin"}
+                  data-testid="button-login"
+                >
+                  <UserIcon className="w-4 h-4 mr-2" />
+                  Login
+                </Button>
               )}
             </div>
           </div>
@@ -743,12 +824,16 @@ export default function Shop() {
                     />
                     <button 
                       className="absolute top-4 right-4 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover-elevate"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // TODO: Add to favorites functionality
-                      }}
+                      onClick={(e) => handleToggleFavorite(product.id, e)}
+                      disabled={addToFavoritesMutation.isPending || removeFromFavoritesMutation.isPending}
+                      data-testid={`button-favorite-${product.id}`}
                     >
-                      <Heart className="w-4 h-4 text-gray-600" />
+                      <Heart 
+                        className={`w-4 h-4 ${isProductFavorited(product.id) 
+                          ? 'fill-pink-500 text-pink-500' 
+                          : 'text-gray-600'
+                        }`} 
+                      />
                     </button>
                     {!product.inStock && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -915,11 +1000,21 @@ export default function Shop() {
                         Sign in to complete your order
                       </p>
                       <div className="flex gap-2">
-                        <Button variant="outline" className="flex-1" asChild>
-                          <Link href="/signin">Sign In</Link>
+                        <Button 
+                          variant="outline" 
+                          className="flex-1"
+                          onClick={() => window.location.href = "/signin"}
+                          data-testid="button-signin"
+                        >
+                          Sign In
                         </Button>
-                        <Button variant="outline" className="flex-1" asChild>
-                          <Link href="/signup">Sign Up</Link>
+                        <Button 
+                          variant="outline" 
+                          className="flex-1"
+                          onClick={() => window.location.href = "/signup"}
+                          data-testid="button-signup"
+                        >
+                          Sign Up
                         </Button>
                       </div>
                     </div>
