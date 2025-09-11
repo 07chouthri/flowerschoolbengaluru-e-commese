@@ -590,59 +590,61 @@ export default function AddressManager({ className, userId }: AddressManagerProp
                   data-testid={`radio-address-${address.id}`}
                 />
                 <div className="flex-1">
-                  <Label 
-                    htmlFor={`address-${address.id}`}
-                    className="block p-3 border rounded-md cursor-pointer hover-elevate space-y-2"
-                    data-testid={`label-address-${address.id}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium text-foreground">{address.fullName}</span>
-                        <div className="flex items-center space-x-1">
-                          {getAddressIcon(address.addressType)}
-                          <span className="text-xs text-muted-foreground">{address.addressType}</span>
+                  <div className="p-3 border rounded-md hover-elevate space-y-2 relative">
+                    <Label 
+                      htmlFor={`address-${address.id}`}
+                      className="cursor-pointer"
+                      data-testid={`label-address-${address.id}`}
+                    >
+                      <div className="flex items-center justify-between pr-16">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium text-foreground">{address.fullName}</span>
+                          <div className="flex items-center space-x-1">
+                            {getAddressIcon(address.addressType)}
+                            <span className="text-xs text-muted-foreground">{address.addressType}</span>
+                          </div>
+                          {address.isDefault && (
+                            <Badge variant="secondary" className="text-xs">
+                              Default
+                            </Badge>
+                          )}
                         </div>
-                        {address.isDefault && (
-                          <Badge variant="secondary" className="text-xs">
-                            Default
-                          </Badge>
-                        )}
                       </div>
+                      <div className="text-sm text-muted-foreground">
+                        {formatAddress(address)}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Phone: {address.phone}
+                      </div>
+                    </Label>
+                    <div className="absolute top-3 right-3 flex items-center space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleEdit(address);
+                        }}
+                        className="h-6 w-6 p-0"
+                        data-testid={`button-edit-${address.id}`}
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDelete(address.id);
+                        }}
+                        className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                        data-testid={`button-delete-${address.id}`}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {formatAddress(address)}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Phone: {address.phone}
-                    </div>
-                  </Label>
-                  <div className="absolute top-3 right-3 flex items-center space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleEdit(address);
-                      }}
-                      className="h-6 w-6 p-0"
-                      data-testid={`button-edit-${address.id}`}
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleDelete(address.id);
-                      }}
-                      className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                      data-testid={`button-delete-${address.id}`}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
                   </div>
                 </div>
               </div>
