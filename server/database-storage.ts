@@ -119,6 +119,94 @@ export class DatabaseStorage implements IStorage {
     return newProduct;
   }
 
+  // Inventory Management
+  async updateProductStock(productId: string, quantityChange: number): Promise<Product> {
+    const [updatedProduct] = await db
+      .update(products)
+      .set({ 
+        stockQuantity: sql`${products.stockQuantity} + ${quantityChange}`,
+        inStock: sql`${products.stockQuantity} + ${quantityChange} > 0`
+      })
+      .where(eq(products.id, productId))
+      .returning();
+    return updatedProduct;
+  }
+
+  async checkProductAvailability(productId: string, requiredQuantity: number): Promise<{ available: boolean; currentStock: number }> {
+    const [product] = await db.select().from(products).where(eq(products.id, productId));
+    if (!product) {
+      return { available: false, currentStock: 0 };
+    }
+    return {
+      available: product.stockQuantity >= requiredQuantity,
+      currentStock: product.stockQuantity
+    };
+  }
+
+  async validateStockAvailability(items: Array<{ productId: string; quantity: number }>): Promise<{
+    isValid: boolean;
+    errors?: string[];
+    stockValidation?: Array<{ productId: string; productName: string; requiredQuantity: number; availableStock: number; sufficient: boolean }>;
+  }> {
+    const errors: string[] = [];
+    const stockValidation: Array<{ productId: string; productName: string; requiredQuantity: number; availableStock: number; sufficient: boolean }> = [];
+
+    for (const item of items) {
+      const [product] = await db.select().from(products).where(eq(products.id, item.productId));
+      
+      if (!product) {
+        errors.push(`Product ${item.productId} not found`);
+        continue;
+      }
+
+      const sufficient = product.stockQuantity >= item.quantity;
+      stockValidation.push({
+        productId: item.productId,
+        productName: product.name,
+        requiredQuantity: item.quantity,
+        availableStock: product.stockQuantity,
+        sufficient
+      });
+
+      if (!sufficient) {
+        errors.push(`Insufficient stock for ${product.name}. Required: ${item.quantity}, Available: ${product.stockQuantity}`);
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors: errors.length > 0 ? errors : undefined,
+      stockValidation
+    };
+  }
+
+  async decrementProductsStock(items: Array<{ productId: string; quantity: number }>): Promise<void> {
+    return await db.transaction(async (tx) => {
+      for (const item of items) {
+        const result = await tx
+          .update(products)
+          .set({ 
+            stockQuantity: sql`${products.stockQuantity} - ${item.quantity}`,
+            inStock: sql`${products.stockQuantity} - ${item.quantity} > 0`
+          })
+          .where(and(
+            eq(products.id, item.productId),
+            sql`${products.stockQuantity} >= ${item.quantity}`
+          ));
+
+        // Check if update affected any rows - if not, stock was insufficient
+        if (!result || result.rowCount === 0) {
+          const [product] = await tx.select({ name: products.name, stockQuantity: products.stockQuantity })
+            .from(products)
+            .where(eq(products.id, item.productId));
+          const productName = product?.name || `Product ${item.productId}`;
+          const currentStock = product?.stockQuantity || 0;
+          throw new Error(`Insufficient stock for ${productName}. Required: ${item.quantity}, Available: ${currentStock}`);
+        }
+      }
+    });
+  }
+
   // Courses
   async getAllCourses(): Promise<Course[]> {
     return await db.select().from(courses);
@@ -406,6 +494,12 @@ export class DatabaseStorage implements IStorage {
 
       if (!product.inStock) {
         errors.push(`Product ${product.name} is out of stock`);
+        continue;
+      }
+
+      // Check stock quantity availability
+      if (product.stockQuantity < item.quantity) {
+        errors.push(`Insufficient stock for ${product.name}. Required: ${item.quantity}, Available: ${product.stockQuantity}`);
         continue;
       }
 
@@ -807,7 +901,32 @@ export class DatabaseStorage implements IStorage {
           })
           .returning();
 
-        // 3. Increment coupon usage if coupon was applied
+        // 3. Decrement product stock for all ordered items with atomic constraints
+        const orderItems = validatedOrder.items as Array<{ productId: string; quantity: number }>;
+        for (const item of orderItems) {
+          const result = await tx
+            .update(products)
+            .set({ 
+              stockQuantity: sql`${products.stockQuantity} - ${item.quantity}`,
+              inStock: sql`${products.stockQuantity} - ${item.quantity} > 0`
+            })
+            .where(and(
+              eq(products.id, item.productId),
+              sql`${products.stockQuantity} >= ${item.quantity}`
+            ));
+
+          // Check if update affected any rows - if not, stock was insufficient at commit time
+          if (!result || result.rowCount === 0) {
+            const [product] = await tx.select({ name: products.name, stockQuantity: products.stockQuantity })
+              .from(products)
+              .where(eq(products.id, item.productId));
+            const productName = product?.name || `Product ${item.productId}`;
+            const currentStock = product?.stockQuantity || 0;
+            throw new Error(`Insufficient stock for ${productName}. Required: ${item.quantity}, Available: ${currentStock}`);
+          }
+        }
+
+        // 4. Increment coupon usage if coupon was applied
         if (couponCode) {
           await tx
             .update(coupons)

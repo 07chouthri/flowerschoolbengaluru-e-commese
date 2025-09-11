@@ -20,6 +20,16 @@ export interface IStorage {
   getProduct(id: string): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
   
+  // Inventory Management
+  updateProductStock(productId: string, quantityChange: number): Promise<Product>;
+  checkProductAvailability(productId: string, requiredQuantity: number): Promise<{ available: boolean; currentStock: number }>;
+  validateStockAvailability(items: Array<{ productId: string; quantity: number }>): Promise<{
+    isValid: boolean;
+    errors?: string[];
+    stockValidation?: Array<{ productId: string; productName: string; requiredQuantity: number; availableStock: number; sufficient: boolean }>;
+  }>;
+  decrementProductsStock(items: Array<{ productId: string; quantity: number }>): Promise<void>;
+  
   // Courses
   getAllCourses(): Promise<Course[]>;
   getCourse(id: string): Promise<Course | undefined>;
@@ -152,6 +162,7 @@ export class MemStorage implements IStorage {
         price: "1299.00",
         category: "roses",
         image: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+        stockQuantity: 25,
         inStock: true,
         featured: true,
         createdAt: new Date(),
@@ -163,6 +174,7 @@ export class MemStorage implements IStorage {
         price: "2499.00",
         category: "orchids",
         image: "https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+        stockQuantity: 15,
         inStock: true,
         featured: true,
         createdAt: new Date(),
@@ -174,6 +186,7 @@ export class MemStorage implements IStorage {
         price: "3999.00",
         category: "wedding",
         image: "https://images.unsplash.com/photo-1606800052052-a08af7148866?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+        stockQuantity: 8,
         inStock: true,
         featured: true,
         createdAt: new Date(),
@@ -185,6 +198,7 @@ export class MemStorage implements IStorage {
         price: "899.00",
         category: "seasonal",
         image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+        stockQuantity: 20,
         inStock: true,
         featured: true,
         createdAt: new Date(),
@@ -508,6 +522,96 @@ export class MemStorage implements IStorage {
     };
     this.products.set(id, product);
     return product;
+  }
+
+  // Inventory Management
+  async updateProductStock(productId: string, quantityChange: number): Promise<Product> {
+    const product = this.products.get(productId);
+    if (!product) {
+      throw new Error(`Product ${productId} not found`);
+    }
+
+    const newStockQuantity = product.stockQuantity + quantityChange;
+    
+    // For stock decrements, check availability first
+    if (quantityChange < 0 && product.stockQuantity < Math.abs(quantityChange)) {
+      throw new Error(`Insufficient stock for ${product.name}. Required: ${Math.abs(quantityChange)}, Available: ${product.stockQuantity}`);
+    }
+
+    const updatedProduct: Product = {
+      ...product,
+      stockQuantity: newStockQuantity,
+      inStock: newStockQuantity > 0
+    };
+
+    this.products.set(productId, updatedProduct);
+    return updatedProduct;
+  }
+
+  async checkProductAvailability(productId: string, requiredQuantity: number): Promise<{ available: boolean; currentStock: number }> {
+    const product = this.products.get(productId);
+    if (!product) {
+      return { available: false, currentStock: 0 };
+    }
+    return {
+      available: product.stockQuantity >= requiredQuantity,
+      currentStock: product.stockQuantity
+    };
+  }
+
+  async validateStockAvailability(items: Array<{ productId: string; quantity: number }>): Promise<{
+    isValid: boolean;
+    errors?: string[];
+    stockValidation?: Array<{ productId: string; productName: string; requiredQuantity: number; availableStock: number; sufficient: boolean }>;
+  }> {
+    const errors: string[] = [];
+    const stockValidation: Array<{ productId: string; productName: string; requiredQuantity: number; availableStock: number; sufficient: boolean }> = [];
+
+    for (const item of items) {
+      const product = this.products.get(item.productId);
+      
+      if (!product) {
+        errors.push(`Product ${item.productId} not found`);
+        continue;
+      }
+
+      const sufficient = product.stockQuantity >= item.quantity;
+      stockValidation.push({
+        productId: item.productId,
+        productName: product.name,
+        requiredQuantity: item.quantity,
+        availableStock: product.stockQuantity,
+        sufficient
+      });
+
+      if (!sufficient) {
+        errors.push(`Insufficient stock for ${product.name}. Required: ${item.quantity}, Available: ${product.stockQuantity}`);
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors: errors.length > 0 ? errors : undefined,
+      stockValidation
+    };
+  }
+
+  async decrementProductsStock(items: Array<{ productId: string; quantity: number }>): Promise<void> {
+    // In MemStorage, we validate all items first to ensure atomicity
+    for (const item of items) {
+      const product = this.products.get(item.productId);
+      if (!product) {
+        throw new Error(`Product ${item.productId} not found`);
+      }
+      if (product.stockQuantity < item.quantity) {
+        throw new Error(`Insufficient stock for ${product.name}. Required: ${item.quantity}, Available: ${product.stockQuantity}`);
+      }
+    }
+
+    // If all validations pass, apply all decrements
+    for (const item of items) {
+      await this.updateProductStock(item.productId, -item.quantity);
+    }
   }
 
   async getAllCourses(): Promise<Course[]> {
@@ -1132,15 +1236,29 @@ export class MemStorage implements IStorage {
     userId?: string
   ): Promise<Order> {
     try {
-      // Create the order
-      const createdOrder = await this.createOrder(validatedOrder);
+      // 1. Generate order number
+      const orderNumber = await this.generateOrderNumber();
+      
+      // 2. Create the order with proper stock decrement
+      const orderItems = validatedOrder.items as Array<{ productId: string; quantity: number }>;
+      
+      // 3. Decrement product stock atomically
+      await this.decrementProductsStock(orderItems);
+      
+      // 4. Create the order after successful stock decrement
+      const createdOrder = await this.createOrder({
+        ...validatedOrder,
+        orderNumber,
+        status: "pending" as const,
+        paymentStatus: "pending" as const
+      });
 
-      // Increment coupon usage if coupon was applied
+      // 5. Increment coupon usage if coupon was applied
       if (couponCode) {
         await this.incrementCouponUsage(couponCode);
       }
 
-      // Clear user cart if this was an authenticated user
+      // 6. Clear user cart if this was an authenticated user
       if (userId) {
         await this.clearUserCart(userId);
       }
@@ -1148,6 +1266,8 @@ export class MemStorage implements IStorage {
       return createdOrder;
     } catch (error) {
       console.error("[MEMSTORAGE TRANSACTION ERROR] Order creation failed:", error);
+      // In a real system, this would roll back all changes
+      // For MemStorage, we rely on the atomic stock validation
       throw error;
     }
   }
