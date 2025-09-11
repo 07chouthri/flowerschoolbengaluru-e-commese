@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertOrderSchema, insertEnrollmentSchema, insertUserSchema, updateUserProfileSchema } from "@shared/schema";
+import { insertOrderSchema, insertEnrollmentSchema, insertUserSchema, updateUserProfileSchema, validateCouponSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import twilio from "twilio";
@@ -108,6 +108,118 @@ const getUserFromSession = async (req: any) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Coupon validation endpoint
+  app.post("/api/coupons/validate", async (req, res) => {
+    try {
+      const validationData = validateCouponSchema.parse(req.body);
+      const { code, cartSubtotal, userId } = validationData;
+      
+      // Normalize coupon code to uppercase for case-insensitive matching
+      const normalizedCode = code.trim().toUpperCase();
+      
+      console.log(`[COUPON] Validating coupon: ${normalizedCode} for cart subtotal: ${cartSubtotal}`);
+      
+      // Find the coupon
+      const coupon = await storage.getCouponByCode(normalizedCode);
+      if (!coupon) {
+        return res.status(404).json({ 
+          valid: false, 
+          error: "Invalid coupon code" 
+        });
+      }
+      
+      console.log(`[COUPON] Found coupon: ${JSON.stringify(coupon)}`);
+      
+      // Check if coupon is active
+      if (!coupon.isActive) {
+        return res.status(400).json({ 
+          valid: false, 
+          error: "This coupon is no longer active" 
+        });
+      }
+      
+      // Check date validity
+      const now = new Date();
+      if (coupon.startsAt && new Date(coupon.startsAt) > now) {
+        return res.status(400).json({ 
+          valid: false, 
+          error: "This coupon is not yet valid" 
+        });
+      }
+      
+      if (coupon.expiresAt && new Date(coupon.expiresAt) < now) {
+        return res.status(400).json({ 
+          valid: false, 
+          error: "This coupon has expired" 
+        });
+      }
+      
+      // Check usage limit
+      if (coupon.usageLimit !== null && (coupon.timesUsed ?? 0) >= coupon.usageLimit) {
+        return res.status(400).json({ 
+          valid: false, 
+          error: "This coupon has reached its usage limit" 
+        });
+      }
+      
+      // Check minimum order amount
+      const minOrderAmount = parseFloat(coupon.minOrderAmount || "0");
+      if (cartSubtotal < minOrderAmount) {
+        return res.status(400).json({ 
+          valid: false, 
+          error: `Minimum order amount of ₹${minOrderAmount.toLocaleString('en-IN')} is required for this coupon` 
+        });
+      }
+      
+      // Calculate discount
+      let discountAmount = 0;
+      const couponValue = parseFloat(coupon.value);
+      
+      if (coupon.type === "fixed") {
+        discountAmount = couponValue;
+      } else if (coupon.type === "percentage") {
+        discountAmount = (cartSubtotal * couponValue) / 100;
+        
+        // Apply maximum discount cap if specified
+        if (coupon.maxDiscount) {
+          const maxDiscount = parseFloat(coupon.maxDiscount);
+          discountAmount = Math.min(discountAmount, maxDiscount);
+        }
+      }
+      
+      // Ensure discount doesn't exceed cart subtotal
+      discountAmount = Math.min(discountAmount, cartSubtotal);
+      
+      console.log(`[COUPON] Valid coupon applied. Discount: ${discountAmount}`);
+      
+      res.json({
+        valid: true,
+        coupon: {
+          id: coupon.id,
+          code: coupon.code,
+          type: coupon.type,
+          value: couponValue,
+          description: coupon.description
+        },
+        discountAmount,
+        finalAmount: cartSubtotal - discountAmount
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          valid: false, 
+          error: "Invalid request data", 
+          details: error.errors 
+        });
+      }
+      console.error("Coupon validation error:", error);
+      res.status(500).json({ 
+        valid: false, 
+        error: "Failed to validate coupon" 
+      });
+    }
+  });
+  
   // Authentication Routes
   app.post("/api/auth/signup", async (req, res) => {
     try {

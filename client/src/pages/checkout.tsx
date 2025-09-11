@@ -14,7 +14,9 @@ import {
   Trash2, 
   ArrowLeft,
   ShoppingCart,
-  AlertCircle 
+  AlertCircle,
+  Tag,
+  X 
 } from "lucide-react";
 import { useCart } from "@/hooks/cart-context";
 import { useToast } from "@/hooks/use-toast";
@@ -23,15 +25,24 @@ import bouquetBarLogo from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.pn
 export default function Checkout() {
   const { 
     items, 
-    totalPrice, 
+    totalPrice,
+    appliedCoupon,
+    discountAmount,
+    finalAmount,
     isLoading, 
-    error, 
+    error,
+    couponError,
     updateQuantity, 
     removeFromCart, 
-    clearCart 
+    clearCart,
+    applyCoupon,
+    removeCoupon,
+    clearCouponError
   } = useCart();
   const { toast } = useToast();
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
+  const [couponCode, setCouponCode] = useState("");
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
   // Format price in INR currency
   const formatPrice = (price: number | string) => {
@@ -100,6 +111,45 @@ export default function Checkout() {
         });
       }
     }
+  };
+
+  // Handle coupon application
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a coupon code",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsApplyingCoupon(true);
+    clearCouponError();
+
+    try {
+      const result = await applyCoupon(couponCode);
+      if (result.success && result.discountAmount !== undefined) {
+        toast({
+          title: "Coupon Applied!",
+          description: `You saved ${formatPrice(result.discountAmount)} with code ${couponCode.toUpperCase()}`,
+        });
+        setCouponCode("");
+      }
+    } catch (error) {
+      console.error('Error applying coupon:', error);
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  // Handle coupon removal
+  const handleRemoveCoupon = () => {
+    removeCoupon();
+    toast({
+      title: "Coupon Removed",
+      description: "The discount has been removed from your order",
+    });
   };
 
   // Loading skeleton component
@@ -345,10 +395,86 @@ export default function Checkout() {
                     </div>
                   ) : (
                     <>
-                      {/* Subtotal */}
-                      <div className="flex justify-between text-base">
-                        <span>Subtotal</span>
-                        <span data-testid="text-subtotal">{formatPrice(totalPrice)}</span>
+                      {/* Coupon Application Section */}
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-medium text-foreground">Coupon Code</h3>
+                        
+                        {/* Applied Coupon Display */}
+                        {appliedCoupon ? (
+                          <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800">
+                            <div className="flex items-center space-x-2">
+                              <Tag className="h-4 w-4 text-green-600 dark:text-green-400" />
+                              <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                                {appliedCoupon.code}
+                              </span>
+                              <span className="text-xs text-green-600 dark:text-green-400">
+                                {appliedCoupon.description || 'Discount applied'}
+                              </span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleRemoveCoupon}
+                              className="h-6 w-6 p-0 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200"
+                              data-testid="button-remove-coupon"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex space-x-2">
+                            <Input
+                              type="text"
+                              placeholder="Enter coupon code"
+                              value={couponCode}
+                              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleApplyCoupon();
+                                }
+                              }}
+                              className="flex-1"
+                              disabled={isApplyingCoupon}
+                              data-testid="input-apply-coupon"
+                            />
+                            <Button
+                              onClick={handleApplyCoupon}
+                              disabled={isApplyingCoupon || !couponCode.trim()}
+                              size="default"
+                              data-testid="button-apply-coupon"
+                            >
+                              {isApplyingCoupon ? "Applying..." : "Apply"}
+                            </Button>
+                          </div>
+                        )}
+
+                        {/* Coupon Error Display */}
+                        {couponError && (
+                          <Alert variant="destructive" data-testid="alert-coupon-error">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>{couponError}</AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+
+                      <Separator />
+
+                      {/* Order Breakdown */}
+                      <div className="space-y-2">
+                        {/* Subtotal */}
+                        <div className="flex justify-between text-base">
+                          <span>Subtotal</span>
+                          <span data-testid="text-subtotal">{formatPrice(totalPrice)}</span>
+                        </div>
+
+                        {/* Discount Line Item */}
+                        {appliedCoupon && discountAmount > 0 && (
+                          <div className="flex justify-between text-base text-green-600 dark:text-green-400">
+                            <span>Discount ({appliedCoupon.code})</span>
+                            <span data-testid="text-discount">-{formatPrice(discountAmount)}</span>
+                          </div>
+                        )}
                       </div>
 
                       <Separator />
@@ -356,7 +482,9 @@ export default function Checkout() {
                       {/* Total */}
                       <div className="flex justify-between text-lg font-semibold">
                         <span>Total</span>
-                        <span data-testid="text-total">{formatPrice(totalPrice)}</span>
+                        <span data-testid="text-total">
+                          {formatPrice(appliedCoupon ? finalAmount : totalPrice)}
+                        </span>
                       </div>
 
                       {/* Checkout Button */}

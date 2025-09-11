@@ -8,6 +8,7 @@ import {
   blogPosts,
   carts,
   favorites,
+  coupons,
   type User, 
   type InsertUser, 
   type Product, 
@@ -25,10 +26,12 @@ import {
   type Cart,
   type InsertCart,
   type Favorite,
-  type InsertFavorite 
+  type InsertFavorite,
+  type Coupon,
+  type InsertCoupon
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { IStorage } from "./storage";
 
 export class DatabaseStorage implements IStorage {
@@ -325,5 +328,48 @@ export class DatabaseStorage implements IStorage {
       .from(favorites)
       .where(and(eq(favorites.userId, userId), eq(favorites.productId, productId)));
     return !!favorite;
+  }
+
+  // Coupon Operations
+  async getCouponByCode(code: string): Promise<Coupon | undefined> {
+    const [coupon] = await db.select().from(coupons).where(eq(coupons.code, code));
+    return coupon || undefined;
+  }
+
+  async getAllCoupons(): Promise<Coupon[]> {
+    return await db.select().from(coupons);
+  }
+
+  async createCoupon(coupon: InsertCoupon): Promise<Coupon> {
+    const [newCoupon] = await db
+      .insert(coupons)
+      .values(coupon)
+      .returning();
+    return newCoupon;
+  }
+
+  async updateCoupon(id: string, updates: Partial<Coupon>): Promise<Coupon> {
+    const [updatedCoupon] = await db
+      .update(coupons)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(coupons.id, id))
+      .returning();
+    return updatedCoupon;
+  }
+
+  async incrementCouponUsage(code: string): Promise<Coupon> {
+    const [updatedCoupon] = await db
+      .update(coupons)
+      .set({ 
+        timesUsed: sql`${coupons.timesUsed} + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(coupons.code, code))
+      .returning();
+    return updatedCoupon;
+  }
+
+  async deleteCoupon(id: string): Promise<void> {
+    await db.delete(coupons).where(eq(coupons.id, id));
   }
 }

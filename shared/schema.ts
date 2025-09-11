@@ -113,6 +113,23 @@ export const blogPosts = pgTable("blog_posts", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const coupons = pgTable("coupons", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: varchar("code").notNull().unique(), // Coupon code (should be uppercase)
+  type: varchar("type").notNull(), // 'percentage' or 'fixed'
+  value: decimal("value", { precision: 10, scale: 2 }).notNull(), // Discount value
+  isActive: boolean("is_active").default(true),
+  startsAt: timestamp("starts_at"),
+  expiresAt: timestamp("expires_at"),
+  minOrderAmount: decimal("min_order_amount", { precision: 10, scale: 2 }).default("0"),
+  maxDiscount: decimal("max_discount", { precision: 10, scale: 2 }), // For percentage caps
+  usageLimit: integer("usage_limit"), // Max number of times coupon can be used
+  timesUsed: integer("times_used").default(0), // Current usage count
+  description: text("description"), // Optional description for the coupon
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   firstName: true,
@@ -176,6 +193,19 @@ export const insertFavoriteSchema = createInsertSchema(favorites).omit({
   createdAt: true,
 });
 
+export const insertCouponSchema = createInsertSchema(coupons).omit({
+  id: true,
+  timesUsed: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const validateCouponSchema = z.object({
+  code: z.string().min(1, "Coupon code is required"),
+  cartSubtotal: z.number().positive("Cart subtotal must be positive"),
+  userId: z.string().optional(),
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
@@ -194,3 +224,6 @@ export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;
 export type Favorite = typeof favorites.$inferSelect;
+export type InsertCoupon = z.infer<typeof insertCouponSchema>;
+export type Coupon = typeof coupons.$inferSelect;
+export type ValidateCoupon = z.infer<typeof validateCouponSchema>;

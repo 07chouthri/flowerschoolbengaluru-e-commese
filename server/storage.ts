@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Product, type InsertProduct, type Course, type InsertCourse, type Order, type InsertOrder, type Enrollment, type InsertEnrollment, type Testimonial, type InsertTestimonial, type BlogPost, type InsertBlogPost, type Cart, type InsertCart, type Favorite, type InsertFavorite } from "@shared/schema";
+import { type User, type InsertUser, type Product, type InsertProduct, type Course, type InsertCourse, type Order, type InsertOrder, type Enrollment, type InsertEnrollment, type Testimonial, type InsertTestimonial, type BlogPost, type InsertBlogPost, type Cart, type InsertCart, type Favorite, type InsertFavorite, type Coupon, type InsertCoupon } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { DatabaseStorage } from "./database-storage";
 
@@ -59,6 +59,14 @@ export interface IStorage {
   updateCartItemQuantity(userId: string, productId: string, quantity: number): Promise<Cart>;
   removeFromCart(userId: string, productId: string): Promise<void>;
   clearUserCart(userId: string): Promise<void>;
+  
+  // Coupon Operations
+  getCouponByCode(code: string): Promise<Coupon | undefined>;
+  getAllCoupons(): Promise<Coupon[]>;
+  createCoupon(coupon: InsertCoupon): Promise<Coupon>;
+  updateCoupon(id: string, updates: Partial<Coupon>): Promise<Coupon>;
+  incrementCouponUsage(code: string): Promise<Coupon>;
+  deleteCoupon(id: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -69,6 +77,7 @@ export class MemStorage implements IStorage {
   private enrollments: Map<string, Enrollment> = new Map();
   private testimonials: Map<string, Testimonial> = new Map();
   private blogPosts: Map<string, BlogPost> = new Map();
+  private coupons: Map<string, Coupon> = new Map();
 
   constructor() {
     this.initializeData();
@@ -238,6 +247,76 @@ export class MemStorage implements IStorage {
     ];
 
     sampleBlogPosts.forEach(post => this.blogPosts.set(post.id, post));
+
+    // Initialize sample coupons
+    const sampleCoupons: Coupon[] = [
+      {
+        id: "1",
+        code: "WELCOME10",
+        type: "percentage",
+        value: "10.00",
+        isActive: true,
+        startsAt: new Date("2024-01-01"),
+        expiresAt: new Date("2024-12-31"),
+        minOrderAmount: "500.00",
+        maxDiscount: "200.00",
+        usageLimit: 1000,
+        timesUsed: 45,
+        description: "Welcome discount for new customers",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: "2",
+        code: "FLAT500",
+        type: "fixed",
+        value: "500.00",
+        isActive: true,
+        startsAt: new Date("2024-01-01"),
+        expiresAt: new Date("2024-12-31"),
+        minOrderAmount: "2000.00",
+        maxDiscount: null,
+        usageLimit: 500,
+        timesUsed: 23,
+        description: "Flat ₹500 off on orders above ₹2000",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: "3",
+        code: "VALENTINE25",
+        type: "percentage",
+        value: "25.00",
+        isActive: true,
+        startsAt: new Date("2024-02-10"),
+        expiresAt: new Date("2024-02-20"),
+        minOrderAmount: "1000.00",
+        maxDiscount: "1000.00",
+        usageLimit: 200,
+        timesUsed: 87,
+        description: "Valentine's Day special - 25% off",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: "4",
+        code: "EXPIRED",
+        type: "percentage",
+        value: "50.00",
+        isActive: true,
+        startsAt: new Date("2023-01-01"),
+        expiresAt: new Date("2023-12-31"),
+        minOrderAmount: "100.00",
+        maxDiscount: null,
+        usageLimit: 100,
+        timesUsed: 100,
+        description: "Expired test coupon",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+
+    sampleCoupons.forEach(coupon => this.coupons.set(coupon.id, coupon));
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -546,6 +625,70 @@ export class MemStorage implements IStorage {
     return Array.from(this.favorites.values()).some(
       fav => fav.userId === userId && fav.productId === productId
     );
+  }
+
+  // Coupon Operations
+  async getCouponByCode(code: string): Promise<Coupon | undefined> {
+    return Array.from(this.coupons.values()).find(coupon => coupon.code === code.toUpperCase());
+  }
+
+  async getAllCoupons(): Promise<Coupon[]> {
+    return Array.from(this.coupons.values()).sort((a, b) => 
+      new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
+    );
+  }
+
+  async createCoupon(insertCoupon: InsertCoupon): Promise<Coupon> {
+    const id = randomUUID();
+    const coupon: Coupon = {
+      ...insertCoupon,
+      id,
+      code: insertCoupon.code.toUpperCase(),
+      timesUsed: 0,
+      startsAt: insertCoupon.startsAt ?? null,
+      expiresAt: insertCoupon.expiresAt ?? null,
+      minOrderAmount: insertCoupon.minOrderAmount ?? "0",
+      maxDiscount: insertCoupon.maxDiscount ?? null,
+      usageLimit: insertCoupon.usageLimit ?? null,
+      description: insertCoupon.description ?? null,
+      isActive: insertCoupon.isActive ?? true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.coupons.set(id, coupon);
+    return coupon;
+  }
+
+  async updateCoupon(id: string, updates: Partial<Coupon>): Promise<Coupon> {
+    const coupon = this.coupons.get(id);
+    if (!coupon) {
+      throw new Error("Coupon not found");
+    }
+    const updatedCoupon = { ...coupon, ...updates, updatedAt: new Date() };
+    this.coupons.set(id, updatedCoupon);
+    return updatedCoupon;
+  }
+
+  async incrementCouponUsage(code: string): Promise<Coupon> {
+    const coupon = await this.getCouponByCode(code);
+    if (!coupon) {
+      throw new Error("Coupon not found");
+    }
+    const updatedCoupon = {
+      ...coupon,
+      timesUsed: (coupon.timesUsed ?? 0) + 1,
+      updatedAt: new Date(),
+    };
+    this.coupons.set(coupon.id, updatedCoupon);
+    return updatedCoupon;
+  }
+
+  async deleteCoupon(id: string): Promise<void> {
+    const coupon = this.coupons.get(id);
+    if (!coupon) {
+      throw new Error("Coupon not found");
+    }
+    this.coupons.delete(id);
   }
 }
 
