@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,18 @@ const profileFormSchema = z.object({
 });
 
 type ProfileFormData = z.infer<typeof profileFormSchema>;
+
+// Password change form schema
+const passwordFormSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(6, "New password must be at least 6 characters"),
+  confirmPassword: z.string().min(1, "Please confirm your new password"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "New passwords don't match",
+  path: ["confirmPassword"],
+});
+
+type PasswordFormData = z.infer<typeof passwordFormSchema>;
 
 interface UserProfile {
   id: string;
@@ -67,6 +80,7 @@ interface Order {
 export default function MyAccount() {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
   const { toast } = useToast();
 
@@ -195,6 +209,44 @@ export default function MyAccount() {
     },
   });
 
+  // Password change form
+  const passwordForm = useForm<PasswordFormData>({
+    resolver: zodResolver(passwordFormSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  // Change password mutation
+  const changePasswordMutation = useMutation({
+    mutationFn: async (data: PasswordFormData) => {
+      return apiRequest("/api/profile/change-password", {
+        method: "PUT",
+        body: JSON.stringify({
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword,
+        }),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Password Changed",
+        description: "Your password has been updated successfully.",
+      });
+      passwordForm.reset();
+      setShowPasswordForm(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to change password",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: ProfileFormData) => {
     updateProfileMutation.mutate(data);
   };
@@ -202,6 +254,10 @@ export default function MyAccount() {
   const handleCancel = () => {
     reset();
     setIsEditing(false);
+  };
+
+  const onPasswordSubmit = (data: PasswordFormData) => {
+    changePasswordMutation.mutate(data);
   };
 
   const handleDeleteAccount = () => {
@@ -600,7 +656,99 @@ export default function MyAccount() {
                           <p className="text-sm text-gray-600 mb-4">
                             Last updated: {profile?.updatedAt ? new Date(profile.updatedAt).toLocaleDateString() : "Never"}
                           </p>
-                          <Button variant="outline">Change Password</Button>
+                          
+                          {!showPasswordForm ? (
+                            <Button 
+                              variant="outline" 
+                              onClick={() => setShowPasswordForm(true)}
+                              data-testid="button-change-password"
+                            >
+                              Change Password
+                            </Button>
+                          ) : (
+                            <Form {...passwordForm}>
+                              <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                                <FormField
+                                  control={passwordForm.control}
+                                  name="currentPassword"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Current Password</FormLabel>
+                                      <FormControl>
+                                        <Input 
+                                          type="password" 
+                                          placeholder="Enter current password"
+                                          data-testid="input-current-password"
+                                          {...field} 
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                
+                                <FormField
+                                  control={passwordForm.control}
+                                  name="newPassword"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>New Password</FormLabel>
+                                      <FormControl>
+                                        <Input 
+                                          type="password" 
+                                          placeholder="Enter new password (min 6 characters)"
+                                          data-testid="input-new-password"
+                                          {...field} 
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                
+                                <FormField
+                                  control={passwordForm.control}
+                                  name="confirmPassword"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Confirm New Password</FormLabel>
+                                      <FormControl>
+                                        <Input 
+                                          type="password" 
+                                          placeholder="Confirm new password"
+                                          data-testid="input-confirm-password"
+                                          {...field} 
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                
+                                <div className="flex gap-2">
+                                  <Button 
+                                    type="submit" 
+                                    disabled={changePasswordMutation.isPending}
+                                    data-testid="button-submit-password"
+                                  >
+                                    {changePasswordMutation.isPending ? "Updating..." : "Update Password"}
+                                  </Button>
+                                  <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    onClick={() => {
+                                      setShowPasswordForm(false);
+                                      passwordForm.reset();
+                                    }}
+                                    disabled={changePasswordMutation.isPending}
+                                    data-testid="button-cancel-password"
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </form>
+                            </Form>
+                          )}
                         </div>
                         
                         <div className="p-4 bg-gray-50 rounded-lg">
