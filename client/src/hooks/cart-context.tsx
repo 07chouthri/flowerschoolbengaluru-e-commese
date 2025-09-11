@@ -431,6 +431,12 @@ export function CartProvider({ children, userId }: CartProviderProps) {
 
 
   const addToCart = useCallback(async (product: Product, quantity: number = 1) => {
+    // Prevent double-add by checking if already loading
+    if (cart.isLoading) {
+      console.log('[ADD TO CART] Already processing, ignoring duplicate request');
+      return;
+    }
+    
     if (userId) {
       // Backend persistence for authenticated users
       setCart(prev => ({ ...prev, isLoading: true, error: null }));
@@ -1000,43 +1006,95 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     try {
       setCart(prev => ({ ...prev, isLoading: true, error: null }));
       
-      const orderData = {
-        userId: userId || null,
-        items: cart.items.map(item => ({
-          productId: item.id,
-          quantity: item.quantity,
-          price: item.price,
-          name: item.name
-        })),
-        shippingAddress: cart.shippingAddress,
-        deliveryOption: cart.deliveryOption,
-        paymentData: {
-          method: cart.paymentData.selectedMethod,
-          // Only send non-sensitive payment data
-          ...(cart.paymentData.selectedMethod === 'upi' && {
-            upiId: cart.paymentData.upiData?.upiId
-          }),
-          ...(cart.paymentData.selectedMethod === 'netbanking' && {
-            bankName: cart.paymentData.netbankingData?.bankName,
-            accountType: cart.paymentData.netbankingData?.accountType
-          }),
-          ...(cart.paymentData.selectedMethod === 'cod' && {
-            confirmed: cart.paymentData.codData?.confirmed
-          })
-        },
-        appliedCoupon: cart.appliedCoupon ? {
-          id: cart.appliedCoupon.id,
-          code: cart.appliedCoupon.code,
-          discountAmount: cart.discountAmount
-        } : null,
-        pricing: {
-          subtotal: cart.totalPrice,
-          discountAmount: cart.discountAmount,
-          deliveryCharge: cart.deliveryCharge,
-          paymentCharge: cart.paymentCharge,
-          finalAmount: cart.finalAmount
+      // Helper function to map frontend payment methods to server enum
+      const mapPaymentMethod = (method: PaymentMethod | null): string => {
+        switch (method) {
+          case 'card':
+            return 'Card';
+          case 'upi':
+            return 'UPI';
+          case 'netbanking':
+            return 'Online';
+          case 'cod':
+            return 'COD';
+          case 'qrcode':
+            return 'Online';
+          default:
+            return 'COD'; // fallback
         }
       };
+      
+      // Helper function to parse price safely
+      const parsePrice = (price: number | string): number => {
+        if (typeof price === 'number') return price;
+        const cleanPrice = String(price).replace(/[₹$,\s]/g, '');
+        const parsed = parseFloat(cleanPrice);
+        return isNaN(parsed) ? 0 : parsed;
+      };
+      
+      // Construct order payload according to server schema
+      const orderData = {
+        // Customer information (required for both guest and authenticated users)
+        customerName: cart.shippingAddress?.fullName || '',
+        email: cart.shippingAddress?.email || '',
+        phone: cart.shippingAddress?.phone || '',
+        
+        // Order details (optional)
+        occasion: '',
+        requirements: '',
+        
+        // Cart items with proper structure
+        items: cart.items.map(item => {
+          const unitPrice = parsePrice(item.price);
+          const totalPrice = unitPrice * item.quantity;
+          return {
+            productId: item.id,
+            productName: item.name,
+            quantity: item.quantity,
+            unitPrice: unitPrice,
+            totalPrice: totalPrice
+          };
+        }),
+        
+        // Pricing breakdown (top-level fields)
+        subtotal: cart.totalPrice,
+        
+        // Delivery information
+        deliveryOptionId: cart.deliveryOption?.id || '',
+        deliveryCharge: cart.deliveryCharge,
+        deliveryDate: undefined, // optional
+        
+        // Payment information
+        paymentMethod: mapPaymentMethod(cart.paymentData.selectedMethod),
+        paymentCharges: cart.paymentCharge,
+        
+        // Address information
+        ...(userId ? {
+          // For authenticated users, send address ID if available
+          shippingAddressId: cart.shippingAddress?.id,
+          // Also send delivery address as fallback for guests-turned-users
+          deliveryAddress: cart.shippingAddress ? 
+            `${cart.shippingAddress.fullName}, ${cart.shippingAddress.addressLine1}${cart.shippingAddress.addressLine2 ? ', ' + cart.shippingAddress.addressLine2 : ''}, ${cart.shippingAddress.landmark ? cart.shippingAddress.landmark + ', ' : ''}${cart.shippingAddress.city}, ${cart.shippingAddress.state} ${cart.shippingAddress.postalCode}, ${cart.shippingAddress.country}` :
+            undefined
+        } : {
+          // For guest users, send delivery address as string
+          deliveryAddress: cart.shippingAddress ? 
+            `${cart.shippingAddress.fullName}, ${cart.shippingAddress.addressLine1}${cart.shippingAddress.addressLine2 ? ', ' + cart.shippingAddress.addressLine2 : ''}, ${cart.shippingAddress.landmark ? cart.shippingAddress.landmark + ', ' : ''}${cart.shippingAddress.city}, ${cart.shippingAddress.state} ${cart.shippingAddress.postalCode}, ${cart.shippingAddress.country}` :
+            ''
+        }),
+        
+        // Coupon information
+        couponCode: cart.appliedCoupon?.code,
+        discountAmount: cart.discountAmount,
+        
+        // Final total
+        total: cart.finalAmount,
+        
+        // User information (optional for guest checkout)
+        userId: userId || undefined
+      };
+      
+      console.log('[ORDER PLACEMENT] Sending order data:', JSON.stringify(orderData, null, 2));
 
       const response = await apiRequest('/api/orders/place', {
         method: 'POST',

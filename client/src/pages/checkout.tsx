@@ -753,10 +753,13 @@ export default function Checkout() {
                       </div>
 
                       {/* Checkout Button */}
-                      <Link to="/checkout/review">
-                        <Button 
-                          size="lg" 
-                          className="w-full" 
+                      <Button 
+                        size="lg" 
+                        className="w-full"
+                        onClick={() => {
+                          handleStepComplete('payment');
+                          setCurrentStep('review');
+                        }} 
                           disabled={items.length === 0 || !shippingAddress || !deliveryOption || !validatePaymentData()}
                           data-testid="button-checkout"
                         >
@@ -765,7 +768,6 @@ export default function Checkout() {
                            !validatePaymentData() ? "Complete Payment Details" :
                            "Continue to Review"}
                         </Button>
-                      </Link>
                       
                       {(!shippingAddress || !deliveryOption || !validatePaymentData()) && (
                         <p className="text-xs text-muted-foreground text-center">

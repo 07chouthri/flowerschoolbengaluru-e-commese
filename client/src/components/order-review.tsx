@@ -72,6 +72,7 @@ export default function OrderReview({
       case 'upi': return 'UPI Payment';
       case 'netbanking': return 'Net Banking';
       case 'cod': return 'Cash on Delivery';
+      case 'qrcode': return 'QR Code Payment';
       default: return 'Not Selected';
     }
   };
@@ -100,6 +101,11 @@ export default function OrderReview({
         return 'Net Banking';
       case 'cod':
         return 'Cash on Delivery';
+      case 'qrcode':
+        if (paymentData.qrcodeData?.confirmed) {
+          return `QR Code Payment - ₹${paymentData.qrcodeData.amount?.toLocaleString() || 'N/A'}`;
+        }
+        return 'QR Code Payment';
       default:
         return 'Payment method selected';
     }
@@ -434,7 +440,7 @@ export default function OrderReview({
             <Checkbox
               id="accept-terms"
               checked={acceptTerms}
-              onCheckedChange={setAcceptTerms}
+              onCheckedChange={(checked) => setAcceptTerms(checked === true)}
               data-testid="checkbox-terms"
             />
             <div className="text-sm">
@@ -442,7 +448,7 @@ export default function OrderReview({
                 I agree to the{' '}
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="link" className="p-0 h-auto text-primary underline" data-testid="button-terms-modal">
+                    <Button variant="ghost" className="p-0 h-auto text-primary underline" data-testid="button-terms-modal">
                       Terms and Conditions
                     </Button>
                   </DialogTrigger>
@@ -492,7 +498,7 @@ export default function OrderReview({
             <Checkbox
               id="accept-privacy"
               checked={acceptPrivacy}
-              onCheckedChange={setAcceptPrivacy}
+              onCheckedChange={(checked) => setAcceptPrivacy(checked === true)}
               data-testid="checkbox-privacy"
             />
             <div className="text-sm">
@@ -500,7 +506,7 @@ export default function OrderReview({
                 I acknowledge the{' '}
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="link" className="p-0 h-auto text-primary underline" data-testid="button-privacy-modal">
+                    <Button variant="ghost" className="p-0 h-auto text-primary underline" data-testid="button-privacy-modal">
                       Privacy Policy
                     </Button>
                   </DialogTrigger>
@@ -550,7 +556,7 @@ export default function OrderReview({
             <Checkbox
               id="confirm-order"
               checked={confirmOrder}
-              onCheckedChange={setConfirmOrder}
+              onCheckedChange={(checked) => setConfirmOrder(checked === true)}
               data-testid="checkbox-confirm"
             />
             <label htmlFor="confirm-order" className="text-sm cursor-pointer">

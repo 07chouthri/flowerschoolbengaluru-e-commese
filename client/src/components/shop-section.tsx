@@ -35,7 +35,7 @@ export default function ShopSection() {
   ];
 
   const handleAddToCart = (product: Product) => {
-    addToCart(product);
+    addToCart(product, 1); // Explicitly pass quantity=1
     toast({
       title: "Added to Cart! 🛒",
       description: `${product.name} has been added to your cart.`,
