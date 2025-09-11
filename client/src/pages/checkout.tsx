@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,8 @@ import {
   ShoppingCart,
   AlertCircle,
   Tag,
-  X 
+  X,
+  CheckCircle 
 } from "lucide-react";
 import { useCart } from "@/hooks/cart-context";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +25,8 @@ import { apiRequest } from "@/lib/queryClient";
 import AddressManager from "@/components/address-manager";
 import DeliveryOptions from "@/components/delivery-options";
 import PaymentOptions from "@/components/payment-options";
+import OrderReview from "@/components/order-review";
+import CheckoutSteps, { type CheckoutStep } from "@/components/checkout-steps";
 import bouquetBarLogo from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 
 export default function Checkout() {
@@ -47,7 +50,8 @@ export default function Checkout() {
     applyCoupon,
     removeCoupon,
     clearCouponError,
-    validatePaymentData
+    validatePaymentData,
+    placeOrder
   } = useCart();
   const { toast } = useToast();
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
@@ -55,6 +59,10 @@ export default function Checkout() {
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [currentStep, setCurrentStep] = useState<CheckoutStep>('cart');
+  const [completedSteps, setCompletedSteps] = useState<CheckoutStep[]>([]);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [, setLocation] = useLocation();
 
   // Check if user is authenticated
   useEffect(() => {
@@ -180,6 +188,113 @@ export default function Checkout() {
     });
   };
 
+  // Handle step navigation
+  const handleStepComplete = (step: CheckoutStep) => {
+    if (!completedSteps.includes(step)) {
+      setCompletedSteps(prev => [...prev, step]);
+    }
+  };
+
+  const navigateToStep = (step: CheckoutStep) => {
+    setCurrentStep(step);
+  };
+
+  const handleNext = () => {
+    const steps: CheckoutStep[] = ['cart', 'shipping', 'payment', 'review'];
+    const currentIndex = steps.indexOf(currentStep);
+    
+    // Mark current step as completed
+    handleStepComplete(currentStep);
+    
+    if (currentIndex < steps.length - 1) {
+      setCurrentStep(steps[currentIndex + 1]);
+    }
+  };
+
+  const handleBack = () => {
+    const steps: CheckoutStep[] = ['cart', 'shipping', 'payment', 'review'];
+    const currentIndex = steps.indexOf(currentStep);
+    
+    if (currentIndex > 0) {
+      setCurrentStep(steps[currentIndex - 1]);
+    }
+  };
+
+  // Handle order placement
+  const handlePlaceOrder = async () => {
+    setIsPlacingOrder(true);
+    
+    try {
+      const result = await placeOrder(user?.id);
+      
+      if (result.success) {
+        toast({
+          title: "Order Placed Successfully!",
+          description: `Your order has been confirmed. Order ID: ${result.orderId}`,
+          duration: 5000,
+        });
+        
+        // Redirect to success page or order confirmation
+        setLocation(`/order-confirmation/${result.orderId}`);
+      } else {
+        toast({
+          title: "Order Failed",
+          description: result.error || "Failed to place order. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Order Failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
+
+  const handleEditSection = (section: 'cart' | 'address' | 'delivery' | 'payment') => {
+    const stepMap: Record<string, CheckoutStep> = {
+      cart: 'cart',
+      address: 'shipping',
+      delivery: 'shipping',
+      payment: 'payment'
+    };
+    setCurrentStep(stepMap[section]);
+  };
+
+  // Auto-advance steps based on completion
+  useEffect(() => {
+    if (items.length > 0 && !completedSteps.includes('cart')) {
+      handleStepComplete('cart');
+    }
+    
+    if (shippingAddress && deliveryOption && !completedSteps.includes('shipping')) {
+      handleStepComplete('shipping');
+    }
+    
+    if (validatePaymentData() && !completedSteps.includes('payment')) {
+      handleStepComplete('payment');
+    }
+  }, [items.length, shippingAddress, deliveryOption, validatePaymentData, completedSteps]);
+
+  // Check if current step can proceed
+  const canProceed = () => {
+    switch (currentStep) {
+      case 'cart':
+        return items.length > 0;
+      case 'shipping':
+        return shippingAddress && deliveryOption;
+      case 'payment':
+        return validatePaymentData();
+      case 'review':
+        return true;
+      default:
+        return false;
+    }
+  };
+
   // Loading skeleton component
   const SkeletonRow = () => (
     <TableRow>
@@ -257,181 +372,266 @@ export default function Checkout() {
           </Card>
         )}
 
-        {/* Cart Items */}
+        {/* Step-based Checkout Flow */}
         {(isLoading || items.length > 0) && (
-          <div className="grid gap-8 xl:grid-cols-3 lg:grid-cols-2">
-            {/* Left Column - Cart Items and Shipping */}
-            <div className="xl:col-span-2 lg:col-span-1 space-y-8">
-              {/* Cart Items Table */}
-              <Card data-testid="card-cart-items">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <ShoppingCart className="mr-2 h-5 w-5" />
-                    Cart Items ({isLoading ? "..." : items.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Product</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Quantity</TableHead>
-                        <TableHead>Subtotal</TableHead>
-                        <TableHead className="w-12"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {isLoading ? (
-                        <>
-                          <SkeletonRow />
-                          <SkeletonRow />
-                          <SkeletonRow />
-                        </>
-                      ) : (
-                        items.map((item) => {
-                          const isUpdating = updatingItems.has(item.id);
-                          const lineTotal = parseFloat(item.price) * item.quantity;
+          <div className="space-y-8">
+            {/* Checkout Steps Indicator */}
+            <CheckoutSteps 
+              currentStep={currentStep} 
+              completedSteps={completedSteps}
+              onStepClick={navigateToStep}
+            />
+
+            {/* Step Content */}
+            <div className="grid gap-8 xl:grid-cols-3 lg:grid-cols-2">
+              {/* Main Content Area */}
+              <div className="xl:col-span-2 lg:col-span-1 space-y-8">
+                
+                {/* Cart Step */}
+                {currentStep === 'cart' && (
+                  <Card data-testid="card-cart-items">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <ShoppingCart className="mr-2 h-5 w-5" />
+                        Cart Items ({isLoading ? "..." : items.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Product</TableHead>
+                            <TableHead>Price</TableHead>
+                            <TableHead>Quantity</TableHead>
+                            <TableHead>Subtotal</TableHead>
+                            <TableHead className="w-12"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {isLoading ? (
+                            <>
+                              <SkeletonRow />
+                              <SkeletonRow />
+                              <SkeletonRow />
+                            </>
+                          ) : (
+                            items.map((item) => {
+                              const isUpdating = updatingItems.has(item.id);
+                              const lineTotal = parseFloat(item.price) * item.quantity;
+                              
+                              return (
+                                <TableRow key={item.id} data-testid={`row-cart-item-${item.id}`}>
+                                  {/* Product Info */}
+                                  <TableCell>
+                                    <div className="flex items-center space-x-4">
+                                      <img
+                                        src={item.image}
+                                        alt={item.name}
+                                        className="h-16 w-16 rounded object-cover"
+                                        data-testid={`img-product-${item.id}`}
+                                      />
+                                      <div>
+                                        <h3 className="font-medium text-foreground" data-testid={`text-product-name-${item.id}`}>
+                                          {item.name}
+                                        </h3>
+                                        <p className="text-sm text-muted-foreground">
+                                          {item.category}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </TableCell>
+
+                                  {/* Unit Price */}
+                                  <TableCell data-testid={`text-unit-price-${item.id}`}>
+                                    {formatPrice(item.price)}
+                                  </TableCell>
+
+                                  {/* Quantity Controls */}
+                                  <TableCell>
+                                    <div className="flex items-center space-x-2">
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                                        disabled={isUpdating || item.quantity <= 1}
+                                        data-testid={`button-decrease-${item.id}`}
+                                      >
+                                        <Minus className="h-3 w-3" />
+                                      </Button>
+                                      
+                                      <Input
+                                        type="number"
+                                        min="1"
+                                        max="99"
+                                        value={item.quantity}
+                                        onChange={(e) => {
+                                          const newQuantity = parseInt(e.target.value);
+                                          if (newQuantity >= 1 && newQuantity <= 99) {
+                                            handleQuantityChange(item.id, newQuantity);
+                                          }
+                                        }}
+                                        className="w-16 text-center"
+                                        disabled={isUpdating}
+                                        data-testid={`input-quantity-${item.id}`}
+                                      />
+                                      
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                                        disabled={isUpdating || item.quantity >= 99}
+                                        data-testid={`button-increase-${item.id}`}
+                                      >
+                                        <Plus className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+
+                                  {/* Line Subtotal */}
+                                  <TableCell className="font-medium" data-testid={`text-line-total-${item.id}`}>
+                                    {formatPrice(lineTotal)}
+                                  </TableCell>
+
+                                  {/* Remove Button */}
+                                  <TableCell>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleRemoveItem(item.id, item.name)}
+                                      disabled={isUpdating}
+                                      data-testid={`button-remove-${item.id}`}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })
+                          )}
+                        </TableBody>
+                      </Table>
+
+                      {/* Cart Actions */}
+                      {!isLoading && items.length > 0 && (
+                        <div className="flex justify-between items-center mt-6 pt-4 border-t">
+                          <Button
+                            variant="outline"
+                            onClick={handleClearCart}
+                            data-testid="button-clear-cart"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Clear Cart
+                          </Button>
                           
-                          return (
-                            <TableRow key={item.id} data-testid={`row-cart-item-${item.id}`}>
-                              {/* Product Info */}
-                              <TableCell>
-                                <div className="flex items-center space-x-4">
-                                  <img
-                                    src={item.image}
-                                    alt={item.name}
-                                    className="h-16 w-16 rounded object-cover"
-                                    data-testid={`img-product-${item.id}`}
-                                  />
-                                  <div>
-                                    <h3 className="font-medium text-foreground" data-testid={`text-product-name-${item.id}`}>
-                                      {item.name}
-                                    </h3>
-                                    <p className="text-sm text-muted-foreground">
-                                      {item.category}
-                                    </p>
-                                  </div>
-                                </div>
-                              </TableCell>
-
-                              {/* Unit Price */}
-                              <TableCell data-testid={`text-unit-price-${item.id}`}>
-                                {formatPrice(item.price)}
-                              </TableCell>
-
-                              {/* Quantity Controls */}
-                              <TableCell>
-                                <div className="flex items-center space-x-2">
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                                    disabled={isUpdating || item.quantity <= 1}
-                                    data-testid={`button-decrease-${item.id}`}
-                                  >
-                                    <Minus className="h-3 w-3" />
-                                  </Button>
-                                  
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    max="99"
-                                    value={item.quantity}
-                                    onChange={(e) => {
-                                      const newQuantity = parseInt(e.target.value);
-                                      if (newQuantity >= 1 && newQuantity <= 99) {
-                                        handleQuantityChange(item.id, newQuantity);
-                                      }
-                                    }}
-                                    className="w-16 text-center"
-                                    disabled={isUpdating}
-                                    data-testid={`input-quantity-${item.id}`}
-                                  />
-                                  
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                                    disabled={isUpdating || item.quantity >= 99}
-                                    data-testid={`button-increase-${item.id}`}
-                                  >
-                                    <Plus className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-
-                              {/* Line Subtotal */}
-                              <TableCell className="font-medium" data-testid={`text-line-total-${item.id}`}>
-                                {formatPrice(lineTotal)}
-                              </TableCell>
-
-                              {/* Remove Button */}
-                              <TableCell>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleRemoveItem(item.id, item.name)}
-                                  disabled={isUpdating}
-                                  data-testid={`button-remove-${item.id}`}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
+                          <Link to="/shop">
+                            <Button variant="ghost" data-testid="link-continue-shopping-inline">
+                              <ArrowLeft className="mr-2 h-4 w-4" />
+                              Continue Shopping
+                            </Button>
+                          </Link>
+                        </div>
                       )}
-                    </TableBody>
-                  </Table>
 
-                  {/* Cart Actions */}
-                  {!isLoading && items.length > 0 && (
-                    <div className="flex justify-between items-center mt-6 pt-4 border-t">
+                      {/* Cart Step Navigation */}
+                      <div className="flex justify-between pt-4">
+                        <Link to="/shop">
+                          <Button variant="outline" data-testid="button-continue-shopping">
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Continue Shopping
+                          </Button>
+                        </Link>
+                        
+                        <Button
+                          onClick={handleNext}
+                          disabled={!canProceed()}
+                          data-testid="button-next-cart"
+                        >
+                          Next: Shipping
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Shipping Step */}
+                {currentStep === 'shipping' && (
+                  <>
+                    {!isLoadingUser && (
+                      <AddressManager 
+                        userId={user?.id}
+                        className=""
+                      />
+                    )}
+                    
+                    <DeliveryOptions className="" />
+                    
+                    <div className="flex justify-between pt-4">
                       <Button
                         variant="outline"
-                        onClick={handleClearCart}
-                        data-testid="button-clear-cart"
+                        onClick={handleBack}
+                        data-testid="button-back-shipping"
                       >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Clear Cart
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Cart
                       </Button>
                       
-                      <Link to="/shop">
-                        <Button variant="ghost" data-testid="link-continue-shopping-inline">
-                          <ArrowLeft className="mr-2 h-4 w-4" />
-                          Continue Shopping
-                        </Button>
-                      </Link>
+                      <Button
+                        onClick={handleNext}
+                        disabled={!canProceed()}
+                        data-testid="button-next-shipping"
+                      >
+                        Next: Payment
+                      </Button>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-              
-              {/* Shipping Address Section */}
-              {!isLoadingUser && (
-                <AddressManager 
-                  userId={user?.id}
-                  className=""
-                />
-              )}
-              
-              {/* Delivery Options Section */}
-              <DeliveryOptions className="" />
-              
-              {/* Payment Options Section */}
-              {!isLoadingUser && (
-                <PaymentOptions />
-              )}
-            </div>
+                  </>
+                )}
 
-            {/* Right Column - Order Summary */}
-            <div className="xl:col-span-1 lg:col-span-1">
-              <Card data-testid="card-order-summary">
-                <CardHeader>
-                  <CardTitle>Order Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                {/* Payment Step */}
+                {currentStep === 'payment' && (
+                  <>
+                    {!isLoadingUser && (
+                      <PaymentOptions />
+                    )}
+                    
+                    <div className="flex justify-between pt-4">
+                      <Button
+                        variant="outline"
+                        onClick={handleBack}
+                        data-testid="button-back-payment"
+                      >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Shipping
+                      </Button>
+                      
+                      <Button
+                        onClick={handleNext}
+                        disabled={!canProceed()}
+                        data-testid="button-next-payment"
+                      >
+                        Next: Review Order
+                      </Button>
+                    </div>
+                  </>
+                )}
+
+                {/* Order Review Step */}
+                {currentStep === 'review' && (
+                  <OrderReview
+                    onPlaceOrder={handlePlaceOrder}
+                    onEdit={handleEditSection}
+                    isPlacingOrder={isPlacingOrder}
+                  />
+                )}
+              </div>
+
+              {/* Right Column - Order Summary (for non-review steps) */}
+              {currentStep !== 'review' && (
+                <div className="xl:col-span-1 lg:col-span-1">
+                  <Card data-testid="card-order-summary">
+                    <CardHeader>
+                      <CardTitle>Order Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
                   {isLoading ? (
                     <div className="space-y-4">
                       <Skeleton className="h-4 w-full" />
@@ -582,8 +782,10 @@ export default function Checkout() {
                       </p>
                     </>
                   )}
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </div>
           </div>
         )}

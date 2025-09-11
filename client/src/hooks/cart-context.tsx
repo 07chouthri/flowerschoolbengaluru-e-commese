@@ -82,6 +82,10 @@ interface CartContextType extends CartState {
   updatePaymentData: (data: Partial<PaymentData>) => void;
   clearPaymentData: () => void;
   validatePaymentData: () => boolean;
+  
+  // Order placement
+  placeOrder: (userId?: string) => Promise<{ success: boolean; orderId?: string; error?: string }>;
+  validateOrderData: () => { isValid: boolean; errors: string[] };
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -330,7 +334,7 @@ export function CartProvider({ children, userId }: CartProviderProps) {
       // On network error, keep coupon but log the issue
       return true;
     }
-  }, [cart.appliedCoupon, userId, saveGuestCoupon, toast]);
+  }, [cart.appliedCoupon, userId, saveGuestCoupon]);
 
   // Save guest cart to localStorage
   const saveGuestCart = useCallback((items: CartItem[]) => {
@@ -804,7 +808,7 @@ export function CartProvider({ children, userId }: CartProviderProps) {
       });
       return [];
     }
-  }, [toast]);
+  }, []);
 
   // Payment methods
   const setPaymentMethod = useCallback((method: PaymentMethod | null) => {
@@ -875,6 +879,135 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     }
   }, [cart]);
 
+  const validateOrderData = useCallback(() => {
+    const errors: string[] = [];
+    
+    if (cart.items.length === 0) {
+      errors.push('Cart is empty');
+    }
+    
+    if (!cart.shippingAddress) {
+      errors.push('Shipping address is required');
+    }
+    
+    if (!cart.deliveryOption) {
+      errors.push('Delivery option must be selected');
+    }
+    
+    if (!validatePaymentData()) {
+      errors.push('Payment information is incomplete');
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }, [cart, validatePaymentData]);
+
+  const placeOrder = useCallback(async (userId?: string) => {
+    const validation = validateOrderData();
+    if (!validation.isValid) {
+      return {
+        success: false,
+        error: validation.errors.join(', ')
+      };
+    }
+
+    try {
+      setCart(prev => ({ ...prev, isLoading: true, error: null }));
+      
+      const orderData = {
+        userId: userId || null,
+        items: cart.items.map(item => ({
+          productId: item.id,
+          quantity: item.quantity,
+          price: item.price,
+          name: item.name
+        })),
+        shippingAddress: cart.shippingAddress,
+        deliveryOption: cart.deliveryOption,
+        paymentData: {
+          method: cart.paymentData.selectedMethod,
+          // Only send non-sensitive payment data
+          ...(cart.paymentData.selectedMethod === 'upi' && {
+            upiId: cart.paymentData.upiData?.upiId
+          }),
+          ...(cart.paymentData.selectedMethod === 'netbanking' && {
+            bankName: cart.paymentData.netbankingData?.bankName,
+            accountType: cart.paymentData.netbankingData?.accountType
+          }),
+          ...(cart.paymentData.selectedMethod === 'cod' && {
+            confirmed: cart.paymentData.codData?.confirmed
+          })
+        },
+        appliedCoupon: cart.appliedCoupon ? {
+          id: cart.appliedCoupon.id,
+          code: cart.appliedCoupon.code,
+          discountAmount: cart.discountAmount
+        } : null,
+        pricing: {
+          subtotal: cart.totalPrice,
+          discountAmount: cart.discountAmount,
+          deliveryCharge: cart.deliveryCharge,
+          paymentCharge: cart.paymentCharge,
+          finalAmount: cart.finalAmount
+        }
+      };
+
+      const response = await apiRequest('/api/orders/place', {
+        method: 'POST',
+        body: JSON.stringify(orderData),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Clear cart after successful order
+        await clearCart();
+        setCart(prev => ({ 
+          ...prev, 
+          isLoading: false,
+          appliedCoupon: null,
+          discountAmount: 0,
+          shippingAddress: null,
+          deliveryOption: null,
+          paymentData: { selectedMethod: null },
+          deliveryCharge: 0,
+          paymentCharge: 0,
+          finalAmount: 0
+        }));
+        
+        // Clear guest storage
+        if (!userId) {
+          try {
+            localStorage.removeItem('guest-cart');
+            localStorage.removeItem('guest-coupon');
+            localStorage.removeItem('guest-shipping');
+          } catch (error) {
+            console.error('Error clearing guest storage:', error);
+          }
+        }
+      } else {
+        setCart(prev => ({ ...prev, isLoading: false, error: result.error }));
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error placing order:', error);
+      setCart(prev => ({ 
+        ...prev, 
+        isLoading: false, 
+        error: 'Failed to place order. Please try again.' 
+      }));
+      
+      return {
+        success: false,
+        error: 'Failed to place order. Please try again.'
+      };
+    }
+  }, [cart, validateOrderData, validatePaymentData, clearCart]);
+
   // Load cart when component mounts or userId changes
   useEffect(() => {
     loadCart();
@@ -901,6 +1034,8 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     updatePaymentData,
     clearPaymentData,
     validatePaymentData,
+    placeOrder,
+    validateOrderData,
   };
 
   return (
@@ -910,10 +1045,10 @@ export function CartProvider({ children, userId }: CartProviderProps) {
   );
 }
 
-export function useCart() {
+export const useCart = () => {
   const context = useContext(CartContext);
   if (context === undefined) {
     throw new Error('useCart must be used within a CartProvider');
   }
   return context;
-}
+};
