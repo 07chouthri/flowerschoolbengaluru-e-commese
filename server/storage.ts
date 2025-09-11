@@ -808,7 +808,7 @@ export class MemStorage implements IStorage {
 
     // Calculate payment charges
     let paymentCharges = 0;
-    if (paymentMethod === "Card" || paymentMethod === "Online") {
+    if (paymentMethod === "Card" || paymentMethod === "Online" || paymentMethod === "UPI") {
       paymentCharges = Math.max((subtotal + deliveryCharge - discountAmount) * 0.02, 5); // 2% or minimum ₹5
     }
 
