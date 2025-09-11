@@ -5,6 +5,7 @@ import { insertOrderSchema, insertEnrollmentSchema, insertUserSchema, updateUser
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import twilio from "twilio";
+import { notificationService } from "./services/notification-service";
 
 // Simple in-memory session storage
 const sessions: Map<string, { userId: string; expires: number }> = new Map();
@@ -728,6 +729,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const createdOrder = orderProcessingResult.order!;
       console.log("[ORDER PLACEMENT] Order created successfully with transaction:", createdOrder.orderNumber);
+      
+      // Send order confirmation notifications (SMS and WhatsApp) asynchronously
+      // This is fire-and-forget to avoid blocking the order response
+      console.log(`[NOTIFICATION] Triggering async notifications for order: ${createdOrder.orderNumber}`);
+      
+      // Use setImmediate to ensure notifications run asynchronously without blocking the response
+      setImmediate(async () => {
+        try {
+          console.log(`[NOTIFICATION] Processing async notifications for order: ${createdOrder.orderNumber}`);
+          
+          const notificationResults = await notificationService.sendOrderConfirmation(createdOrder);
+          
+          // Log overall notification status without PII
+          const notificationSummary = {
+            orderNumber: createdOrder.orderNumber,
+            smsStatus: notificationResults.sms.success ? 'sent' : 'failed',
+            whatsappStatus: notificationResults.whatsapp.success ? 'sent' : 'failed',
+            smsMessageId: notificationResults.sms.messageId || null,
+            whatsappMessageId: notificationResults.whatsapp.messageId || null,
+            hasErrors: !notificationResults.sms.success || !notificationResults.whatsapp.success
+          };
+          
+          console.log(`[NOTIFICATION] Summary for order ${createdOrder.orderNumber}:`, JSON.stringify(notificationSummary, null, 2));
+          
+        } catch (notificationError) {
+          // Log error without failing the order
+          console.error(`[NOTIFICATION] Async notification error for order ${createdOrder.orderNumber}:`, notificationError instanceof Error ? notificationError.message : 'Unknown error');
+        }
+      });
       
       // Send success response with order details
       res.status(201).json({

@@ -362,3 +362,20 @@ export type Coupon = typeof coupons.$inferSelect;
 export type ValidateCoupon = z.infer<typeof validateCouponSchema>;
 export type AddressValidation = z.infer<typeof addressValidationSchema>;
 export type OrderPlacement = z.infer<typeof orderPlacementSchema>;
+
+// Notification types for SMS and WhatsApp messaging
+export interface OrderNotificationData {
+  orderNumber: string;
+  customerName: string;
+  phone: string;
+  total: string;
+  estimatedDeliveryDate?: Date;
+  items: Array<{
+    name: string;
+    quantity: number;
+    price: string;
+  }>;
+  deliveryAddress: string;
+  paymentMethod: string;
+  paymentStatus: string;
+}
