@@ -8,13 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { User, Edit3, Trash2, Camera, MapPin, Phone, Mail, Globe, Save, X, Settings, Shield, Heart, ShoppingBag, HelpCircle, MessageCircle } from "lucide-react";
+import { User, Edit3, Trash2, Camera, MapPin, Phone, Mail, Globe, Save, X, Settings, Shield, Heart, ShoppingBag, HelpCircle, MessageCircle, Package, Calendar, Truck } from "lucide-react";
 import { Link } from "wouter";
 
 // Profile form schema
@@ -45,14 +44,41 @@ interface UserProfile {
   updatedAt: string | null;
 }
 
+interface Order {
+  id: string;
+  userId: string;
+  customerName: string;
+  email: string;
+  phone: string;
+  deliveryAddress: string;
+  items: Array<{
+    productId: string;
+    quantity: number;
+    price: number;
+  }>;
+  totalAmount: number;
+  status: string;
+  deliveryDate: string | null;
+  deliveryTime: string | null;
+  specialInstructions: string | null;
+  createdAt: string | null;
+}
+
 export default function MyAccount() {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState("profile");
   const { toast } = useToast();
 
   // Fetch user profile
   const { data: profile, isLoading, error } = useQuery<UserProfile>({
     queryKey: ["/api/profile"],
+  });
+
+  // Fetch user orders
+  const { data: orders = [], isLoading: ordersLoading } = useQuery<Order[]>({
+    queryKey: ["/api/orders/user"],
+    enabled: !!profile, // Only fetch when profile is available
   });
 
   // Initialize form with profile data
@@ -189,7 +215,7 @@ export default function MyAccount() {
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">Unable to load profile</h2>
             <p className="text-gray-600 mb-4">Please sign in to access your account.</p>
-            <Link href="/auth">
+            <Link href="/signin">
               <Button className="w-full">Sign In</Button>
             </Link>
           </CardContent>
@@ -240,19 +266,39 @@ export default function MyAccount() {
                 </Badge>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button variant="ghost" className="w-full justify-start" data-testid="button-nav-account">
+                <Button 
+                  variant={activeTab === "profile" ? "secondary" : "ghost"} 
+                  className="w-full justify-start" 
+                  onClick={() => setActiveTab("profile")}
+                  data-testid="button-nav-account"
+                >
                   <User className="h-4 w-4 mr-3" />
                   Account Details
                 </Button>
-                <Button variant="ghost" className="w-full justify-start" data-testid="button-nav-orders">
+                <Button 
+                  variant={activeTab === "orders" ? "secondary" : "ghost"} 
+                  className="w-full justify-start" 
+                  onClick={() => setActiveTab("orders")}
+                  data-testid="button-nav-orders"
+                >
                   <ShoppingBag className="h-4 w-4 mr-3" />
                   My Orders
                 </Button>
-                <Button variant="ghost" className="w-full justify-start" data-testid="button-nav-favorites">
+                <Button 
+                  variant={activeTab === "favorites" ? "secondary" : "ghost"} 
+                  className="w-full justify-start" 
+                  onClick={() => setActiveTab("favorites")}
+                  data-testid="button-nav-favorites"
+                >
                   <Heart className="h-4 w-4 mr-3" />
                   Favorites
                 </Button>
-                <Button variant="ghost" className="w-full justify-start" data-testid="button-nav-settings">
+                <Button 
+                  variant={activeTab === "settings" ? "secondary" : "ghost"} 
+                  className="w-full justify-start" 
+                  onClick={() => setActiveTab("settings")}
+                  data-testid="button-nav-settings"
+                >
                   <Settings className="h-4 w-4 mr-3" />
                   Settings
                 </Button>
@@ -271,15 +317,11 @@ export default function MyAccount() {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            <Tabs defaultValue="profile" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="profile" data-testid="tab-profile">Profile</TabsTrigger>
-                <TabsTrigger value="security" data-testid="tab-security">Security</TabsTrigger>
-                <TabsTrigger value="preferences" data-testid="tab-preferences">Preferences</TabsTrigger>
-              </TabsList>
+            <div className="space-y-6">
 
               {/* Profile Tab */}
-              <TabsContent value="profile" className="space-y-6">
+              {activeTab === "profile" && (
+                <div className="space-y-6">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
@@ -506,47 +548,46 @@ export default function MyAccount() {
                     </AlertDialog>
                   </CardContent>
                 </Card>
-              </TabsContent>
+                </div>
+              )}
 
-              {/* Security Tab */}
-              <TabsContent value="security">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Shield className="h-5 w-5" />
-                      Security Settings
-                    </CardTitle>
-                    <CardDescription>
-                      Manage your password and security preferences
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <h3 className="font-semibold mb-2">Password</h3>
-                        <p className="text-sm text-gray-600 mb-4">
-                          Last updated: {profile?.updatedAt ? new Date(profile.updatedAt).toLocaleDateString() : "Never"}
-                        </p>
-                        <Button variant="outline">Change Password</Button>
+              {/* Settings Tab - combines Security and Preferences */}
+              {activeTab === "settings" && (
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Shield className="h-5 w-5" />
+                        Security Settings
+                      </CardTitle>
+                      <CardDescription>
+                        Manage your password and security preferences
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-6">
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                          <h3 className="font-semibold mb-2">Password</h3>
+                          <p className="text-sm text-gray-600 mb-4">
+                            Last updated: {profile?.updatedAt ? new Date(profile.updatedAt).toLocaleDateString() : "Never"}
+                          </p>
+                          <Button variant="outline">Change Password</Button>
+                        </div>
+                        
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                          <h3 className="font-semibold mb-2">Two-Factor Authentication</h3>
+                          <p className="text-sm text-gray-600 mb-4">
+                            Add an extra layer of security to your account
+                          </p>
+                          <Button variant="outline" disabled>
+                            Enable 2FA <Badge variant="secondary" className="ml-2">Coming Soon</Badge>
+                          </Button>
+                        </div>
                       </div>
-                      
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <h3 className="font-semibold mb-2">Two-Factor Authentication</h3>
-                        <p className="text-sm text-gray-600 mb-4">
-                          Add an extra layer of security to your account
-                        </p>
-                        <Button variant="outline" disabled>
-                          Enable 2FA <Badge variant="secondary" className="ml-2">Coming Soon</Badge>
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Preferences Tab */}
-              <TabsContent value="preferences">
-                <Card>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Settings className="h-5 w-5" />
@@ -604,8 +645,113 @@ export default function MyAccount() {
                     </div>
                   </CardContent>
                 </Card>
-              </TabsContent>
-            </Tabs>
+                </div>
+              )}
+
+              {/* Orders Tab */}
+              {activeTab === "orders" && (
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Package className="h-5 w-5" />
+                        Order History
+                      </CardTitle>
+                      <CardDescription>
+                        View and track your recent orders
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {ordersLoading ? (
+                        <div className="space-y-4">
+                          {[...Array(3)].map((_, i) => (
+                            <div key={i} className="p-4 border rounded-lg animate-pulse">
+                              <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : orders.length === 0 ? (
+                        <div className="text-center py-8">
+                          <ShoppingBag className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">No orders yet</h3>
+                          <p className="text-gray-600 mb-4">Start shopping to see your orders here</p>
+                          <Link href="/shop">
+                            <Button>Start Shopping</Button>
+                          </Link>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {orders.map((order) => (
+                            <div key={order.id} className="p-4 border rounded-lg hover-elevate" data-testid={`order-${order.id}`}>
+                              <div className="flex justify-between items-start mb-3">
+                                <div>
+                                  <h3 className="font-semibold">Order #{order.id.slice(-8)}</h3>
+                                  <p className="text-sm text-gray-600">
+                                    {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
+                                  </p>
+                                </div>
+                                <Badge 
+                                  variant={order.status === 'delivered' ? 'default' : 'secondary'}
+                                  className={order.status === 'delivered' ? 'bg-green-100 text-green-700' : ''}
+                                >
+                                  {order.status}
+                                </Badge>
+                              </div>
+                              <div className="grid md:grid-cols-2 gap-4">
+                                <div>
+                                  <p className="text-sm font-medium">Items: {order.items.length}</p>
+                                  <p className="text-sm text-gray-600">Total: ₹{order.totalAmount}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600 flex items-center gap-1">
+                                    <MapPin className="h-3 w-3" />
+                                    {order.deliveryAddress}
+                                  </p>
+                                  {order.deliveryDate && (
+                                    <p className="text-sm text-gray-600 flex items-center gap-1">
+                                      <Truck className="h-3 w-3" />
+                                      {new Date(order.deliveryDate).toLocaleDateString()}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Favorites Tab */}
+              {activeTab === "favorites" && (
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Heart className="h-5 w-5" />
+                        My Favorites
+                      </CardTitle>
+                      <CardDescription>
+                        Your saved and favorite items
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-center py-8">
+                        <Heart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No favorites yet</h3>
+                        <p className="text-gray-600 mb-4">Save items you love to see them here</p>
+                        <Link href="/shop">
+                          <Button>Browse Products</Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
