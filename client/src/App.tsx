@@ -13,6 +13,7 @@ import SignIn from "@/pages/signin";
 import ForgotPassword from "@/pages/forgot-password";
 import VerifyOtp from "@/pages/verify-otp";
 import MyAccount from "@/pages/my-account";
+import Checkout from "@/pages/checkout";
 import type { User } from "@shared/schema";
 
 function Router() {
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/shop" component={Shop} />
       <Route path="/product/:id" component={ProductDetail} />
+      <Route path="/checkout" component={Checkout} />
       <Route path="/signup" component={SignUp} />
       <Route path="/signin" component={SignIn} />
       <Route path="/forgot-password" component={ForgotPassword} />
