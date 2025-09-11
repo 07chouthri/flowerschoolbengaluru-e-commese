@@ -81,6 +81,12 @@ export default function MyAccount() {
     enabled: !!profile, // Only fetch when profile is available
   });
 
+  // Fetch user favorites
+  const { data: favorites = [], isLoading: favoritesLoading } = useQuery<any[]>({
+    queryKey: ["/api/favorites"],
+    enabled: !!profile, // Only fetch when profile is available
+  });
+
   // Initialize form with profile data
   const {
     register,
@@ -161,6 +167,29 @@ export default function MyAccount() {
       toast({
         title: "Error",
         description: error.message || "Failed to delete account",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Remove from favorites mutation
+  const removeFromFavoritesMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      return apiRequest(`/api/favorites/${productId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      toast({
+        title: "Removed from Favorites",
+        description: "Product removed from your favorites list.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove from favorites",
         variant: "destructive",
       });
     },
@@ -739,14 +768,106 @@ export default function MyAccount() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-center py-8">
-                        <Heart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No favorites yet</h3>
-                        <p className="text-gray-600 mb-4">Save items you love to see them here</p>
-                        <Link href="/shop">
-                          <Button>Browse Products</Button>
-                        </Link>
-                      </div>
+                      {favoritesLoading ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {[...Array(6)].map((_, index) => (
+                            <Card key={index} className="overflow-hidden">
+                              <div className="w-full h-48 bg-gray-200 animate-pulse"></div>
+                              <CardContent className="p-4">
+                                <div className="h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                                <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      ) : favorites.length === 0 ? (
+                        <div className="text-center py-8">
+                          <Heart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">No favorites yet</h3>
+                          <p className="text-gray-600 mb-4">Save items you love to see them here</p>
+                          <Button onClick={() => window.location.href = "/shop"}>
+                            Browse Products
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {favorites.map((favorite: any) => (
+                            <Card key={favorite.id} className="overflow-hidden hover-elevate" data-testid={`card-favorite-${favorite.productId}`}>
+                              <div className="relative">
+                                <img 
+                                  src={favorite.product?.image || "/placeholder-image.jpg"}
+                                  alt={favorite.product?.name || "Product"}
+                                  className="w-full h-48 object-cover cursor-pointer"
+                                  onClick={() => window.location.href = `/product/${favorite.productId}`}
+                                />
+                                <button 
+                                  className="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover-elevate"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeFromFavoritesMutation.mutate(favorite.productId);
+                                  }}
+                                  disabled={removeFromFavoritesMutation.isPending}
+                                  data-testid={`button-remove-favorite-${favorite.productId}`}
+                                >
+                                  <Heart className="w-4 h-4 fill-pink-500 text-pink-500" />
+                                </button>
+                                {favorite.product && !favorite.product.inStock && (
+                                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                    <Badge variant="secondary" className="bg-white text-black">
+                                      Out of Stock
+                                    </Badge>
+                                  </div>
+                                )}
+                              </div>
+                              <CardContent className="p-4">
+                                <h3 
+                                  className="font-semibold text-gray-900 mb-2 cursor-pointer hover:text-pink-600 transition-colors"
+                                  onClick={() => window.location.href = `/product/${favorite.productId}`}
+                                >
+                                  {favorite.product?.name || "Product Name"}
+                                </h3>
+                                <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                                  {favorite.product?.description || "Product description"}
+                                </p>
+                                <div className="flex items-center justify-between mb-4">
+                                  <span className="text-xl font-bold text-primary">
+                                    ₹{favorite.product?.price || "0"}
+                                  </span>
+                                  <Badge variant="outline" className="text-xs">
+                                    {favorite.product?.category || "Category"}
+                                  </Badge>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button 
+                                    size="sm"
+                                    variant="outline"
+                                    className="flex-1"
+                                    onClick={() => window.location.href = `/product/${favorite.productId}`}
+                                    data-testid={`button-view-product-${favorite.productId}`}
+                                  >
+                                    View Product
+                                  </Button>
+                                  <Button 
+                                    size="sm"
+                                    className="flex-1"
+                                    onClick={() => {
+                                      // Add to cart functionality would go here
+                                      toast({
+                                        title: "Add to Cart",
+                                        description: "Visit the product page to add to cart.",
+                                      });
+                                    }}
+                                    disabled={favorite.product && !favorite.product.inStock}
+                                    data-testid={`button-add-cart-${favorite.productId}`}
+                                  >
+                                    {favorite.product && !favorite.product.inStock ? "Out of Stock" : "Add to Cart"}
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
