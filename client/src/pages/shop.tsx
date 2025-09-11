@@ -352,21 +352,46 @@ export default function Shop() {
             </div>
             
             <div className="flex items-center gap-4">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="relative" 
-                onClick={() => setShowCartModal(true)}
-                data-testid="button-cart"
-              >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Cart
+              {/* Smart Cart/Checkout Button */}
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="relative" 
+                  onClick={() => {
+                    // Smart checkout logic
+                    if (totalItems === 0) {
+                      // If cart is empty, show cart modal to encourage shopping
+                      setShowCartModal(true);
+                    } else {
+                      // If cart has items, go directly to checkout
+                      setLocation('/checkout');
+                    }
+                  }}
+                  data-testid="button-cart"
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  {totalItems > 0 ? 'Checkout' : 'Cart'}
+                  {totalItems > 0 && (
+                    <Badge className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center text-xs">
+                      {totalItems}
+                    </Badge>
+                  )}
+                </Button>
+                
+                {/* View Cart button - only show when there are items */}
                 {totalItems > 0 && (
-                  <Badge className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center text-xs">
-                    {totalItems}
-                  </Badge>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowCartModal(true)}
+                    data-testid="button-view-cart"
+                    className="text-xs px-2"
+                  >
+                    View Cart
+                  </Button>
                 )}
-              </Button>
+              </div>
               <Button variant="outline" size="sm" data-testid="button-contact">
                 <Phone className="w-4 h-4 mr-2" />
                 Contact
