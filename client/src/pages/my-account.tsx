@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { User, Edit3, Trash2, Camera, MapPin, Phone, Mail, Globe, Save, X, Settings, Shield, Heart, ShoppingBag, HelpCircle, MessageCircle, Package, Calendar, Truck } from "lucide-react";
 import { Link } from "wouter";
+import AddressManager from "@/components/address-manager";
 
 // Profile form schema
 const profileFormSchema = z.object({
@@ -368,6 +369,15 @@ export default function MyAccount() {
                 >
                   <ShoppingBag className="h-4 w-4 mr-3" />
                   My Orders
+                </Button>
+                <Button 
+                  variant={activeTab === "addresses" ? "secondary" : "ghost"} 
+                  className="w-full justify-start" 
+                  onClick={() => setActiveTab("addresses")}
+                  data-testid="button-nav-addresses"
+                >
+                  <MapPin className="h-4 w-4 mr-3" />
+                  My Addresses
                 </Button>
                 <Button 
                   variant={activeTab === "favorites" ? "secondary" : "ghost"} 
@@ -1016,6 +1026,26 @@ export default function MyAccount() {
                           ))}
                         </div>
                       )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Addresses Tab */}
+              {activeTab === "addresses" && (
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <MapPin className="h-5 w-5" />
+                        My Addresses
+                      </CardTitle>
+                      <CardDescription>
+                        Manage your delivery addresses for easy checkout
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <AddressManager userId={profile?.id} className="border-0 shadow-none p-0" />
                     </CardContent>
                   </Card>
                 </div>
