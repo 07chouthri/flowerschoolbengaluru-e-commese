@@ -157,23 +157,6 @@ export default function Navigation() {
           </div>
 
           <div className="flex items-center space-x-4">
-            {/* Cart Button - Always visible */}
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="relative text-pink-600 border border-pink-300 rounded-full px-4 py-1 text-sm hover:bg-pink-50 shrink-0 z-10"
-              onClick={() => setShowCartModal(true)}
-              data-testid="button-cart"
-            >
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Cart
-              {totalItems > 0 && (
-                <Badge className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center text-xs bg-pink-500 text-white">
-                  {totalItems}
-                </Badge>
-              )}
-            </Button>
-
             <div className="hidden md:flex items-center space-x-3 shrink-0">
               {user ? (
                 <div className="flex items-center gap-3">
@@ -450,20 +433,8 @@ export default function Navigation() {
                     onClick={(e) => { 
                       e.preventDefault();
                       e.stopPropagation();
-                      console.log('Proceed to Checkout clicked!'); 
-                      console.log('Current URL:', window.location.href);
                       setShowCartModal(false); 
-                      console.log('Calling setLocation with /checkout');
                       setLocation('/checkout'); 
-                      console.log('SetLocation called, new URL should be /checkout');
-                      // Force navigation if setLocation doesn't work
-                      setTimeout(() => {
-                        console.log('URL after timeout:', window.location.href);
-                        if (!window.location.href.includes('/checkout')) {
-                          console.log('Navigation failed, forcing with window.location');
-                          window.location.href = '/checkout';
-                        }
-                      }, 100);
                     }}
                     data-testid="button-proceed-checkout"
                     role="button"
