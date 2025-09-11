@@ -145,7 +145,7 @@ export default function OrderConfirmation() {
               <CardTitle>Order Items</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {JSON.parse(order.items || '[]').map((item: any, index: number) => (
+              {(Array.isArray(order.items) ? order.items : JSON.parse(order.items || '[]')).map((item: any, index: number) => (
                 <div key={index} className="flex justify-between items-start">
                   <div>
                     <h4 className="font-medium">{item.productName}</h4>

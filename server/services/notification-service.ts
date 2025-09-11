@@ -40,8 +40,9 @@ export class NotificationService {
     // Twilio WhatsApp Business number (sandbox or verified number)
     this.whatsappFromNumber = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886';
     
-    // Twilio SMS number
-    this.smsFromNumber = process.env.TWILIO_SMS_FROM || process.env.TWILIO_PHONE_NUMBER || '';
+    // Twilio SMS number - ensure it's properly formatted with country code
+    const rawSmsNumber = process.env.TWILIO_SMS_FROM || process.env.TWILIO_PHONE_NUMBER || '';
+    this.smsFromNumber = rawSmsNumber.startsWith('+') ? rawSmsNumber : (rawSmsNumber ? `+${rawSmsNumber}` : '');
   }
 
   /**

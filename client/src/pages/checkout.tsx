@@ -230,12 +230,12 @@ export default function Checkout() {
       if (result.success) {
         toast({
           title: "Order Placed Successfully!",
-          description: `Your order has been confirmed. Order ID: ${result.orderId}`,
+          description: `Your order has been confirmed. Order ID: ${result.order?.id || result.order?.orderNumber}`,
           duration: 5000,
         });
         
         // Redirect to success page or order confirmation
-        setLocation(`/order-confirmation/${result.orderId}`);
+        setLocation(`/order-confirmation/${result.order?.id}`);
       } else {
         toast({
           title: "Order Failed",
