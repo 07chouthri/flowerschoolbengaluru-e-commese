@@ -451,8 +451,19 @@ export default function Navigation() {
                       e.preventDefault();
                       e.stopPropagation();
                       console.log('Proceed to Checkout clicked!'); 
+                      console.log('Current URL:', window.location.href);
                       setShowCartModal(false); 
+                      console.log('Calling setLocation with /checkout');
                       setLocation('/checkout'); 
+                      console.log('SetLocation called, new URL should be /checkout');
+                      // Force navigation if setLocation doesn't work
+                      setTimeout(() => {
+                        console.log('URL after timeout:', window.location.href);
+                        if (!window.location.href.includes('/checkout')) {
+                          console.log('Navigation failed, forcing with window.location');
+                          window.location.href = '/checkout';
+                        }
+                      }, 100);
                     }}
                     data-testid="button-proceed-checkout"
                     role="button"
