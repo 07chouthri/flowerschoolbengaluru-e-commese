@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import AddressManager from "@/components/address-manager";
 import DeliveryOptions from "@/components/delivery-options";
+import PaymentOptions from "@/components/payment-options";
 import bouquetBarLogo from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 
 export default function Checkout() {
@@ -33,6 +34,8 @@ export default function Checkout() {
     discountAmount,
     finalAmount,
     deliveryCharge,
+    paymentCharge,
+    paymentData,
     shippingAddress,
     deliveryOption,
     isLoading, 
@@ -43,7 +46,8 @@ export default function Checkout() {
     clearCart,
     applyCoupon,
     removeCoupon,
-    clearCouponError
+    clearCouponError,
+    validatePaymentData
   } = useCart();
   const { toast } = useToast();
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
@@ -414,6 +418,11 @@ export default function Checkout() {
               
               {/* Delivery Options Section */}
               <DeliveryOptions className="" />
+              
+              {/* Payment Options Section */}
+              {!isLoadingUser && (
+                <PaymentOptions />
+              )}
             </div>
 
             {/* Right Column - Order Summary */}
@@ -514,6 +523,16 @@ export default function Checkout() {
                           </div>
                         )}
 
+                        {/* Payment Charge (for COD, etc.) */}
+                        {paymentCharge > 0 && (
+                          <div className="flex justify-between text-base">
+                            <span>Payment Charge ({paymentData.selectedMethod?.toUpperCase()})</span>
+                            <span data-testid="text-payment-charge">
+                              {formatPrice(paymentCharge)}
+                            </span>
+                          </div>
+                        )}
+
                         {/* Discount Line Item */}
                         {appliedCoupon && discountAmount > 0 && (
                           <div className="flex justify-between text-base text-green-600 dark:text-green-400">
@@ -538,20 +557,23 @@ export default function Checkout() {
                         <Button 
                           size="lg" 
                           className="w-full" 
-                          disabled={items.length === 0 || !shippingAddress || !deliveryOption}
+                          disabled={items.length === 0 || !shippingAddress || !deliveryOption || !validatePaymentData()}
                           data-testid="button-checkout"
                         >
                           {!shippingAddress ? "Add Shipping Address" : 
                            !deliveryOption ? "Select Delivery Option" : 
+                           !validatePaymentData() ? "Complete Payment Details" :
                            "Continue to Review"}
                         </Button>
                       </Link>
                       
-                      {(!shippingAddress || !deliveryOption) && (
+                      {(!shippingAddress || !deliveryOption || !validatePaymentData()) && (
                         <p className="text-xs text-muted-foreground text-center">
                           {!shippingAddress && "Please add a shipping address."}
-                          {!shippingAddress && !deliveryOption && " "}
+                          {!shippingAddress && (!deliveryOption || !validatePaymentData()) && " "}
                           {!deliveryOption && "Please select a delivery option."}
+                          {!deliveryOption && !validatePaymentData() && " "}
+                          {!validatePaymentData() && "Please complete payment details."}
                         </p>
                       )}
 

@@ -3,6 +3,29 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Product, Address, DeliveryOption } from "@shared/schema";
 
+export type PaymentMethod = 'card' | 'upi' | 'netbanking' | 'cod';
+
+export interface PaymentData {
+  selectedMethod: PaymentMethod | null;
+  cardData?: {
+    holderName: string;
+    number: string;
+    expiryMonth: string;
+    expiryYear: string;
+    cvv: string;
+  };
+  upiData?: {
+    upiId: string;
+  };
+  netbankingData?: {
+    bankName: string;
+    accountType: string;
+  };
+  codData?: {
+    confirmed: boolean;
+  };
+}
+
 interface CartItem extends Product {
   quantity: number;
 }
@@ -25,6 +48,8 @@ interface CartState {
   shippingAddress: Address | null;
   deliveryOption: DeliveryOption | null;
   deliveryCharge: number;
+  paymentData: PaymentData;
+  paymentCharge: number;
   finalAmount: number;
   isLoading: boolean;
   error: string | null;
@@ -51,6 +76,12 @@ interface CartContextType extends CartState {
   // Delivery option methods
   setDeliveryOption: (option: DeliveryOption | null) => void;
   loadDeliveryOptions: () => Promise<DeliveryOption[]>;
+  
+  // Payment methods
+  setPaymentMethod: (method: PaymentMethod | null) => void;
+  updatePaymentData: (data: Partial<PaymentData>) => void;
+  clearPaymentData: () => void;
+  validatePaymentData: () => boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -71,6 +102,10 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     shippingAddress: null,
     deliveryOption: null,
     deliveryCharge: 0,
+    paymentData: {
+      selectedMethod: null,
+    },
+    paymentCharge: 0,
     finalAmount: 0,
     isLoading: false,
     error: null,
@@ -81,7 +116,8 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     items: CartItem[], 
     coupon?: AppliedCoupon | null, 
     discountAmount: number = 0, 
-    deliveryCharge: number = 0
+    deliveryCharge: number = 0,
+    paymentCharge: number = 0
   ) => {
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
     const totalPrice = items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
@@ -103,10 +139,10 @@ export function CartProvider({ children, userId }: CartProviderProps) {
       }
     }
     
-    // Calculate final amount: subtotal - discount + delivery
+    // Calculate final amount: subtotal - discount + delivery + payment charges
     // Ensure the discounted subtotal is never negative
     const discountedSubtotal = Math.max(0, totalPrice - recalculatedDiscount);
-    const finalAmount = discountedSubtotal + deliveryCharge;
+    const finalAmount = discountedSubtotal + deliveryCharge + paymentCharge;
     
     return { 
       totalItems, 
@@ -683,7 +719,7 @@ export function CartProvider({ children, userId }: CartProviderProps) {
   // Remove applied coupon
   const removeCoupon = useCallback(() => {
     setCart(prev => {
-      const { totalItems, totalPrice, finalAmount } = calculateTotals(prev.items, null, 0, prev.deliveryCharge);
+      const { totalItems, totalPrice, finalAmount } = calculateTotals(prev.items, null, 0, prev.deliveryCharge, prev.paymentCharge);
       return {
         ...prev,
         appliedCoupon: null,
@@ -705,7 +741,8 @@ export function CartProvider({ children, userId }: CartProviderProps) {
         prev.items, 
         prev.appliedCoupon, 
         prev.discountAmount,
-        prev.deliveryCharge
+        prev.deliveryCharge,
+        prev.paymentCharge
       );
       
       const newCart = {
@@ -734,7 +771,8 @@ export function CartProvider({ children, userId }: CartProviderProps) {
         prev.items, 
         prev.appliedCoupon, 
         prev.discountAmount,
-        deliveryCharge
+        deliveryCharge,
+        prev.paymentCharge
       );
       
       const newCart = {
@@ -768,6 +806,75 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     }
   }, [toast]);
 
+  // Payment methods
+  const setPaymentMethod = useCallback((method: PaymentMethod | null) => {
+    setCart(prev => {
+      const paymentCharge = method === 'cod' ? 50 : 0; // COD charge
+      const { totalItems, totalPrice, finalAmount } = calculateTotals(
+        prev.items,
+        prev.appliedCoupon,
+        prev.discountAmount,
+        prev.deliveryCharge,
+        paymentCharge
+      );
+
+      return {
+        ...prev,
+        paymentData: {
+          ...prev.paymentData,
+          selectedMethod: method,
+        },
+        paymentCharge,
+        totalItems,
+        totalPrice,
+        finalAmount,
+      };
+    });
+  }, [calculateTotals]);
+
+  const updatePaymentData = useCallback((data: Partial<PaymentData>) => {
+    setCart(prev => ({
+      ...prev,
+      paymentData: {
+        ...prev.paymentData,
+        ...data,
+      },
+    }));
+  }, []);
+
+  const clearPaymentData = useCallback(() => {
+    setCart(prev => ({
+      ...prev,
+      paymentData: {
+        selectedMethod: null,
+      },
+      paymentCharge: 0,
+    }));
+  }, []);
+
+  const validatePaymentData = useCallback((): boolean => {
+    const { paymentData } = cart;
+    
+    if (!paymentData.selectedMethod) return false;
+
+    switch (paymentData.selectedMethod) {
+      case 'card':
+        return !!(paymentData.cardData?.holderName &&
+                 paymentData.cardData?.number &&
+                 paymentData.cardData?.expiryMonth &&
+                 paymentData.cardData?.expiryYear &&
+                 paymentData.cardData?.cvv);
+      case 'upi':
+        return !!(paymentData.upiData?.upiId);
+      case 'netbanking':
+        return !!(paymentData.netbankingData?.bankName);
+      case 'cod':
+        return !!(paymentData.codData?.confirmed);
+      default:
+        return false;
+    }
+  }, [cart]);
+
   // Load cart when component mounts or userId changes
   useEffect(() => {
     loadCart();
@@ -790,6 +897,10 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     clearShippingAddress,
     setDeliveryOption,
     loadDeliveryOptions,
+    setPaymentMethod,
+    updatePaymentData,
+    clearPaymentData,
+    validatePaymentData,
   };
 
   return (
