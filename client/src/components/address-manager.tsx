@@ -118,16 +118,7 @@ export default function AddressManager({ className, userId }: AddressManagerProp
     if (!userId) return;
     
     try {
-      const response = await apiRequest('/api/profile');
-      
-      // Check for authentication failure and fall back to guest mode
-      if (response.status === 401) {
-        console.log('Profile fetch failed, switching to guest mode');
-        setIsGuestMode(true);
-        return;
-      }
-      
-      const profile = await response.json();
+      const profile = await apiRequest('/api/profile');
       setUserProfile(profile);
     } catch (err: any) {
       console.error('Error loading user profile:', err);
@@ -159,17 +150,7 @@ export default function AddressManager({ className, userId }: AddressManagerProp
     try {
       setIsLoading(true);
       setError(null);
-      const response = await apiRequest('/api/addresses');
-      
-      // Check for authentication failure (401) and fall back to guest mode
-      if (response.status === 401) {
-        console.log('Authentication failed, switching to guest mode');
-        setIsGuestMode(true);
-        loadGuestAddressesFromStorage();
-        return;
-      }
-      
-      const addresses: Address[] = await response.json();
+      const addresses: Address[] = await apiRequest('/api/addresses');
       setAddresses(addresses);
       
       // Auto-select default address or first address
@@ -280,38 +261,22 @@ export default function AddressManager({ className, userId }: AddressManagerProp
         try {
           if (editingAddress) {
             // Update existing address
-            const response = await apiRequest(`/api/addresses/${editingAddress.id}`, {
+            savedAddress = await apiRequest(`/api/addresses/${editingAddress.id}`, {
               method: 'PUT',
               body: JSON.stringify(formData),
             });
             
-            if (response.status === 401) {
-              // Authentication failed, switch to guest mode and save locally
-              setIsGuestMode(true);
-              handleGuestAddressSave();
-              return;
-            }
-            
-            savedAddress = await response.json();
             toast({
               title: "Address Updated",
               description: "Your address has been updated successfully.",
             });
           } else {
             // Create new address
-            const response = await apiRequest('/api/addresses', {
+            savedAddress = await apiRequest('/api/addresses', {
               method: 'POST',
               body: JSON.stringify(formData),
             });
             
-            if (response.status === 401) {
-              // Authentication failed, switch to guest mode and save locally
-              setIsGuestMode(true);
-              handleGuestAddressSave();
-              return;
-            }
-            
-            savedAddress = await response.json();
             toast({
               title: "Address Added",
               description: "Your new address has been saved successfully.",
@@ -418,16 +383,9 @@ export default function AddressManager({ className, userId }: AddressManagerProp
     try {
       if (userId && !isGuestMode) {
         // Authenticated user - delete from backend
-        const response = await apiRequest(`/api/addresses/${addressId}`, {
+        await apiRequest(`/api/addresses/${addressId}`, {
           method: 'DELETE',
         });
-        
-        if (response.status === 401) {
-          // Authentication failed, switch to guest mode and delete locally
-          setIsGuestMode(true);
-          handleGuestAddressDelete(addressId);
-          return;
-        }
         
         toast({
           title: "Address Deleted",
