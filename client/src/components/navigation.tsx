@@ -462,17 +462,28 @@ export default function Navigation() {
                       </div>
                     </div>
                   ) : (
-                    <Button 
-                      className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
-                      onClick={() => { 
+                    <div 
+                      className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-medium py-2 px-4 rounded-md cursor-pointer text-center transition-colors"
+                      onClick={(e) => { 
+                        e.preventDefault();
+                        e.stopPropagation();
                         console.log('Proceed to Checkout clicked!'); 
                         setShowCartModal(false); 
                         setLocation('/checkout'); 
                       }}
                       data-testid="button-proceed-checkout"
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setShowCartModal(false);
+                          setLocation('/checkout');
+                        }
+                      }}
                     >
                       Proceed to Checkout
-                    </Button>
+                    </div>
                   )}
                   <Button variant="outline" onClick={() => setShowCartModal(false)} className="w-full">
                     Continue Shopping
