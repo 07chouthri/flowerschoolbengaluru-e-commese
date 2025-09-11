@@ -25,7 +25,7 @@ import {
   Minus,
   Trash2
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import Footer from "@/components/footer";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -41,6 +41,7 @@ export default function Shop() {
   const [priceRange, setPriceRange] = useState([0, 2000]);
   const [showInStockOnly, setShowInStockOnly] = useState(false);
   const [showCartModal, setShowCartModal] = useState(false);
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -1019,7 +1020,14 @@ export default function Shop() {
                       </div>
                     </div>
                   ) : (
-                    <Button className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
+                    <Button 
+                      className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
+                      onClick={() => {
+                        setShowCartModal(false);
+                        setLocation('/checkout');
+                      }}
+                      data-testid="button-proceed-checkout-shop"
+                    >
                       Proceed to Checkout
                     </Button>
                   )}
