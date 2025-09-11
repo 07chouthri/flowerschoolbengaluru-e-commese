@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Product, type InsertProduct, type Course, type InsertCourse, type Order, type InsertOrder, type Enrollment, type InsertEnrollment, type Testimonial, type InsertTestimonial, type BlogPost, type InsertBlogPost, type Cart, type InsertCart, type Favorite, type InsertFavorite, type Coupon, type InsertCoupon } from "@shared/schema";
+import { type User, type InsertUser, type Product, type InsertProduct, type Course, type InsertCourse, type Order, type InsertOrder, type Enrollment, type InsertEnrollment, type Testimonial, type InsertTestimonial, type BlogPost, type InsertBlogPost, type Cart, type InsertCart, type Favorite, type InsertFavorite, type Coupon, type InsertCoupon, type Address, type InsertAddress, type DeliveryOption, type InsertDeliveryOption } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { DatabaseStorage } from "./database-storage";
 
@@ -67,6 +67,20 @@ export interface IStorage {
   updateCoupon(id: string, updates: Partial<Coupon>): Promise<Coupon>;
   incrementCouponUsage(code: string): Promise<Coupon>;
   deleteCoupon(id: string): Promise<void>;
+  
+  // Address Operations
+  getUserAddresses(userId: string): Promise<Address[]>;
+  getAddress(id: string): Promise<Address | undefined>;
+  createAddress(address: InsertAddress): Promise<Address>;
+  updateAddress(id: string, updates: Partial<Address>): Promise<Address>;
+  deleteAddress(id: string): Promise<void>;
+  setDefaultAddress(userId: string, addressId: string): Promise<void>;
+  
+  // Delivery Options
+  getAllDeliveryOptions(): Promise<DeliveryOption[]>;
+  getActiveDeliveryOptions(): Promise<DeliveryOption[]>;
+  getDeliveryOption(id: string): Promise<DeliveryOption | undefined>;
+  createDeliveryOption(deliveryOption: InsertDeliveryOption): Promise<DeliveryOption>;
 }
 
 export class MemStorage implements IStorage {
@@ -78,6 +92,8 @@ export class MemStorage implements IStorage {
   private testimonials: Map<string, Testimonial> = new Map();
   private blogPosts: Map<string, BlogPost> = new Map();
   private coupons: Map<string, Coupon> = new Map();
+  private addresses: Map<string, Address> = new Map();
+  private deliveryOptions: Map<string, DeliveryOption> = new Map();
 
   constructor() {
     this.initializeData();
@@ -317,6 +333,42 @@ export class MemStorage implements IStorage {
     ];
 
     sampleCoupons.forEach(coupon => this.coupons.set(coupon.id, coupon));
+
+    // Initialize delivery options
+    const sampleDeliveryOptions: DeliveryOption[] = [
+      {
+        id: "1",
+        name: "Standard Delivery",
+        description: "Free delivery within 3-5 business days",
+        estimatedDays: "3-5 business days",
+        price: "0.00",
+        isActive: true,
+        sortOrder: 1,
+        createdAt: new Date(),
+      },
+      {
+        id: "2",
+        name: "Express Delivery",
+        description: "Fast delivery within 1-2 business days",
+        estimatedDays: "1-2 business days",
+        price: "99.00",
+        isActive: true,
+        sortOrder: 2,
+        createdAt: new Date(),
+      },
+      {
+        id: "3",
+        name: "Same Day Delivery",
+        description: "Get your flowers delivered the same day (within city limits)",
+        estimatedDays: "Same day",
+        price: "199.00",
+        isActive: true,
+        sortOrder: 3,
+        createdAt: new Date(),
+      },
+    ];
+
+    sampleDeliveryOptions.forEach(option => this.deliveryOptions.set(option.id, option));
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -690,6 +742,107 @@ export class MemStorage implements IStorage {
     }
     this.coupons.delete(id);
   }
+
+  // Address Management Methods
+  async getUserAddresses(userId: string): Promise<Address[]> {
+    return Array.from(this.addresses.values())
+      .filter(address => address.userId === userId)
+      .sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0)); // Default address first
+  }
+
+  async getAddress(id: string): Promise<Address | undefined> {
+    return this.addresses.get(id);
+  }
+
+  async createAddress(address: InsertAddress): Promise<Address> {
+    const newAddress: Address = {
+      id: randomUUID(),
+      ...address,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    // If this is marked as default, remove default from other addresses
+    if (newAddress.isDefault) {
+      await this.setDefaultAddress(address.userId, newAddress.id);
+    }
+    
+    this.addresses.set(newAddress.id, newAddress);
+    return newAddress;
+  }
+
+  async updateAddress(id: string, updates: Partial<Address>): Promise<Address> {
+    const existingAddress = this.addresses.get(id);
+    if (!existingAddress) {
+      throw new Error("Address not found");
+    }
+
+    const updatedAddress: Address = {
+      ...existingAddress,
+      ...updates,
+      updatedAt: new Date(),
+    };
+
+    // If this is being set as default, remove default from other addresses
+    if (updates.isDefault && existingAddress.userId) {
+      await this.setDefaultAddress(existingAddress.userId, id);
+    }
+
+    this.addresses.set(id, updatedAddress);
+    return updatedAddress;
+  }
+
+  async deleteAddress(id: string): Promise<void> {
+    const address = this.addresses.get(id);
+    if (!address) {
+      throw new Error("Address not found");
+    }
+    this.addresses.delete(id);
+  }
+
+  async setDefaultAddress(userId: string, addressId: string): Promise<void> {
+    // Remove default from all user's addresses
+    for (const [id, address] of this.addresses.entries()) {
+      if (address.userId === userId && address.isDefault) {
+        const updated = { ...address, isDefault: false, updatedAt: new Date() };
+        this.addresses.set(id, updated);
+      }
+    }
+
+    // Set the new default address
+    const targetAddress = this.addresses.get(addressId);
+    if (targetAddress && targetAddress.userId === userId) {
+      const updated = { ...targetAddress, isDefault: true, updatedAt: new Date() };
+      this.addresses.set(addressId, updated);
+    }
+  }
+
+  // Delivery Options Methods
+  async getAllDeliveryOptions(): Promise<DeliveryOption[]> {
+    return Array.from(this.deliveryOptions.values())
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  }
+
+  async getActiveDeliveryOptions(): Promise<DeliveryOption[]> {
+    return Array.from(this.deliveryOptions.values())
+      .filter(option => option.isActive)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  }
+
+  async getDeliveryOption(id: string): Promise<DeliveryOption | undefined> {
+    return this.deliveryOptions.get(id);
+  }
+
+  async createDeliveryOption(deliveryOption: InsertDeliveryOption): Promise<DeliveryOption> {
+    const newDeliveryOption: DeliveryOption = {
+      id: randomUUID(),
+      ...deliveryOption,
+      createdAt: new Date(),
+    };
+    
+    this.deliveryOptions.set(newDeliveryOption.id, newDeliveryOption);
+    return newDeliveryOption;
+  }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();

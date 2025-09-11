@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Product } from "@shared/schema";
+import type { Product, Address, DeliveryOption } from "@shared/schema";
 
 interface CartItem extends Product {
   quantity: number;
@@ -22,6 +22,9 @@ interface CartState {
   totalPrice: number;
   appliedCoupon: AppliedCoupon | null;
   discountAmount: number;
+  shippingAddress: Address | null;
+  deliveryOption: DeliveryOption | null;
+  deliveryCharge: number;
   finalAmount: number;
   isLoading: boolean;
   error: string | null;
@@ -40,6 +43,14 @@ interface CartContextType extends CartState {
   applyCoupon: (code: string) => Promise<{ success: boolean; discountAmount?: number }>;
   removeCoupon: () => void;
   clearCouponError: () => void;
+  
+  // Shipping address methods
+  setShippingAddress: (address: Address | null) => void;
+  clearShippingAddress: () => void;
+  
+  // Delivery option methods
+  setDeliveryOption: (option: DeliveryOption | null) => void;
+  loadDeliveryOptions: () => Promise<DeliveryOption[]>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -57,13 +68,21 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     totalPrice: 0,
     appliedCoupon: null,
     discountAmount: 0,
+    shippingAddress: null,
+    deliveryOption: null,
+    deliveryCharge: 0,
     finalAmount: 0,
     isLoading: false,
     error: null,
     couponError: null,
   });
 
-  const calculateTotals = useCallback((items: CartItem[], coupon?: AppliedCoupon | null, discountAmount: number = 0) => {
+  const calculateTotals = useCallback((
+    items: CartItem[], 
+    coupon?: AppliedCoupon | null, 
+    discountAmount: number = 0, 
+    deliveryCharge: number = 0
+  ) => {
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
     const totalPrice = items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
     
@@ -71,22 +90,30 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     
     if (coupon) {
       if (coupon.type === 'percentage') {
-        // Recalculate percentage discount based on new cart total
+        // Recalculate percentage discount based on cart subtotal only (not including delivery)
         recalculatedDiscount = (totalPrice * coupon.value) / 100;
         
-        // Apply maximum discount cap if specified (Critical Issue 3)
+        // Apply maximum discount cap if specified
         if (coupon.maxDiscount && recalculatedDiscount > coupon.maxDiscount) {
           recalculatedDiscount = coupon.maxDiscount;
         }
       } else if (coupon.type === 'fixed') {
-        // For fixed discounts, clamp to prevent negative amounts (Critical Issue 1)
+        // For fixed discounts, clamp to prevent negative amounts on subtotal
         recalculatedDiscount = Math.min(coupon.value, totalPrice);
       }
     }
     
-    // Ensure finalAmount is never negative (Critical Issue 1)
-    const finalAmount = Math.max(0, totalPrice - recalculatedDiscount);
-    return { totalItems, totalPrice, finalAmount, recalculatedDiscount };
+    // Calculate final amount: subtotal - discount + delivery
+    // Ensure the discounted subtotal is never negative
+    const discountedSubtotal = Math.max(0, totalPrice - recalculatedDiscount);
+    const finalAmount = discountedSubtotal + deliveryCharge;
+    
+    return { 
+      totalItems, 
+      totalPrice, 
+      finalAmount, 
+      recalculatedDiscount 
+    };
   }, []);
 
   // Save/load coupon state for guest users (defined before loadCart to fix initialization order)
@@ -116,6 +143,35 @@ export function CartProvider({ children, userId }: CartProviderProps) {
       }
     }
     return { coupon: null, discountAmount: 0 };
+  }, [userId]);
+
+  // Save/load shipping state for guest users
+  const saveGuestShipping = useCallback((shippingAddress: Address | null, deliveryOption: DeliveryOption | null) => {
+    if (!userId) {
+      try {
+        if (shippingAddress || deliveryOption) {
+          localStorage.setItem('guest-shipping', JSON.stringify({ shippingAddress, deliveryOption }));
+        } else {
+          localStorage.removeItem('guest-shipping');
+        }
+      } catch (error) {
+        console.error('Error saving guest shipping:', error);
+      }
+    }
+  }, [userId]);
+
+  const loadGuestShipping = useCallback(() => {
+    if (!userId) {
+      try {
+        const savedShipping = localStorage.getItem('guest-shipping');
+        if (savedShipping) {
+          return JSON.parse(savedShipping);
+        }
+      } catch (error) {
+        console.error('Error loading guest shipping:', error);
+      }
+    }
+    return { shippingAddress: null, deliveryOption: null };
   }, [userId]);
 
   // Load cart from backend or localStorage
@@ -627,12 +683,12 @@ export function CartProvider({ children, userId }: CartProviderProps) {
   // Remove applied coupon
   const removeCoupon = useCallback(() => {
     setCart(prev => {
-      const { totalItems, totalPrice, finalAmount } = calculateTotals(prev.items);
+      const { totalItems, totalPrice, finalAmount } = calculateTotals(prev.items, null, 0, prev.deliveryCharge);
       return {
         ...prev,
         appliedCoupon: null,
         discountAmount: 0,
-        finalAmount: totalPrice,
+        finalAmount,
         couponError: null
       };
     });
@@ -641,6 +697,76 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     saveGuestCoupon(null);
     console.log('[COUPON] Coupon removed');
   }, [calculateTotals, saveGuestCoupon]);
+
+  // Shipping address methods
+  const setShippingAddress = useCallback((address: Address | null) => {
+    setCart(prev => {
+      const { totalItems, totalPrice, finalAmount } = calculateTotals(
+        prev.items, 
+        prev.appliedCoupon, 
+        prev.discountAmount,
+        prev.deliveryCharge
+      );
+      
+      const newCart = {
+        ...prev,
+        shippingAddress: address,
+        totalItems,
+        totalPrice,
+        finalAmount
+      };
+      
+      // Save shipping to localStorage for guests
+      saveGuestShipping(address, prev.deliveryOption);
+      return newCart;
+    });
+  }, [calculateTotals, saveGuestShipping]);
+
+  const clearShippingAddress = useCallback(() => {
+    setShippingAddress(null);
+  }, [setShippingAddress]);
+
+  // Delivery option methods
+  const setDeliveryOption = useCallback((option: DeliveryOption | null) => {
+    setCart(prev => {
+      const deliveryCharge = option ? parseFloat(option.price) : 0;
+      const { totalItems, totalPrice, finalAmount } = calculateTotals(
+        prev.items, 
+        prev.appliedCoupon, 
+        prev.discountAmount,
+        deliveryCharge
+      );
+      
+      const newCart = {
+        ...prev,
+        deliveryOption: option,
+        deliveryCharge,
+        totalItems,
+        totalPrice,
+        finalAmount
+      };
+      
+      // Save shipping to localStorage for guests
+      saveGuestShipping(prev.shippingAddress, option);
+      return newCart;
+    });
+  }, [calculateTotals, saveGuestShipping]);
+
+  const loadDeliveryOptions = useCallback(async (): Promise<DeliveryOption[]> => {
+    try {
+      const response = await apiRequest('/api/delivery-options');
+      const deliveryOptions = await response.json();
+      return deliveryOptions;
+    } catch (error) {
+      console.error('Error loading delivery options:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load delivery options",
+        variant: "destructive",
+      });
+      return [];
+    }
+  }, [toast]);
 
   // Load cart when component mounts or userId changes
   useEffect(() => {
@@ -660,6 +786,10 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     applyCoupon,
     removeCoupon,
     clearCouponError,
+    setShippingAddress,
+    clearShippingAddress,
+    setDeliveryOption,
+    loadDeliveryOptions,
   };
 
   return (

@@ -64,8 +64,14 @@ export const orders = pgTable("orders", {
   requirements: text("requirements"),
   status: text("status").default("pending"),
   items: jsonb("items").notNull(),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  deliveryOptionId: varchar("delivery_option_id").references(() => deliveryOptions.id),
+  deliveryCharge: decimal("delivery_charge", { precision: 10, scale: 2 }).notNull().default("0"),
+  couponCode: varchar("coupon_code"),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default("0"),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  deliveryAddress: text("delivery_address"),
+  shippingAddressId: varchar("shipping_address_id").references(() => addresses.id),
+  deliveryAddress: text("delivery_address"), // Fallback for guest users or address changes
   deliveryDate: timestamp("delivery_date"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -110,6 +116,36 @@ export const blogPosts = pgTable("blog_posts", {
   category: text("category").notNull(),
   image: text("image").notNull(),
   publishedAt: timestamp("published_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const addresses = pgTable("addresses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  fullName: varchar("full_name").notNull(),
+  phone: varchar("phone").notNull(),
+  email: varchar("email"),
+  addressLine1: text("address_line_1").notNull(),
+  addressLine2: text("address_line_2"),
+  landmark: text("landmark"),
+  city: varchar("city").notNull(),
+  state: varchar("state").notNull(),
+  postalCode: varchar("postal_code").notNull(),
+  country: varchar("country").notNull().default("India"),
+  addressType: varchar("address_type").notNull().default("Home"), // Home, Office, Other
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const deliveryOptions = pgTable("delivery_options", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(), // Standard, Express, Same Day
+  description: text("description").notNull(),
+  estimatedDays: varchar("estimated_days").notNull(), // "3-5 business days", "1-2 business days", "Same day"
+  price: decimal("price", { precision: 10, scale: 2 }).notNull().default("0"),
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(1),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -193,6 +229,17 @@ export const insertFavoriteSchema = createInsertSchema(favorites).omit({
   createdAt: true,
 });
 
+export const insertAddressSchema = createInsertSchema(addresses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDeliveryOptionSchema = createInsertSchema(deliveryOptions).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertCouponSchema = createInsertSchema(coupons).omit({
   id: true,
   timesUsed: true,
@@ -204,6 +251,22 @@ export const validateCouponSchema = z.object({
   code: z.string().min(1, "Coupon code is required"),
   cartSubtotal: z.number().positive("Cart subtotal must be positive"),
   userId: z.string().optional(),
+});
+
+// Address validation schema with enhanced validation
+export const addressValidationSchema = z.object({
+  fullName: z.string().min(1, "Full name is required"),
+  phone: z.string().regex(/^[6-9]\d{9}$/, "Please enter a valid 10-digit mobile number"),
+  email: z.string().email("Please enter a valid email address").optional(),
+  addressLine1: z.string().min(1, "Address line 1 is required"),
+  addressLine2: z.string().optional(),
+  landmark: z.string().optional(),
+  city: z.string().min(1, "City is required"),
+  state: z.string().min(1, "State is required"),
+  postalCode: z.string().regex(/^\d{6}$/, "Please enter a valid 6-digit postal code"),
+  country: z.string().min(1, "Country is required").default("India"),
+  addressType: z.enum(["Home", "Office", "Other"]).default("Home"),
+  isDefault: z.boolean().default(false),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -224,6 +287,11 @@ export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;
 export type Favorite = typeof favorites.$inferSelect;
+export type InsertAddress = z.infer<typeof insertAddressSchema>;
+export type Address = typeof addresses.$inferSelect;
+export type InsertDeliveryOption = z.infer<typeof insertDeliveryOptionSchema>;
+export type DeliveryOption = typeof deliveryOptions.$inferSelect;
 export type InsertCoupon = z.infer<typeof insertCouponSchema>;
 export type Coupon = typeof coupons.$inferSelect;
 export type ValidateCoupon = z.infer<typeof validateCouponSchema>;
+export type AddressValidation = z.infer<typeof addressValidationSchema>;

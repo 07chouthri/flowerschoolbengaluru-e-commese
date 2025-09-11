@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,9 @@ import {
 } from "lucide-react";
 import { useCart } from "@/hooks/cart-context";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import AddressManager from "@/components/address-manager";
+import DeliveryOptions from "@/components/delivery-options";
 import bouquetBarLogo from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 
 export default function Checkout() {
@@ -29,6 +32,9 @@ export default function Checkout() {
     appliedCoupon,
     discountAmount,
     finalAmount,
+    deliveryCharge,
+    shippingAddress,
+    deliveryOption,
     isLoading, 
     error,
     couponError,
@@ -43,6 +49,24 @@ export default function Checkout() {
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [couponCode, setCouponCode] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+
+  // Check if user is authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const userData = await apiRequest('/api/auth/user');
+        setUser(userData);
+      } catch (error) {
+        // User not authenticated, continue as guest
+        setUser(null);
+      } finally {
+        setIsLoadingUser(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
   // Format price in INR currency
   const formatPrice = (price: number | string) => {
@@ -231,9 +255,10 @@ export default function Checkout() {
 
         {/* Cart Items */}
         {(isLoading || items.length > 0) && (
-          <div className="grid gap-8 lg:grid-cols-3">
-            {/* Cart Items Table */}
-            <div className="lg:col-span-2">
+          <div className="grid gap-8 xl:grid-cols-3 lg:grid-cols-2">
+            {/* Left Column - Cart Items and Shipping */}
+            <div className="xl:col-span-2 lg:col-span-1 space-y-8">
+              {/* Cart Items Table */}
               <Card data-testid="card-cart-items">
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -378,10 +403,21 @@ export default function Checkout() {
                   )}
                 </CardContent>
               </Card>
+              
+              {/* Shipping Address Section */}
+              {!isLoadingUser && (
+                <AddressManager 
+                  userId={user?.id}
+                  className=""
+                />
+              )}
+              
+              {/* Delivery Options Section */}
+              <DeliveryOptions className="" />
             </div>
 
-            {/* Order Summary */}
-            <div>
+            {/* Right Column - Order Summary */}
+            <div className="xl:col-span-1 lg:col-span-1">
               <Card data-testid="card-order-summary">
                 <CardHeader>
                   <CardTitle>Order Summary</CardTitle>
@@ -468,6 +504,16 @@ export default function Checkout() {
                           <span data-testid="text-subtotal">{formatPrice(totalPrice)}</span>
                         </div>
 
+                        {/* Delivery Charge */}
+                        {deliveryOption && (
+                          <div className="flex justify-between text-base">
+                            <span>Delivery ({deliveryOption.name})</span>
+                            <span data-testid="text-delivery-charge">
+                              {parseFloat(deliveryOption.price) > 0 ? formatPrice(deliveryOption.price) : 'Free'}
+                            </span>
+                          </div>
+                        )}
+
                         {/* Discount Line Item */}
                         {appliedCoupon && discountAmount > 0 && (
                           <div className="flex justify-between text-base text-green-600 dark:text-green-400">
@@ -483,7 +529,7 @@ export default function Checkout() {
                       <div className="flex justify-between text-lg font-semibold">
                         <span>Total</span>
                         <span data-testid="text-total">
-                          {formatPrice(appliedCoupon ? finalAmount : totalPrice)}
+                          {formatPrice(finalAmount)}
                         </span>
                       </div>
 
@@ -492,12 +538,22 @@ export default function Checkout() {
                         <Button 
                           size="lg" 
                           className="w-full" 
-                          disabled={items.length === 0}
+                          disabled={items.length === 0 || !shippingAddress || !deliveryOption}
                           data-testid="button-checkout"
                         >
-                          Continue to Review
+                          {!shippingAddress ? "Add Shipping Address" : 
+                           !deliveryOption ? "Select Delivery Option" : 
+                           "Continue to Review"}
                         </Button>
                       </Link>
+                      
+                      {(!shippingAddress || !deliveryOption) && (
+                        <p className="text-xs text-muted-foreground text-center">
+                          {!shippingAddress && "Please add a shipping address."}
+                          {!shippingAddress && !deliveryOption && " "}
+                          {!deliveryOption && "Please select a delivery option."}
+                        </p>
+                      )}
 
                       <p className="text-xs text-muted-foreground text-center">
                         Secure checkout powered by Bouquet Bar

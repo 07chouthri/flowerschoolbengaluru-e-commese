@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertOrderSchema, insertEnrollmentSchema, insertUserSchema, updateUserProfileSchema, validateCouponSchema } from "@shared/schema";
+import { insertOrderSchema, insertEnrollmentSchema, insertUserSchema, updateUserProfileSchema, validateCouponSchema, insertAddressSchema, addressValidationSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import twilio from "twilio";
@@ -904,6 +904,170 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error checking favorite status:", error);
       res.status(500).json({ message: "Failed to check favorite status" });
+    }
+  });
+
+  // Address Management Routes
+  app.get("/api/addresses", async (req, res) => {
+    try {
+      const user = await getUserFromSession(req);
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const addresses = await storage.getUserAddresses(user.id);
+      res.json(addresses);
+    } catch (error) {
+      console.error("Error fetching user addresses:", error);
+      res.status(500).json({ message: "Failed to fetch addresses" });
+    }
+  });
+
+  app.post("/api/addresses", async (req, res) => {
+    try {
+      const user = await getUserFromSession(req);
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      // Validate the address data
+      const validatedAddress = addressValidationSchema.parse(req.body);
+      
+      const addressData = {
+        userId: user.id,
+        ...validatedAddress,
+      };
+
+      const newAddress = await storage.createAddress(addressData);
+      
+      // If this address is marked as default, ensure it's the only default address
+      if (validatedAddress.isDefault) {
+        await storage.setDefaultAddress(user.id, newAddress.id);
+        // Get the updated address with correct default status
+        const updatedAddress = await storage.getAddress(newAddress.id);
+        return res.status(201).json(updatedAddress);
+      }
+      
+      res.status(201).json(newAddress);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid address data", 
+          errors: error.errors 
+        });
+      }
+      console.error("Error creating address:", error);
+      res.status(500).json({ message: "Failed to create address" });
+    }
+  });
+
+  app.put("/api/addresses/:id", async (req, res) => {
+    try {
+      const user = await getUserFromSession(req);
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const addressId = req.params.id;
+      
+      // Check if address exists and belongs to user
+      const existingAddress = await storage.getAddress(addressId);
+      if (!existingAddress) {
+        return res.status(404).json({ message: "Address not found" });
+      }
+      
+      if (existingAddress.userId !== user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Validate the update data
+      const validatedUpdates = addressValidationSchema.partial().parse(req.body);
+      
+      const updatedAddress = await storage.updateAddress(addressId, validatedUpdates);
+      
+      // If this address is being set as default, ensure it's the only default address
+      if (validatedUpdates.isDefault === true) {
+        await storage.setDefaultAddress(user.id, addressId);
+        // Get the updated address with correct default status
+        const finalAddress = await storage.getAddress(addressId);
+        return res.json(finalAddress);
+      }
+      
+      res.json(updatedAddress);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid address data", 
+          errors: error.errors 
+        });
+      }
+      console.error("Error updating address:", error);
+      res.status(500).json({ message: "Failed to update address" });
+    }
+  });
+
+  app.delete("/api/addresses/:id", async (req, res) => {
+    try {
+      const user = await getUserFromSession(req);
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const addressId = req.params.id;
+      
+      // Check if address exists and belongs to user
+      const existingAddress = await storage.getAddress(addressId);
+      if (!existingAddress) {
+        return res.status(404).json({ message: "Address not found" });
+      }
+      
+      if (existingAddress.userId !== user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.deleteAddress(addressId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting address:", error);
+      res.status(500).json({ message: "Failed to delete address" });
+    }
+  });
+
+  app.put("/api/addresses/:id/default", async (req, res) => {
+    try {
+      const user = await getUserFromSession(req);
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const addressId = req.params.id;
+      
+      // Check if address exists and belongs to user
+      const existingAddress = await storage.getAddress(addressId);
+      if (!existingAddress) {
+        return res.status(404).json({ message: "Address not found" });
+      }
+      
+      if (existingAddress.userId !== user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.setDefaultAddress(user.id, addressId);
+      res.json({ success: true, message: "Default address updated" });
+    } catch (error) {
+      console.error("Error setting default address:", error);
+      res.status(500).json({ message: "Failed to set default address" });
+    }
+  });
+
+  // Delivery Options Routes
+  app.get("/api/delivery-options", async (req, res) => {
+    try {
+      const deliveryOptions = await storage.getActiveDeliveryOptions();
+      res.json(deliveryOptions);
+    } catch (error) {
+      console.error("Error fetching delivery options:", error);
+      res.status(500).json({ message: "Failed to fetch delivery options" });
     }
   });
 
