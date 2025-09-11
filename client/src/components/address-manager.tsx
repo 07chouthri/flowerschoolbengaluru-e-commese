@@ -63,6 +63,7 @@ export default function AddressManager({ className, userId }: AddressManagerProp
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGuestMode, setIsGuestMode] = useState(!userId); // Track if in guest mode
+  const [userProfile, setUserProfile] = useState<any>(null); // Store user profile data
 
   // Form state for new/edit address
   const [formData, setFormData] = useState<AddressValidation>({
@@ -102,14 +103,42 @@ export default function AddressManager({ className, userId }: AddressManagerProp
     }
   };
 
-  // Load addresses for authenticated users or guest addresses
+  // Load addresses and user profile for authenticated users or guest addresses
   useEffect(() => {
     if (userId && !isGuestMode) {
       loadAddresses();
+      loadUserProfile();
     } else {
       loadGuestAddressesFromStorage();
     }
   }, [userId, isGuestMode]);
+
+  // Load user profile for form prefilling
+  const loadUserProfile = async () => {
+    if (!userId) return;
+    
+    try {
+      const response = await apiRequest('/api/profile');
+      
+      // Check for authentication failure and fall back to guest mode
+      if (response.status === 401) {
+        console.log('Profile fetch failed, switching to guest mode');
+        setIsGuestMode(true);
+        return;
+      }
+      
+      const profile = await response.json();
+      setUserProfile(profile);
+    } catch (err: any) {
+      console.error('Error loading user profile:', err);
+      
+      // If it's a 401 error, switch to guest mode
+      if (err.status === 401 || (err.message && err.message.includes('401'))) {
+        console.log('Profile authentication error detected, switching to guest mode');
+        setIsGuestMode(true);
+      }
+    }
+  };
 
   const loadGuestAddressesFromStorage = () => {
     setIsLoading(true);
@@ -181,6 +210,36 @@ export default function AddressManager({ className, userId }: AddressManagerProp
   // Handle address selection
   const handleAddressSelect = (address: Address) => {
     setShippingAddress(address);
+  };
+
+  // Reset form with user profile data for new addresses
+  const resetFormWithProfileData = () => {
+    const fullName = userProfile 
+      ? `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim() 
+      : '';
+    
+    setFormData({
+      fullName: fullName || '',
+      phone: userProfile?.phone || '',
+      email: userProfile?.email || '',
+      addressLine1: '',
+      addressLine2: '',
+      landmark: '',
+      city: '',
+      state: userProfile?.state || '',
+      postalCode: '',
+      country: userProfile?.country || 'India',
+      addressType: 'Home',
+      isDefault: addresses.length === 0, // Make first address default
+    });
+    setFormErrors({});
+    setEditingAddress(null);
+  };
+
+  // Handle starting new address with prefilled data
+  const handleStartNewAddress = () => {
+    resetFormWithProfileData();
+    setIsAddingNew(true);
   };
 
   // Validate form data
@@ -519,7 +578,13 @@ export default function AddressManager({ className, userId }: AddressManagerProp
             Shipping Address
           </span>
           {userId && addresses.length > 0 && (
-            <Dialog open={isAddingNew} onOpenChange={setIsAddingNew}>
+            <Dialog open={isAddingNew} onOpenChange={(open) => {
+              if (open) {
+                handleStartNewAddress();
+              } else {
+                setIsAddingNew(false);
+              }
+            }}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm" data-testid="button-add-address">
                   <Plus className="mr-2 h-4 w-4" />

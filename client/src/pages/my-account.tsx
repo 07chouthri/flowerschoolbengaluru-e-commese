@@ -23,8 +23,6 @@ const profileFormSchema = z.object({
   firstName: z.string().min(1, "First name is required").optional(),
   lastName: z.string().min(1, "Last name is required").optional(),
   phone: z.string().min(10, "Phone number must be at least 10 digits").optional(),
-  defaultAddress: z.string().optional(),
-  deliveryAddress: z.string().optional(),
   country: z.string().optional(),
   state: z.string().optional(),
 });
@@ -114,8 +112,6 @@ export default function MyAccount() {
       firstName: "",
       lastName: "",
       phone: "",
-      defaultAddress: "",
-      deliveryAddress: "",
       country: "",
       state: "",
     },
@@ -128,8 +124,6 @@ export default function MyAccount() {
         firstName: profile.firstName || "",
         lastName: profile.lastName || "",
         phone: profile.phone || "",
-        defaultAddress: profile.defaultAddress || "",
-        deliveryAddress: profile.deliveryAddress || "",
         country: profile.country || "",
         state: profile.state || "",
       });
@@ -538,41 +532,6 @@ export default function MyAccount() {
                         </div>
                       </div>
 
-                      {/* Addresses */}
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold flex items-center gap-2">
-                          <MapPin className="h-5 w-5" />
-                          Address Information
-                        </h3>
-                        
-                        <div className="grid md:grid-cols-2 gap-6">
-                          {/* Default Address */}
-                          <div className="space-y-2">
-                            <Label htmlFor="defaultAddress">Default Address</Label>
-                            <textarea
-                              id="defaultAddress"
-                              {...register("defaultAddress")}
-                              disabled={!isEditing}
-                              className={`w-full min-h-[100px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-vertical ${!isEditing ? "bg-gray-50" : ""}`}
-                              placeholder="Enter your default address"
-                              data-testid="textarea-default-address"
-                            />
-                          </div>
-
-                          {/* Delivery Address */}
-                          <div className="space-y-2">
-                            <Label htmlFor="deliveryAddress">Delivery Address</Label>
-                            <textarea
-                              id="deliveryAddress"
-                              {...register("deliveryAddress")}
-                              disabled={!isEditing}
-                              className={`w-full min-h-[100px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-vertical ${!isEditing ? "bg-gray-50" : ""}`}
-                              placeholder="Enter your delivery address"
-                              data-testid="textarea-delivery-address"
-                            />
-                          </div>
-                        </div>
-                      </div>
 
                       {/* Form Actions */}
                       {isEditing && (
