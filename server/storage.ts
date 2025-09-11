@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Product, type InsertProduct, type Course, type InsertCourse, type Order, type InsertOrder, type Enrollment, type InsertEnrollment, type Testimonial, type InsertTestimonial, type BlogPost, type InsertBlogPost, type Cart, type InsertCart, type Favorite, type InsertFavorite, type Coupon, type InsertCoupon, type Address, type InsertAddress, type DeliveryOption, type InsertDeliveryOption } from "@shared/schema";
+import { type User, type InsertUser, type Product, type InsertProduct, type Course, type InsertCourse, type Order, type InsertOrder, type Enrollment, type InsertEnrollment, type Testimonial, type InsertTestimonial, type BlogPost, type InsertBlogPost, type Cart, type InsertCart, type Favorite, type InsertFavorite, type Coupon, type InsertCoupon, type Address, type InsertAddress, type DeliveryOption, type InsertDeliveryOption, type OrderPlacement } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { DatabaseStorage } from "./database-storage";
 
@@ -28,9 +28,37 @@ export interface IStorage {
   // Orders
   getAllOrders(): Promise<Order[]>;
   getOrder(id: string): Promise<Order | undefined>;
+  getOrderByNumber(orderNumber: string): Promise<Order | undefined>;
   getUserOrders(userId: string): Promise<Order[]>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: string, status: string): Promise<Order>;
+  updateOrderPaymentStatus(id: string, paymentStatus: string, transactionId?: string): Promise<Order>;
+  
+  // Enhanced order processing methods
+  generateOrderNumber(): Promise<string>;
+  validateAndProcessOrder(orderData: OrderPlacement): Promise<{
+    isValid: boolean;
+    errors?: string[];
+    validatedOrder?: InsertOrder;
+    calculatedPricing?: {
+      subtotal: number;
+      deliveryCharge: number;
+      discountAmount: number;
+      paymentCharges: number;
+      total: number;
+    };
+  }>;
+  validateCartItems(items: Array<{ productId: string; quantity: number; unitPrice: number }>): Promise<{
+    isValid: boolean;
+    errors?: string[];
+    validatedItems?: Array<{ productId: string; productName: string; quantity: number; unitPrice: number; totalPrice: number }>;
+  }>;
+  calculateOrderPricing(subtotal: number, deliveryOptionId: string, couponCode?: string, paymentMethod?: string): Promise<{
+    deliveryCharge: number;
+    discountAmount: number;
+    paymentCharges: number;
+    total: number;
+  }>;
   
   // Favorites
   getUserFavorites(userId: string): Promise<(Favorite & { product: Product })[]>;
@@ -81,6 +109,21 @@ export interface IStorage {
   getActiveDeliveryOptions(): Promise<DeliveryOption[]>;
   getDeliveryOption(id: string): Promise<DeliveryOption | undefined>;
   createDeliveryOption(deliveryOption: InsertDeliveryOption): Promise<DeliveryOption>;
+  
+  // Transactional order processing methods
+  createOrderWithTransaction(validatedOrder: InsertOrder, couponCode?: string, userId?: string): Promise<Order>;
+  processOrderPlacement(orderData: OrderPlacement, userId?: string): Promise<{
+    isValid: boolean;
+    errors?: string[];
+    order?: Order;
+    calculatedPricing?: {
+      subtotal: number;
+      deliveryCharge: number;
+      discountAmount: number;
+      paymentCharges: number;
+      total: number;
+    };
+  }>;
 }
 
 export class MemStorage implements IStorage {
@@ -496,21 +539,259 @@ export class MemStorage implements IStorage {
     return this.orders.get(id);
   }
 
+  async getOrderByNumber(orderNumber: string): Promise<Order | undefined> {
+    return Array.from(this.orders.values()).find(order => order.orderNumber === orderNumber);
+  }
+
+  async getUserOrders(userId: string): Promise<Order[]> {
+    return Array.from(this.orders.values()).filter(order => order.userId === userId);
+  }
+
   async createOrder(insertOrder: InsertOrder): Promise<Order> {
     const id = randomUUID();
+    const orderNumber = await this.generateOrderNumber();
+    const now = new Date();
     const order: Order = { 
       ...insertOrder, 
-      id, 
+      id,
+      orderNumber,
       status: "pending", 
-      createdAt: new Date(),
+      paymentStatus: "pending",
+      createdAt: now,
+      updatedAt: now,
       occasion: insertOrder.occasion ?? null,
       requirements: insertOrder.requirements ?? null,
       userId: insertOrder.userId ?? null,
       deliveryAddress: insertOrder.deliveryAddress ?? null,
-      deliveryDate: insertOrder.deliveryDate ?? null
+      deliveryDate: insertOrder.deliveryDate ? new Date(insertOrder.deliveryDate) : null,
+      estimatedDeliveryDate: insertOrder.estimatedDeliveryDate ? new Date(insertOrder.estimatedDeliveryDate) : null,
+      paymentTransactionId: insertOrder.paymentTransactionId ?? null,
+      couponCode: insertOrder.couponCode ?? null,
+      shippingAddressId: insertOrder.shippingAddressId ?? null
     };
     this.orders.set(id, order);
     return order;
+  }
+
+  async updateOrderStatus(id: string, status: string): Promise<Order> {
+    const order = this.orders.get(id);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    const updatedOrder = { ...order, status, updatedAt: new Date() };
+    this.orders.set(id, updatedOrder);
+    return updatedOrder;
+  }
+
+  async updateOrderPaymentStatus(id: string, paymentStatus: string, transactionId?: string): Promise<Order> {
+    const order = this.orders.get(id);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    const updatedOrder = { 
+      ...order, 
+      paymentStatus, 
+      paymentTransactionId: transactionId || order.paymentTransactionId,
+      updatedAt: new Date() 
+    };
+    this.orders.set(id, updatedOrder);
+    return updatedOrder;
+  }
+
+  async generateOrderNumber(): Promise<string> {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const existingOrders = Array.from(this.orders.values());
+    const todaysOrders = existingOrders.filter(order => {
+      const orderDate = new Date(order.createdAt!);
+      return orderDate.toDateString() === now.toDateString();
+    });
+    const nextNumber = String(todaysOrders.length + 1).padStart(4, '0');
+    return `ORD-${year}${month}-${nextNumber}`;
+  }
+
+  async validateCartItems(items: Array<{ productId: string; quantity: number; unitPrice: number }>): Promise<{
+    isValid: boolean;
+    errors?: string[];
+    validatedItems?: Array<{ productId: string; productName: string; quantity: number; unitPrice: number; totalPrice: number }>;
+  }> {
+    const errors: string[] = [];
+    const validatedItems: Array<{ productId: string; productName: string; quantity: number; unitPrice: number; totalPrice: number }> = [];
+
+    for (const item of items) {
+      const product = this.products.get(item.productId);
+      if (!product) {
+        errors.push(`Product with ID ${item.productId} not found`);
+        continue;
+      }
+
+      if (!product.inStock) {
+        errors.push(`Product ${product.name} is out of stock`);
+        continue;
+      }
+
+      const currentPrice = parseFloat(product.price);
+      if (Math.abs(currentPrice - item.unitPrice) > 0.01) {
+        errors.push(`Price mismatch for ${product.name}. Current price: ${currentPrice}, provided: ${item.unitPrice}`);
+        continue;
+      }
+
+      if (item.quantity <= 0) {
+        errors.push(`Invalid quantity for ${product.name}`);
+        continue;
+      }
+
+      validatedItems.push({
+        productId: item.productId,
+        productName: product.name,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalPrice: item.unitPrice * item.quantity
+      });
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors: errors.length > 0 ? errors : undefined,
+      validatedItems: errors.length === 0 ? validatedItems : undefined
+    };
+  }
+
+  async calculateOrderPricing(subtotal: number, deliveryOptionId: string, couponCode?: string, paymentMethod?: string): Promise<{
+    deliveryCharge: number;
+    discountAmount: number;
+    paymentCharges: number;
+    total: number;
+  }> {
+    // Get delivery charge
+    const deliveryOption = this.deliveryOptions.get(deliveryOptionId);
+    const deliveryCharge = deliveryOption ? parseFloat(deliveryOption.price) : 0;
+
+    // Calculate discount
+    let discountAmount = 0;
+    if (couponCode) {
+      const coupon = Array.from(this.coupons.values()).find(c => c.code === couponCode && c.isActive);
+      if (coupon) {
+        if (coupon.type === "percentage") {
+          discountAmount = (subtotal * parseFloat(coupon.value)) / 100;
+          if (coupon.maxDiscount) {
+            discountAmount = Math.min(discountAmount, parseFloat(coupon.maxDiscount));
+          }
+        } else if (coupon.type === "fixed") {
+          discountAmount = parseFloat(coupon.value);
+        }
+      }
+    }
+
+    // Calculate payment charges
+    let paymentCharges = 0;
+    if (paymentMethod === "Card" || paymentMethod === "Online") {
+      paymentCharges = Math.max((subtotal + deliveryCharge - discountAmount) * 0.02, 5); // 2% or minimum ₹5
+    }
+
+    const total = subtotal + deliveryCharge - discountAmount + paymentCharges;
+
+    return {
+      deliveryCharge,
+      discountAmount,
+      paymentCharges,
+      total
+    };
+  }
+
+  async validateAndProcessOrder(orderData: OrderPlacement): Promise<{
+    isValid: boolean;
+    errors?: string[];
+    validatedOrder?: InsertOrder;
+    calculatedPricing?: {
+      subtotal: number;
+      deliveryCharge: number;
+      discountAmount: number;
+      paymentCharges: number;
+      total: number;
+    };
+  }> {
+    const errors: string[] = [];
+
+    // Validate cart items
+    const cartValidation = await this.validateCartItems(orderData.items);
+    if (!cartValidation.isValid) {
+      errors.push(...(cartValidation.errors || []));
+    }
+
+    // Validate delivery option
+    const deliveryOption = this.deliveryOptions.get(orderData.deliveryOptionId);
+    if (!deliveryOption) {
+      errors.push("Invalid delivery option");
+    }
+
+    // Validate address if user is authenticated
+    if (orderData.userId && orderData.shippingAddressId) {
+      const address = this.addresses.get(orderData.shippingAddressId);
+      if (!address || address.userId !== orderData.userId) {
+        errors.push("Invalid shipping address");
+      }
+    }
+
+    if (errors.length > 0) {
+      return { isValid: false, errors };
+    }
+
+    // Calculate server-side pricing
+    const calculatedPricing = await this.calculateOrderPricing(
+      orderData.subtotal,
+      orderData.deliveryOptionId,
+      orderData.couponCode,
+      orderData.paymentMethod
+    );
+
+    // Validate pricing
+    const pricingTolerance = 0.01;
+    if (Math.abs(calculatedPricing.deliveryCharge - orderData.deliveryCharge) > pricingTolerance) {
+      errors.push("Delivery charge mismatch");
+    }
+    if (Math.abs(calculatedPricing.discountAmount - orderData.discountAmount) > pricingTolerance) {
+      errors.push("Discount amount mismatch");
+    }
+    if (Math.abs(calculatedPricing.total - orderData.total) > pricingTolerance) {
+      errors.push("Total amount mismatch");
+    }
+
+    if (errors.length > 0) {
+      return { isValid: false, errors };
+    }
+
+    // Create validated order object
+    const validatedOrder: InsertOrder = {
+      userId: orderData.userId,
+      customerName: orderData.customerName,
+      email: orderData.email,
+      phone: orderData.phone,
+      occasion: orderData.occasion,
+      requirements: orderData.requirements,
+      items: cartValidation.validatedItems!,
+      subtotal: orderData.subtotal.toString(),
+      deliveryOptionId: orderData.deliveryOptionId,
+      deliveryCharge: calculatedPricing.deliveryCharge.toString(),
+      couponCode: orderData.couponCode,
+      discountAmount: calculatedPricing.discountAmount.toString(),
+      paymentMethod: orderData.paymentMethod,
+      paymentCharges: calculatedPricing.paymentCharges.toString(),
+      total: calculatedPricing.total.toString(),
+      shippingAddressId: orderData.shippingAddressId,
+      deliveryAddress: orderData.deliveryAddress,
+      deliveryDate: orderData.deliveryDate ? new Date(orderData.deliveryDate) : undefined,
+      estimatedDeliveryDate: deliveryOption ? 
+        new Date(Date.now() + parseInt(deliveryOption.estimatedDays.split('-')[0]) * 24 * 60 * 60 * 1000) : 
+        undefined
+    };
+
+    return {
+      isValid: true,
+      validatedOrder,
+      calculatedPricing
+    };
   }
 
   async getAllEnrollments(): Promise<Enrollment[]> {
@@ -842,6 +1123,76 @@ export class MemStorage implements IStorage {
     
     this.deliveryOptions.set(newDeliveryOption.id, newDeliveryOption);
     return newDeliveryOption;
+  }
+
+  // Transactional order processing methods (MemStorage - simplified implementation)
+  async createOrderWithTransaction(
+    validatedOrder: InsertOrder, 
+    couponCode?: string, 
+    userId?: string
+  ): Promise<Order> {
+    try {
+      // Create the order
+      const createdOrder = await this.createOrder(validatedOrder);
+
+      // Increment coupon usage if coupon was applied
+      if (couponCode) {
+        await this.incrementCouponUsage(couponCode);
+      }
+
+      // Clear user cart if this was an authenticated user
+      if (userId) {
+        await this.clearUserCart(userId);
+      }
+
+      return createdOrder;
+    } catch (error) {
+      console.error("[MEMSTORAGE TRANSACTION ERROR] Order creation failed:", error);
+      throw error;
+    }
+  }
+
+  async processOrderPlacement(orderData: OrderPlacement, userId?: string): Promise<{
+    isValid: boolean;
+    errors?: string[];
+    order?: Order;
+    calculatedPricing?: {
+      subtotal: number;
+      deliveryCharge: number;
+      discountAmount: number;
+      paymentCharges: number;
+      total: number;
+    };
+  }> {
+    try {
+      // First validate the order
+      const validation = await this.validateAndProcessOrder(orderData);
+      if (!validation.isValid) {
+        return {
+          isValid: false,
+          errors: validation.errors
+        };
+      }
+
+      // If validation passes, create order with transaction
+      const createdOrder = await this.createOrderWithTransaction(
+        validation.validatedOrder!,
+        orderData.couponCode,
+        userId
+      );
+
+      return {
+        isValid: true,
+        order: createdOrder,
+        calculatedPricing: validation.calculatedPricing
+      };
+    } catch (error) {
+      console.error("[MEMSTORAGE ORDER PROCESSING ERROR]:", error);
+      return {
+        isValid: false,
+        errors: ["Failed to process order placement"]
+      };
+    }
   }
 }
 

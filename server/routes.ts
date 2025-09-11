@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertOrderSchema, insertEnrollmentSchema, insertUserSchema, updateUserProfileSchema, validateCouponSchema, insertAddressSchema, addressValidationSchema } from "@shared/schema";
+import { insertOrderSchema, insertEnrollmentSchema, insertUserSchema, updateUserProfileSchema, validateCouponSchema, insertAddressSchema, addressValidationSchema, orderPlacementSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import twilio from "twilio";
@@ -673,12 +673,159 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Comprehensive order placement with validation and processing
+  app.post("/api/orders/place", async (req, res) => {
+    try {
+      console.log("[ORDER PLACEMENT] Received order data:", JSON.stringify(req.body, null, 2));
+      
+      // Parse and validate order data
+      const orderData = orderPlacementSchema.parse(req.body);
+      console.log("[ORDER PLACEMENT] Order data validated successfully");
+      
+      // Get current user if authenticated
+      let currentUser = null;
+      if (orderData.userId) {
+        currentUser = await getUserFromSession(req);
+        if (!currentUser || currentUser.id !== orderData.userId) {
+          console.log("[ORDER PLACEMENT] Authentication failed for user:", orderData.userId);
+          return res.status(401).json({ 
+            success: false,
+            message: "Authentication required",
+            errors: ["Invalid or expired session"]
+          });
+        }
+        console.log("[ORDER PLACEMENT] User authenticated:", currentUser.email);
+      } else {
+        console.log("[ORDER PLACEMENT] Processing guest order");
+      }
+      
+      // Validate and process order through comprehensive validation
+      console.log("[ORDER PLACEMENT] Starting order validation and processing");
+      const orderValidation = await storage.validateAndProcessOrder(orderData);
+      
+      if (!orderValidation.isValid) {
+        console.log("[ORDER PLACEMENT] Order validation failed:", orderValidation.errors);
+        return res.status(400).json({
+          success: false,
+          message: "Order validation failed",
+          errors: orderValidation.errors
+        });
+      }
+      
+      console.log("[ORDER PLACEMENT] Order validation successful, processing order with transaction");
+      
+      // Process the entire order placement in a single transaction
+      const orderProcessingResult = await storage.processOrderPlacement(orderData, currentUser?.id);
+      
+      if (!orderProcessingResult.isValid) {
+        console.log("[ORDER PLACEMENT] Order processing failed:", orderProcessingResult.errors);
+        return res.status(400).json({
+          success: false,
+          message: "Order processing failed",
+          errors: orderProcessingResult.errors
+        });
+      }
+      
+      const createdOrder = orderProcessingResult.order!;
+      console.log("[ORDER PLACEMENT] Order created successfully with transaction:", createdOrder.orderNumber);
+      
+      // Send success response with order details
+      res.status(201).json({
+        success: true,
+        message: "Order placed successfully",
+        order: {
+          id: createdOrder.id,
+          orderNumber: createdOrder.orderNumber,
+          status: createdOrder.status,
+          paymentStatus: createdOrder.paymentStatus,
+          total: createdOrder.total,
+          estimatedDeliveryDate: createdOrder.estimatedDeliveryDate,
+          createdAt: createdOrder.createdAt
+        },
+        calculatedPricing: orderProcessingResult.calculatedPricing
+      });
+      
+    } catch (error) {
+      console.error("[ORDER PLACEMENT] Error placing order:", error);
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid order data",
+          errors: error.errors.map(err => `${err.path.join('.')}: ${err.message}`)
+        });
+      }
+      
+      res.status(500).json({
+        success: false,
+        message: "Failed to place order",
+        errors: ["Internal server error. Please try again."]
+      });
+    }
+  });
+
   app.get("/api/orders", async (req, res) => {
     try {
       const orders = await storage.getAllOrders();
       res.json(orders);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  // Get order by order number
+  app.get("/api/orders/number/:orderNumber", async (req, res) => {
+    try {
+      const order = await storage.getOrderByNumber(req.params.orderNumber);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch order" });
+    }
+  });
+
+  // Get specific order by ID
+  app.get("/api/orders/:id", async (req, res) => {
+    try {
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch order" });
+    }
+  });
+
+  // Update order status
+  app.patch("/api/orders/:id/status", async (req, res) => {
+    try {
+      const { status } = req.body;
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+      
+      const order = await storage.updateOrderStatus(req.params.id, status);
+      res.json(order);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update order status" });
+    }
+  });
+
+  // Update payment status
+  app.patch("/api/orders/:id/payment", async (req, res) => {
+    try {
+      const { paymentStatus, transactionId } = req.body;
+      if (!paymentStatus) {
+        return res.status(400).json({ message: "Payment status is required" });
+      }
+      
+      const order = await storage.updateOrderPaymentStatus(req.params.id, paymentStatus, transactionId);
+      res.json(order);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update payment status" });
     }
   });
 
