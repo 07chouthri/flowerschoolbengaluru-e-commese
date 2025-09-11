@@ -88,63 +88,68 @@ export default function ShopSection() {
             {products.map((product) => (
               <Card 
                 key={product.id} 
-                className="card-shadow hover:shadow-xl transition-all group overflow-hidden card-hover-lift flower-float cursor-pointer"
+                className="card-shadow hover:shadow-xl transition-all group overflow-hidden card-hover-lift flower-float"
                 data-testid={`card-product-${product.id}`}
               >
                 <Dialog>
-                  <DialogTrigger className="w-full text-left">
-                    <div className="relative overflow-hidden rounded-t-xl">
-                      <img 
-                        src={product.image} 
-                        alt={product.name} 
-                        className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500" 
-                      />
-                      {/* Product overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      
-                      {/* View details button */}
-                      <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <Badge className="bg-blue-500 text-white text-xs backdrop-blur-sm">
-                          <Eye className="w-3 h-3 mr-1" />
-                          View Details
-                        </Badge>
-                      </div>
-                      
-                      {/* Professional badge */}
-                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <Badge className="bg-white/90 text-black text-xs backdrop-blur-sm">Premium</Badge>
-                      </div>
-                      
-                      {/* Shimmer effect */}
-                      <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700"></div>
-                    </div>
-                    <CardContent className="p-6">
-                      <h3 className="text-lg font-semibold mb-2" data-testid={`text-product-name-${product.id}`}>
-                        {product.name}
-                      </h3>
-                      <p className="text-muted-foreground text-sm mb-4" data-testid={`text-product-description-${product.id}`}>
-                        {product.description}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl font-bold text-primary" data-testid={`text-product-price-${product.id}`}>
-                          ₹{parseFloat(product.price).toLocaleString('en-IN')}
-                        </span>
-                        <div className="flex gap-2">
-                          <Button 
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAddToCart(product);
-                            }}
-                            data-testid={`button-add-to-cart-${product.id}`}
-                            className="hover:bg-primary/90"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
+                  <div className="relative">
+                    <DialogTrigger asChild>
+                      <div className="cursor-pointer">
+                        <div className="relative overflow-hidden rounded-t-xl">
+                          <img 
+                            src={product.image} 
+                            alt={product.name} 
+                            className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500" 
+                          />
+                          {/* Product overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          
+                          {/* View details button */}
+                          <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <Badge className="bg-blue-500 text-white text-xs backdrop-blur-sm">
+                              <Eye className="w-3 h-3 mr-1" />
+                              View Details
+                            </Badge>
+                          </div>
+                          
+                          {/* Professional badge */}
+                          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <Badge className="bg-white/90 text-black text-xs backdrop-blur-sm">Premium</Badge>
+                          </div>
+                          
+                          {/* Shimmer effect */}
+                          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700"></div>
                         </div>
+                        <CardContent className="p-6">
+                          <h3 className="text-lg font-semibold mb-2" data-testid={`text-product-name-${product.id}`}>
+                            {product.name}
+                          </h3>
+                          <p className="text-muted-foreground text-sm mb-4" data-testid={`text-product-description-${product.id}`}>
+                            {product.description}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-2xl font-bold text-primary" data-testid={`text-product-price-${product.id}`}>
+                              ₹{parseFloat(product.price).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        </CardContent>
                       </div>
-                    </CardContent>
-                  </DialogTrigger>
+                    </DialogTrigger>
+                    {/* Add to Cart Button - Outside DialogTrigger to avoid nesting */}
+                    <div className="absolute bottom-6 right-6">
+                      <Button 
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(product);
+                        }}
+                        data-testid={`button-add-to-cart-${product.id}`}
+                        className="hover:bg-primary/90"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
                   
                   {/* Product Detail Dialog */}
                   <DialogContent className="sm:max-w-[500px]">
