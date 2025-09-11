@@ -26,7 +26,7 @@ import AddressManager from "@/components/address-manager";
 import DeliveryOptions from "@/components/delivery-options";
 import PaymentOptions from "@/components/payment-options";
 import OrderReview from "@/components/order-review";
-import CheckoutSteps, { type CheckoutStep } from "@/components/checkout-steps";
+import { type CheckoutStep } from "@/components/checkout-steps";
 import bouquetBarLogo from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 
 export default function Checkout() {
@@ -375,12 +375,6 @@ export default function Checkout() {
         {/* Step-based Checkout Flow */}
         {(isLoading || items.length > 0) && (
           <div className="space-y-8">
-            {/* Checkout Steps Indicator */}
-            <CheckoutSteps 
-              currentStep={currentStep} 
-              completedSteps={completedSteps}
-              onStepClick={navigateToStep}
-            />
 
             {/* Step Content */}
             <div className="grid gap-8 xl:grid-cols-3 lg:grid-cols-2">
