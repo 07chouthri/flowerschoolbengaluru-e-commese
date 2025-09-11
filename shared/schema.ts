@@ -217,7 +217,16 @@ export const orderPlacementSchema = z.object({
   // Customer information (required for guest checkout)
   customerName: z.string().min(1, "Customer name is required"),
   email: z.string().email("Valid email is required"),
-  phone: z.string().regex(/^[6-9]\d{9}$/, "Valid 10-digit phone number is required"),
+  phone: z.string().regex(/^(\+91|91)?[6-9]\d{9}$/, "Valid Indian phone number is required").transform((val) => {
+    // Normalize to +91XXXXXXXXXX format
+    const digitsOnly = val.replace(/\D/g, '');
+    if (digitsOnly.length === 10 && /^[6-9]/.test(digitsOnly)) {
+      return `+91${digitsOnly}`;
+    } else if (digitsOnly.length === 12 && digitsOnly.startsWith('91')) {
+      return `+${digitsOnly}`;
+    }
+    return val.startsWith('+') ? val : `+91${digitsOnly}`;
+  }),
   
   // Order details
   occasion: z.string().optional(),
@@ -322,7 +331,16 @@ export const validateCouponSchema = z.object({
 // Address validation schema with enhanced validation
 export const addressValidationSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
-  phone: z.string().regex(/^[6-9]\d{9}$/, "Please enter a valid 10-digit mobile number"),
+  phone: z.string().regex(/^(\+91|91)?[6-9]\d{9}$/, "Please enter a valid Indian mobile number").transform((val) => {
+    // Normalize to +91XXXXXXXXXX format
+    const digitsOnly = val.replace(/\D/g, '');
+    if (digitsOnly.length === 10 && /^[6-9]/.test(digitsOnly)) {
+      return `+91${digitsOnly}`;
+    } else if (digitsOnly.length === 12 && digitsOnly.startsWith('91')) {
+      return `+${digitsOnly}`;
+    }
+    return val.startsWith('+') ? val : `+91${digitsOnly}`;
+  }),
   email: z.string().email("Please enter a valid email address").optional(),
   addressLine1: z.string().min(1, "Address line 1 is required"),
   addressLine2: z.string().optional(),

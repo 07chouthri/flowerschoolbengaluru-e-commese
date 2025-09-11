@@ -904,7 +904,16 @@ export function CartProvider({ children, userId }: CartProviderProps) {
   // Payment methods
   const setPaymentMethod = useCallback((method: PaymentMethod | null) => {
     setCart(prev => {
-      const paymentCharge = method === 'cod' ? 50 : 0; // COD charge, QR code is free
+      // Calculate payment charges to match backend logic
+      let paymentCharge = 0;
+      if (method === 'card' || method === 'upi' || method === 'netbanking') {
+        // Card/Online payments: 2% of (subtotal + delivery - discount) or minimum ₹5
+        const subtotal = prev.totalPrice;
+        const baseAmount = subtotal + prev.deliveryCharge - prev.discountAmount;
+        paymentCharge = Math.max(baseAmount * 0.02, 5);
+      }
+      // COD and QR code are free (paymentCharge = 0)
+
       const { totalItems, totalPrice, finalAmount } = calculateTotals(
         prev.items,
         prev.appliedCoupon,
