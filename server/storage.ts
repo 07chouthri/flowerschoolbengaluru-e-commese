@@ -147,6 +147,8 @@ export class MemStorage implements IStorage {
   private coupons: Map<string, Coupon> = new Map();
   private addresses: Map<string, Address> = new Map();
   private deliveryOptions: Map<string, DeliveryOption> = new Map();
+  private carts: Map<string, Cart> = new Map();
+  private favorites: Map<string, Favorite> = new Map();
 
   constructor() {
     this.initializeData();
@@ -330,7 +332,7 @@ export class MemStorage implements IStorage {
         value: "10.00",
         isActive: true,
         startsAt: new Date("2024-01-01"),
-        expiresAt: new Date("2024-12-31"),
+        expiresAt: new Date("2025-12-31"),
         minOrderAmount: "500.00",
         maxDiscount: "200.00",
         usageLimit: 1000,
@@ -346,7 +348,7 @@ export class MemStorage implements IStorage {
         value: "500.00",
         isActive: true,
         startsAt: new Date("2024-01-01"),
-        expiresAt: new Date("2024-12-31"),
+        expiresAt: new Date("2025-12-31"),
         minOrderAmount: "2000.00",
         maxDiscount: null,
         usageLimit: 500,
@@ -373,6 +375,22 @@ export class MemStorage implements IStorage {
       },
       {
         id: "4",
+        code: "SPRING25",
+        type: "percentage",
+        value: "25.00",
+        isActive: true,
+        startsAt: new Date("2025-01-01"),
+        expiresAt: new Date("2025-12-31"),
+        minOrderAmount: "800.00",
+        maxDiscount: "500.00",
+        usageLimit: 300,
+        timesUsed: 12,
+        description: "Spring season special - 25% off",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: "5",
         code: "EXPIRED",
         type: "percentage",
         value: "50.00",
@@ -964,44 +982,88 @@ export class MemStorage implements IStorage {
 
   // Cart Operations (MemStorage implementation - not used in production)
   async getUserCart(userId: string): Promise<(Cart & { product: Product })[]> {
-    // MemStorage implementation - returns empty array
-    return [];
+    const userCarts: (Cart & { product: Product })[] = [];
+    
+    for (const cart of this.carts.values()) {
+      if (cart.userId === userId) {
+        const product = this.products.get(cart.productId);
+        if (product) {
+          userCarts.push({ ...cart, product });
+        }
+      }
+    }
+    
+    return userCarts;
   }
 
   async addToCart(userId: string, productId: string, quantity: number): Promise<Cart> {
-    // MemStorage implementation - returns dummy cart item
-    const id = randomUUID();
-    return {
-      id,
-      userId,
-      productId,
-      quantity,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    // Check if item already exists in cart
+    let existingCartKey = null;
+    for (const [key, cart] of this.carts.entries()) {
+      if (cart.userId === userId && cart.productId === productId) {
+        existingCartKey = key;
+        break;
+      }
+    }
+    
+    if (existingCartKey) {
+      // Update quantity if item exists
+      const existingCart = this.carts.get(existingCartKey)!;
+      const updatedCart = {
+        ...existingCart,
+        quantity: existingCart.quantity + quantity,
+        updatedAt: new Date()
+      };
+      this.carts.set(existingCartKey, updatedCart);
+      return updatedCart;
+    } else {
+      // Add new item to cart
+      const id = randomUUID();
+      const newCart: Cart = {
+        id,
+        userId,
+        productId,
+        quantity,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      this.carts.set(id, newCart);
+      return newCart;
+    }
   }
 
   async updateCartItemQuantity(userId: string, productId: string, quantity: number): Promise<Cart> {
-    // MemStorage implementation - returns dummy cart item
-    const id = randomUUID();
-    return {
-      id,
-      userId,
-      productId,
-      quantity,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    for (const [key, cart] of this.carts.entries()) {
+      if (cart.userId === userId && cart.productId === productId) {
+        const updatedCart = {
+          ...cart,
+          quantity,
+          updatedAt: new Date()
+        };
+        this.carts.set(key, updatedCart);
+        return updatedCart;
+      }
+    }
+    throw new Error(`Cart item not found for user ${userId} and product ${productId}`);
   }
 
   async removeFromCart(userId: string, productId: string): Promise<void> {
-    // MemStorage implementation - no-op
-    return;
+    for (const [key, cart] of this.carts.entries()) {
+      if (cart.userId === userId && cart.productId === productId) {
+        this.carts.delete(key);
+        return;
+      }
+    }
   }
 
   async clearUserCart(userId: string): Promise<void> {
-    // MemStorage implementation - no-op
-    return;
+    const keysToDelete: string[] = [];
+    for (const [key, cart] of this.carts.entries()) {
+      if (cart.userId === userId) {
+        keysToDelete.push(key);
+      }
+    }
+    keysToDelete.forEach(key => this.carts.delete(key));
   }
 
   // Additional Orders methods
