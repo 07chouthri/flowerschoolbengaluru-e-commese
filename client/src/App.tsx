@@ -14,6 +14,7 @@ import ForgotPassword from "@/pages/forgot-password";
 import VerifyOtp from "@/pages/verify-otp";
 import MyAccount from "@/pages/my-account";
 import Checkout from "@/pages/checkout";
+import OrderConfirmation from "@/pages/order-confirmation";
 import type { User } from "@shared/schema";
 
 function Router() {
@@ -23,6 +24,7 @@ function Router() {
       <Route path="/shop" component={Shop} />
       <Route path="/product/:id" component={ProductDetail} />
       <Route path="/checkout" component={Checkout} />
+      <Route path="/order-confirmation/:orderId" component={OrderConfirmation} />
       <Route path="/signup" component={SignUp} />
       <Route path="/signin" component={SignIn} />
       <Route path="/forgot-password" component={ForgotPassword} />
