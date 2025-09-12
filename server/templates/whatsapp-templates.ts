@@ -274,6 +274,110 @@ Don't miss out on this beautiful opportunity! 🌹✨
 }
 
 /**
+ * Generate WhatsApp order cancellation message
+ */
+export function getWhatsAppOrderCancellationTemplate(
+  orderNumber: string,
+  customerName: string,
+  refundAmount?: string,
+  refundMethod?: string,
+  estimatedRefundDays?: number
+): string {
+  let refundInfo = '';
+  if (refundAmount && refundMethod) {
+    const refundDays = estimatedRefundDays || 5;
+    refundInfo = `\n━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 *REFUND DETAILS*
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💵 *Amount*: ${refundAmount}
+💳 *Method*: ${refundMethod}
+📅 *Timeline*: ${refundDays} business days
+
+Your refund will be processed automatically and you'll receive a confirmation message once completed.`;
+  }
+
+  return `🌸 *BOUQUET BAR - ORDER CANCELLED* 🌸
+
+Hi *${customerName}*! 👋
+
+❌ Your order has been successfully cancelled as requested.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 *CANCELLATION DETAILS*
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔹 *Order*: ${orderNumber}
+⏰ *Cancelled*: ${new Date().toLocaleDateString('en-IN', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  })}${refundInfo}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+😊 *WE'RE HERE FOR YOU*
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+We're sorry to see you cancel your order, but we understand that plans can change. We'd love to serve you again in the future!
+
+🌹 Browse our collection anytime
+💬 Reply for recommendations
+📞 Call: +91-98765-43210
+
+Thank you for choosing Bouquet Bar. We hope to make your next special moment beautiful! ✨`;
+}
+
+/**
+ * Generate WhatsApp points awarded message
+ */
+export function getWhatsAppPointsAwardedTemplate(
+  customerName: string,
+  pointsAwarded: number,
+  totalPoints: number,
+  orderNumber: string,
+  nextMilestone?: { points: number, reward: string }
+): string {
+  let milestoneInfo = '';
+  if (nextMilestone) {
+    const pointsNeeded = nextMilestone.points - totalPoints;
+    milestoneInfo = `\n🎯 *Next Milestone*: ${pointsNeeded} more points for ${nextMilestone.reward}`;
+  }
+
+  return `🌸 *BOUQUET BAR - POINTS EARNED* 🌸
+
+Hi *${customerName}*! 👋
+
+🎉 Congratulations! You've earned reward points for your recent purchase.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+🏆 *POINTS SUMMARY*
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ *Points Earned*: ${pointsAwarded} points
+🔹 *Order*: ${orderNumber}
+💎 *Total Points*: ${totalPoints} points${milestoneInfo}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 *HOW TO REDEEM*
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+• Use points at checkout for instant discounts
+• 100 points = ₹10 discount
+• Points never expire
+• Combine with offers for extra savings
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+🛒 *SHOP AGAIN*
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💬 Reply "CATALOG" for our latest collection
+📞 Call: +91-98765-43210
+🌐 Visit our website
+
+Thank you for being a valued customer! 🌹✨`;
+}
+
+/**
  * Generate WhatsApp order tracking message
  */
 export function getWhatsAppOrderTrackingTemplate(

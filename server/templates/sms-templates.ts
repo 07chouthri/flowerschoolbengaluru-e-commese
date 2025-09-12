@@ -127,6 +127,48 @@ Support: +91-98765-43210`;
 }
 
 /**
+ * Generate SMS order cancellation message
+ */
+export function getSMSOrderCancellationTemplate(
+  orderNumber: string,
+  customerName: string,
+  refundAmount?: string,
+  refundMethod?: string
+): string {
+  let refundInfo = '';
+  if (refundAmount && refundMethod) {
+    refundInfo = `\nRefund: ${refundAmount} via ${refundMethod} in 3-5 business days.`;
+  }
+
+  return `❌ Order ${orderNumber} cancelled successfully.${refundInfo}
+
+We're sorry to see you cancel your order. We hope to serve you again soon!
+
+Support: +91-98765-43210
+-Bouquet Bar`;
+}
+
+/**
+ * Generate SMS points awarded message
+ */
+export function getSMSPointsAwardedTemplate(
+  customerName: string,
+  pointsAwarded: number,
+  totalPoints: number,
+  orderNumber: string
+): string {
+  return `🎉 ${pointsAwarded} points earned!
+
+Hi ${customerName}, you've earned ${pointsAwarded} reward points for order ${orderNumber}.
+
+Total points: ${totalPoints}
+Redeem at checkout for discounts!
+
+Shop: wa.me/919876543210
+-Bouquet Bar`;
+}
+
+/**
  * Generate SMS promotional message template
  */
 export function getSMSPromotionalTemplate(
