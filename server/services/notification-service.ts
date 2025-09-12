@@ -38,7 +38,11 @@ export class NotificationService {
     );
     
     // Twilio WhatsApp Business number (sandbox or verified number)
-    this.whatsappFromNumber = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886';
+    const rawWhatsAppNumber = process.env.TWILIO_WHATSAPP_FROM || '+14155238886';
+    // Ensure WhatsApp number has the whatsapp: prefix
+    this.whatsappFromNumber = rawWhatsAppNumber.startsWith('whatsapp:') 
+      ? rawWhatsAppNumber 
+      : `whatsapp:${rawWhatsAppNumber}`;
     
     // Twilio SMS number - ensure it's properly formatted with country code
     const rawSmsNumber = process.env.TWILIO_SMS_FROM || process.env.TWILIO_PHONE_NUMBER || '';
