@@ -813,7 +813,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get specific order by ID
+  // User Orders Management Routes - MUST come before /api/orders/:id
+  app.get("/api/orders/user", async (req, res) => {
+    try {
+      console.log("[ORDER HISTORY] Fetching user orders...");
+      const user = await getUserFromSession(req);
+      if (!user) {
+        console.log("[ORDER HISTORY] No user found in session");
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      console.log(`[ORDER HISTORY] User found: ${user.id} (${user.email})`);
+      const orders = await storage.getUserOrders(user.id);
+      console.log(`[ORDER HISTORY] Found ${orders.length} orders for user ${user.id}`);
+      
+      if (orders.length === 0) {
+        console.log("[ORDER HISTORY] No orders found, returning empty array");
+      } else {
+        console.log("[ORDER HISTORY] Orders:", orders.map(o => ({ id: o.id, orderNumber: o.orderNumber, status: o.status })));
+      }
+      
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching user orders:", error);
+      res.status(500).json({ message: "Failed to fetch user orders" });
+    }
+  });
+
+  // Get specific order by ID - MUST come after specific routes like /user
   app.get("/api/orders/:id", async (req, res) => {
     try {
       const order = await storage.getOrder(req.params.id);
@@ -967,21 +994,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User Orders Management Routes
-  app.get("/api/orders/user", async (req, res) => {
-    try {
-      const user = await getUserFromSession(req);
-      if (!user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      const orders = await storage.getUserOrders(user.id);
-      res.json(orders);
-    } catch (error) {
-      console.error("Error fetching user orders:", error);
-      res.status(500).json({ message: "Failed to fetch user orders" });
-    }
-  });
 
   app.put("/api/orders/:id/status", async (req, res) => {
     try {
