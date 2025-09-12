@@ -16,6 +16,7 @@ import VerifyOtp from "@/pages/verify-otp";
 import MyAccount from "@/pages/my-account";
 import Checkout from "@/pages/checkout";
 import OrderConfirmation from "@/pages/order-confirmation";
+import OrderTracking from "@/pages/order-tracking";
 import type { User } from "@shared/schema";
 
 function Router() {
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/order-confirmation/:orderId" component={OrderConfirmation} />
+      <Route path="/order-tracking/:id" component={OrderTracking} />
       <Route path="/signup" component={SignUp} />
       <Route path="/signin" component={SignIn} />
       <Route path="/login" component={SignIn} />
