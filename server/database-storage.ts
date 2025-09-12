@@ -1069,8 +1069,8 @@ export class DatabaseStorage implements IStorage {
       .from(orders)
       .where(
         and(
-          sql`${orders.status} = ANY(${statuses})`,
-          sql`${orders.statusUpdatedAt} <= ${cutoffDate}`
+          inArray(orders.status, statuses),
+          lte(orders.statusUpdatedAt, cutoffDate)
         )
       );
     return ordersToAdvance;

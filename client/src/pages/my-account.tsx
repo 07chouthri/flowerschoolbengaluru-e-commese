@@ -96,6 +96,34 @@ export default function MyAccount() {
     enabled: !!profile, // Only fetch when profile is available
   });
 
+  // Cancel order mutation
+  const cancelOrderMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      return apiRequest(`/api/orders/${orderId}/cancel`, {
+        method: "POST",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders/user"] });
+      toast({
+        title: "Order cancelled",
+        description: "Your order has been cancelled successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to cancel order",
+        description: error.response?.data?.message || "Please try again",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Helper function to check if order can be cancelled
+  const canCancelOrder = (order: Order) => {
+    return order.status === "pending" || order.status === "confirmed";
+  };
+
   // Fetch user favorites
   const { data: favorites = [], isLoading: favoritesLoading } = useQuery<any[]>({
     queryKey: ["/api/favorites"],
@@ -781,12 +809,55 @@ export default function MyAccount() {
                                     {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
                                   </p>
                                 </div>
-                                <Badge 
-                                  variant={order.status === 'delivered' ? 'default' : 'secondary'}
-                                  className={order.status === 'delivered' ? 'bg-green-100 text-green-700' : ''}
-                                >
-                                  {order.status}
-                                </Badge>
+                                <div className="flex items-center gap-2">
+                                  <Badge 
+                                    variant={order.status === 'delivered' ? 'default' : 'secondary'}
+                                    className={order.status === 'delivered' ? 'bg-green-100 text-green-700' : ''}
+                                  >
+                                    {order.status}
+                                  </Badge>
+                                  {canCancelOrder(order) && (
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm"
+                                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                          disabled={cancelOrderMutation.isPending}
+                                          data-testid={`button-cancel-order-${order.id}`}
+                                        >
+                                          <X className="h-3 w-3 mr-1" />
+                                          Cancel
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Cancel Order</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            Are you sure you want to cancel Order #{order.id.slice(-8)}? 
+                                            This action cannot be undone and you will receive a refund according to our policy.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel 
+                                            disabled={cancelOrderMutation.isPending}
+                                            data-testid={`button-keep-order-${order.id}`}
+                                          >
+                                            Keep Order
+                                          </AlertDialogCancel>
+                                          <AlertDialogAction
+                                            onClick={() => cancelOrderMutation.mutate(order.id)}
+                                            className="bg-red-600 hover:bg-red-700 text-white"
+                                            disabled={cancelOrderMutation.isPending}
+                                            data-testid={`button-confirm-cancel-${order.id}`}
+                                          >
+                                            {cancelOrderMutation.isPending ? "Cancelling..." : "Cancel Order"}
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  )}
+                                </div>
                               </div>
                               <div className="grid md:grid-cols-2 gap-4">
                                 <div>
