@@ -30,20 +30,7 @@ export function getSMSOrderConfirmationTemplate(data: OrderNotificationData): st
     ? 'Payment confirmed' 
     : `Payment: ${data.paymentMethod}`;
 
-  return `🌸 Bouquet Bar Order Confirmed!
-
-Order: ${data.orderNumber}
-Items: ${itemSummary}
-Total: ${data.total}
-${paymentMsg}
-
-Delivery: ${deliveryDate}
-${data.deliveryAddress}
-
-Track your order: wa.me/919876543210
-Support: +91-98765-43210
-
-Thank you for choosing Bouquet Bar! 🌹`;
+  return `🌹 Order ${data.orderNumber} confirmed! Total: ${data.total}. ${data.paymentMethod} payment. Delivery: ${deliveryDate}. Thanks! -Bouquet Bar`;
 }
 
 /**
