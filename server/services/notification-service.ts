@@ -287,6 +287,77 @@ export class NotificationService {
 
     return await this.sendWhatsApp(notificationData);
   }
+
+  /**
+   * Send order cancellation notification via SMS and WhatsApp
+   */
+  async sendOrderCancellationNotification(data: {
+    orderId: string;
+    orderNumber: string;
+    customerName: string;
+    customerPhone: string;
+    refundAmount?: string;
+    refundMethod?: string;
+  }): Promise<{
+    sms: NotificationResult;
+    whatsapp: NotificationResult;
+  }> {
+    const phone = this.formatPhoneNumber(data.customerPhone);
+    
+    if (!phone) {
+      const errorResult: NotificationResult = {
+        success: false,
+        channel: 'sms',
+        error: 'Invalid phone number format'
+      };
+      return {
+        sms: errorResult,
+        whatsapp: { ...errorResult, channel: 'whatsapp' }
+      };
+    }
+
+    // Import templates dynamically to avoid circular dependencies
+    const { getSMSOrderCancellationTemplate } = await import("../templates/sms-templates.js");
+    const { getWhatsAppOrderCancellationTemplate } = await import("../templates/whatsapp-templates.js");
+
+    // Generate messages
+    const smsMessage = getSMSOrderCancellationTemplate(
+      data.orderNumber,
+      data.customerName,
+      data.refundAmount,
+      data.refundMethod
+    );
+
+    const whatsappMessage = getWhatsAppOrderCancellationTemplate(
+      data.orderNumber,
+      data.customerName,
+      data.refundAmount,
+      data.refundMethod,
+      5 // estimated refund days
+    );
+
+    // Send notifications
+    const smsResult = await this.sendRawSMS(phone, smsMessage);
+    const whatsappResult = await this.sendRawWhatsApp(phone, whatsappMessage);
+
+    // Log results
+    if (smsResult.success) {
+      console.log(`[CANCELLATION] SMS sent successfully for order ${data.orderNumber}, SID: ${smsResult.messageId}`);
+    } else {
+      console.error(`[CANCELLATION] SMS failed for order ${data.orderNumber}:`, smsResult.error);
+    }
+
+    if (whatsappResult.success) {
+      console.log(`[CANCELLATION] WhatsApp sent successfully for order ${data.orderNumber}, SID: ${whatsappResult.messageId}`);
+    } else {
+      console.error(`[CANCELLATION] WhatsApp failed for order ${data.orderNumber}:`, whatsappResult.error);
+    }
+
+    return {
+      sms: smsResult,
+      whatsapp: whatsappResult
+    };
+  }
 }
 
 // Export singleton instance

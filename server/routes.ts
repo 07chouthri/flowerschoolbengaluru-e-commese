@@ -1015,6 +1015,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Order cancellation route
+  app.post("/api/orders/:id/cancel", async (req, res) => {
+    try {
+      const user = await getUserFromSession(req);
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const orderId = req.params.id;
+      
+      // Cancel the order using the storage method
+      const cancelledOrder = await storage.cancelOrder(orderId, user.id);
+      
+      // Send cancellation notification
+      try {
+        await notificationService.sendOrderCancellationNotification({
+          orderId: cancelledOrder.id,
+          orderNumber: cancelledOrder.orderNumber,
+          customerName: (user.firstName && user.lastName) ? `${user.firstName} ${user.lastName}` : user.email,
+          customerPhone: cancelledOrder.phone,
+          refundAmount: cancelledOrder.total,
+          refundMethod: cancelledOrder.paymentMethod || "Original payment method"
+        });
+      } catch (notificationError) {
+        console.error("Failed to send cancellation notification:", notificationError);
+        // Don't fail the cancellation if notification fails
+      }
+
+      res.json({
+        success: true,
+        order: cancelledOrder,
+        message: "Order cancelled successfully"
+      });
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to cancel order";
+      
+      // Map specific error types to appropriate HTTP status codes
+      if (errorMessage.includes("Order not found")) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      if (errorMessage.includes("Unauthorized")) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      if (errorMessage.includes("cannot be cancelled")) {
+        return res.status(409).json({ message: "Order cannot be cancelled in current status" });
+      }
+      
+      res.status(500).json({ message: "Failed to cancel order" });
+    }
+  });
+
+  // Order tracking route
+  app.get("/api/orders/:id/tracking", async (req, res) => {
+    try {
+      const user = await getUserFromSession(req);
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const orderId = req.params.id;
+      
+      // Get the order first
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      // Check if user owns this order
+      if (order.userId !== user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get order status history
+      const statusHistory = await storage.getOrderStatusHistory(orderId);
+      
+      // Define status progression steps
+      const statusSteps = [
+        { step: "Order Placed", status: "pending", completed: true },
+        { step: "Order Confirmed", status: "confirmed", completed: false },
+        { step: "Being Prepared", status: "processing", completed: false },
+        { step: "Out for Delivery", status: "shipped", completed: false },
+        { step: "Delivered", status: "delivered", completed: false }
+      ];
+
+      // Mark completed steps based on current order status
+      const statusOrder = ["pending", "confirmed", "processing", "shipped", "delivered"];
+      const currentStatus = order.status || "pending";
+      const currentStatusIndex = statusOrder.indexOf(currentStatus);
+      
+      if (currentStatusIndex >= 0) {
+        statusSteps.forEach((step, index) => {
+          step.completed = index <= currentStatusIndex;
+        });
+      }
+
+      // Handle cancelled orders
+      if (currentStatus === "cancelled") {
+        statusSteps.forEach(step => step.completed = false);
+        statusSteps.push({ step: "Order Cancelled", status: "cancelled", completed: true });
+      }
+
+      res.json({
+        order: {
+          id: order.id,
+          orderNumber: order.orderNumber,
+          status: order.status,
+          total: order.total,
+          createdAt: order.createdAt,
+          statusUpdatedAt: order.statusUpdatedAt,
+          estimatedDeliveryDate: order.estimatedDeliveryDate,
+          pointsAwarded: order.pointsAwarded
+        },
+        statusHistory,
+        progressSteps: statusSteps,
+        canCancel: ["pending", "confirmed", "processing"].includes(currentStatus)
+      });
+    } catch (error) {
+      console.error("Error fetching order tracking:", error);
+      res.status(500).json({ message: "Failed to fetch order tracking" });
+    }
+  });
+
   // Favorites Management Routes
   app.get("/api/favorites", async (req, res) => {
     try {

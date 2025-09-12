@@ -11,6 +11,7 @@ import {
   coupons,
   addresses,
   deliveryOptions,
+  orderStatusHistory,
   type User, 
   type InsertUser, 
   type Product, 
@@ -35,7 +36,9 @@ import {
   type InsertAddress,
   type DeliveryOption,
   type InsertDeliveryOption,
-  type OrderPlacement
+  type OrderPlacement,
+  type OrderStatusHistory,
+  type InsertOrderStatusHistory
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, sql } from "drizzle-orm";
@@ -995,5 +998,113 @@ export class DatabaseStorage implements IStorage {
         errors: ["Failed to process order placement"]
       };
     }
+  }
+
+  // Order cancellation and tracking methods
+  async cancelOrder(orderId: string, userId: string): Promise<Order> {
+    // Get the order first
+    const [order] = await db.select().from(orders).where(eq(orders.id, orderId));
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    if (order.userId !== userId) {
+      throw new Error("Unauthorized to cancel this order");
+    }
+    if (!["pending", "confirmed", "processing"].includes(order.status || "")) {
+      throw new Error("Order cannot be cancelled in current status");
+    }
+
+    // Update order status
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({
+        status: "cancelled",
+        statusUpdatedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(orders.id, orderId))
+      .returning();
+
+    // Add status history entry
+    await this.addOrderStatusHistory(orderId, "cancelled", "Order cancelled by customer");
+
+    // TODO: Restore product stock (will be implemented when needed)
+    
+    return updatedOrder;
+  }
+
+  async getOrderStatusHistory(orderId: string): Promise<OrderStatusHistory[]> {
+    const history = await db
+      .select()
+      .from(orderStatusHistory)
+      .where(eq(orderStatusHistory.orderId, orderId))
+      .orderBy(orderStatusHistory.changedAt);
+    return history;
+  }
+
+  async addOrderStatusHistory(orderId: string, status: string, note?: string): Promise<void> {
+    await db.insert(orderStatusHistory).values({
+      orderId,
+      status,
+      note: note || null,
+      changedAt: new Date()
+    });
+  }
+
+  async awardUserPoints(userId: string, points: number): Promise<void> {
+    await db
+      .update(users)
+      .set({
+        points: sql`COALESCE(${users.points}, 0) + ${points}`,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+    
+    console.log(`[POINTS] Awarded ${points} points to user ${userId}`);
+  }
+
+  async listAdvancableOrders(cutoffDate: Date, statuses: string[]): Promise<Order[]> {
+    const ordersToAdvance = await db
+      .select()
+      .from(orders)
+      .where(
+        and(
+          sql`${orders.status} = ANY(${statuses})`,
+          sql`${orders.statusUpdatedAt} <= ${cutoffDate}`
+        )
+      );
+    return ordersToAdvance;
+  }
+
+  async advanceOrderStatus(orderId: string, nextStatus: string): Promise<Order> {
+    // Get the order first
+    const [order] = await db.select().from(orders).where(eq(orders.id, orderId));
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    const now = new Date();
+
+    // Update order status
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({
+        status: nextStatus,
+        statusUpdatedAt: now,
+        updatedAt: now,
+        // Award points when order reaches processing status
+        pointsAwarded: nextStatus === "processing" && !order.pointsAwarded ? true : order.pointsAwarded
+      })
+      .where(eq(orders.id, orderId))
+      .returning();
+
+    // Award points when order reaches processing status
+    if (nextStatus === "processing" && !order.pointsAwarded && order.userId) {
+      await this.awardUserPoints(order.userId, 50);
+    }
+
+    await this.addOrderStatusHistory(orderId, nextStatus, "Status automatically updated");
+    
+    return updatedOrder;
   }
 }
