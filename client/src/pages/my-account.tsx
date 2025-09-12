@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { User, Edit3, Trash2, Camera, MapPin, Phone, Mail, Globe, Save, X, Settings, Shield, Heart, ShoppingBag, HelpCircle, MessageCircle, Package, Calendar, Truck } from "lucide-react";
 import { Link } from "wouter";
@@ -83,6 +84,8 @@ export default function MyAccount() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
+  const [selectedOrderForAddress, setSelectedOrderForAddress] = useState<Order | null>(null);
+  const [addressChangeForm, setAddressChangeForm] = useState({ deliveryAddress: '', deliveryPhone: '' });
   const { toast } = useToast();
 
   // Fetch user profile
@@ -122,6 +125,10 @@ export default function MyAccount() {
   // Helper function to check if order can be cancelled
   const canCancelOrder = (order: Order) => {
     return order.status === "pending" || order.status === "confirmed";
+  };
+
+  const canChangeAddress = (order: Order) => {
+    return order.status === "pending" || order.status === "confirmed" || order.status === "processing";
   };
 
   // Fetch user favorites
@@ -272,6 +279,32 @@ export default function MyAccount() {
     },
   });
 
+  // Change address mutation
+  const changeAddressMutation = useMutation({
+    mutationFn: async ({ orderId, deliveryAddress, deliveryPhone }: { orderId: string; deliveryAddress: string; deliveryPhone?: string }) => {
+      return apiRequest(`/api/orders/${orderId}/address`, {
+        method: "POST",
+        body: JSON.stringify({ deliveryAddress, deliveryPhone }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders/user"] });
+      setSelectedOrderForAddress(null); // Close dialog on success
+      toast({
+        title: "Address Updated",
+        description: "Your delivery address has been updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      // Don't close dialog on error - keep it open so user can fix issues
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update address",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: ProfileFormData) => {
     updateProfileMutation.mutate(data);
   };
@@ -288,6 +321,25 @@ export default function MyAccount() {
   const handleDeleteAccount = () => {
     deleteAccountMutation.mutate();
     setShowDeleteDialog(false);
+  };
+
+  const handleOpenAddressChange = (order: Order) => {
+    setSelectedOrderForAddress(order);
+    setAddressChangeForm({
+      deliveryAddress: order.deliveryAddress || '',
+      deliveryPhone: order.phone || ''
+    });
+  };
+
+  const handleAddressChange = () => {
+    if (!selectedOrderForAddress) return;
+    
+    changeAddressMutation.mutate({
+      orderId: selectedOrderForAddress.id,
+      deliveryAddress: addressChangeForm.deliveryAddress,
+      deliveryPhone: addressChangeForm.deliveryPhone || undefined
+    });
+    // Don't close dialog here - let onSuccess/onError handle dialog closure
   };
 
   const getInitials = () => {
@@ -816,6 +868,19 @@ export default function MyAccount() {
                                   >
                                     {order.status}
                                   </Badge>
+                                  {canChangeAddress(order) && (
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                      onClick={() => handleOpenAddressChange(order)}
+                                      disabled={changeAddressMutation.isPending}
+                                      data-testid={`button-change-address-${order.id}`}
+                                    >
+                                      <Truck className="h-3 w-3 mr-1" />
+                                      Change Address
+                                    </Button>
+                                  )}
                                   {canCancelOrder(order) && (
                                     <AlertDialog>
                                       <AlertDialogTrigger asChild>
@@ -1028,6 +1093,65 @@ export default function MyAccount() {
           </div>
         </div>
       </div>
+
+      {/* Address Change Dialog */}
+      <Dialog open={!!selectedOrderForAddress} onOpenChange={() => setSelectedOrderForAddress(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change Delivery Address</DialogTitle>
+            <DialogDescription>
+              Update the delivery address for Order #{selectedOrderForAddress?.id.slice(-8)}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="deliveryAddress" className="block text-sm font-medium mb-2">
+                Delivery Address *
+              </label>
+              <textarea
+                id="deliveryAddress"
+                rows={3}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                placeholder="Enter full delivery address"
+                value={addressChangeForm.deliveryAddress}
+                onChange={(e) => setAddressChangeForm(prev => ({ ...prev, deliveryAddress: e.target.value }))}
+                data-testid="textarea-delivery-address"
+              />
+            </div>
+            <div>
+              <label htmlFor="deliveryPhone" className="block text-sm font-medium mb-2">
+                Delivery Phone (Optional)
+              </label>
+              <input
+                type="tel"
+                id="deliveryPhone"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                placeholder="Enter phone number for delivery"
+                value={addressChangeForm.deliveryPhone}
+                onChange={(e) => setAddressChangeForm(prev => ({ ...prev, deliveryPhone: e.target.value }))}
+                data-testid="input-delivery-phone"
+              />
+            </div>
+          </div>
+          <DialogFooter className="mt-6">
+            <Button 
+              variant="outline" 
+              onClick={() => setSelectedOrderForAddress(null)}
+              data-testid="button-cancel-address-change"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAddressChange}
+              disabled={!addressChangeForm.deliveryAddress.trim() || changeAddressMutation.isPending}
+              className="bg-pink-600 hover:bg-pink-700"
+              data-testid="button-save-address"
+            >
+              {changeAddressMutation.isPending ? "Updating..." : "Update Address"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
