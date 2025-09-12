@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Product, type InsertProduct, type Course, type InsertCourse, type Order, type InsertOrder, type Enrollment, type InsertEnrollment, type Testimonial, type InsertTestimonial, type BlogPost, type InsertBlogPost, type Cart, type InsertCart, type Favorite, type InsertFavorite, type Coupon, type InsertCoupon, type Address, type InsertAddress, type DeliveryOption, type InsertDeliveryOption, type OrderPlacement } from "@shared/schema";
+import { type User, type InsertUser, type Product, type InsertProduct, type Course, type InsertCourse, type Order, type InsertOrder, type Enrollment, type InsertEnrollment, type Testimonial, type InsertTestimonial, type BlogPost, type InsertBlogPost, type Cart, type InsertCart, type Favorite, type InsertFavorite, type Coupon, type InsertCoupon, type Address, type InsertAddress, type DeliveryOption, type InsertDeliveryOption, type OrderPlacement, type OrderStatusHistory, type InsertOrderStatusHistory } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { DatabaseStorage } from "./database-storage";
 
@@ -43,6 +43,18 @@ export interface IStorage {
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: string, status: string): Promise<Order>;
   updateOrderPaymentStatus(id: string, paymentStatus: string, transactionId?: string): Promise<Order>;
+  
+  // Order cancellation and tracking
+  cancelOrder(orderId: string, userId: string): Promise<Order>;
+  getOrderStatusHistory(orderId: string): Promise<OrderStatusHistory[]>;
+  addOrderStatusHistory(orderId: string, status: string, note?: string): Promise<void>;
+  
+  // Points system
+  awardUserPoints(userId: string, points: number): Promise<void>;
+  
+  // Order progression for background jobs
+  listAdvancableOrders(cutoffDate: Date, statuses: string[]): Promise<Order[]>;
+  advanceOrderStatus(orderId: string, nextStatus: string): Promise<Order>;
   
   // Enhanced order processing methods
   generateOrderNumber(): Promise<string>;
@@ -505,6 +517,7 @@ export class MemStorage implements IStorage {
       deliveryAddress: null,
       country: null,
       state: null,
+      points: 0,
       createdAt: null,
       updatedAt: null
     };
@@ -678,6 +691,8 @@ export class MemStorage implements IStorage {
       id,
       orderNumber,
       status: "pending", 
+      statusUpdatedAt: now,
+      pointsAwarded: false,
       paymentStatus: "pending",
       createdAt: now,
       updatedAt: now,
@@ -1390,6 +1405,97 @@ export class MemStorage implements IStorage {
         errors: ["Failed to process order placement"]
       };
     }
+  }
+
+  // Order cancellation and tracking methods
+  async cancelOrder(orderId: string, userId: string): Promise<Order> {
+    const order = this.orders.get(orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    if (order.userId !== userId) {
+      throw new Error("Unauthorized to cancel this order");
+    }
+    if (!["pending", "confirmed", "processing"].includes(order.status)) {
+      throw new Error("Order cannot be cancelled in current status");
+    }
+
+    // Update order status
+    const updatedOrder: Order = {
+      ...order,
+      status: "cancelled",
+      statusUpdatedAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.orders.set(orderId, updatedOrder);
+
+    // Add status history entry
+    await this.addOrderStatusHistory(orderId, "cancelled", "Order cancelled by customer");
+
+    // TODO: Restore product stock (will be implemented when needed)
+    
+    return updatedOrder;
+  }
+
+  async getOrderStatusHistory(orderId: string): Promise<OrderStatusHistory[]> {
+    // For MemStorage (development), return empty array
+    // This will be properly implemented in DatabaseStorage
+    return [];
+  }
+
+  async addOrderStatusHistory(orderId: string, status: string, note?: string): Promise<void> {
+    // For MemStorage (development), this is a no-op
+    // This will be properly implemented in DatabaseStorage
+    console.log(`[ORDER STATUS] ${orderId}: ${status} - ${note || ''}`);
+  }
+
+  async awardUserPoints(userId: string, points: number): Promise<void> {
+    const user = this.users.get(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    const updatedUser: User = {
+      ...user,
+      points: (user.points || 0) + points,
+      updatedAt: new Date()
+    };
+    this.users.set(userId, updatedUser);
+    console.log(`[POINTS] Awarded ${points} points to user ${userId}. Total: ${updatedUser.points}`);
+  }
+
+  async listAdvancableOrders(cutoffDate: Date, statuses: string[]): Promise<Order[]> {
+    return Array.from(this.orders.values()).filter(order => 
+      statuses.includes(order.status) && 
+      order.statusUpdatedAt && 
+      order.statusUpdatedAt <= cutoffDate
+    );
+  }
+
+  async advanceOrderStatus(orderId: string, nextStatus: string): Promise<Order> {
+    const order = this.orders.get(orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    const now = new Date();
+    const updatedOrder: Order = {
+      ...order,
+      status: nextStatus,
+      statusUpdatedAt: now,
+      updatedAt: now
+    };
+
+    // Award points when order reaches processing status
+    if (nextStatus === "processing" && !order.pointsAwarded && order.userId) {
+      await this.awardUserPoints(order.userId, 50);
+      updatedOrder.pointsAwarded = true;
+    }
+
+    this.orders.set(orderId, updatedOrder);
+    await this.addOrderStatusHistory(orderId, nextStatus, "Status automatically updated");
+    
+    return updatedOrder;
   }
 }
 
