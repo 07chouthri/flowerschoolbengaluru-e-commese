@@ -149,7 +149,8 @@ export class NotificationService {
       const message = await this.twilioClient.messages.create({
         body: messageBody,
         from: this.smsFromNumber,
-        to: notificationData.phone
+        to: notificationData.phone,
+        statusCallback: `${process.env.BASE_URL || 'http://localhost:5000'}/api/twilio/status`
       });
 
       console.log(`[SMS] Message sent successfully. Order: ${notificationData.orderNumber}, SID: ${message.sid}`);
@@ -182,7 +183,8 @@ export class NotificationService {
       const message = await this.twilioClient.messages.create({
         body: messageBody,
         from: this.whatsappFromNumber,
-        to: whatsappTo
+        to: whatsappTo,
+        statusCallback: `${process.env.BASE_URL || 'http://localhost:5000'}/api/twilio/status`
       });
 
       console.log(`[WHATSAPP] Message sent successfully. Order: ${notificationData.orderNumber}, SID: ${message.sid}`);

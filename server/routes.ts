@@ -1299,6 +1299,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Twilio status webhook endpoint
+  app.post("/api/twilio/status", (req, res) => {
+    const { MessageSid, MessageStatus, To, ErrorCode, ErrorMessage } = req.body;
+    
+    console.log(`[TWILIO WEBHOOK] Message ${MessageSid} to ${To}: ${MessageStatus}`);
+    if (ErrorCode) {
+      console.log(`[TWILIO WEBHOOK] Error ${ErrorCode}: ${ErrorMessage}`);
+    }
+    
+    // Respond with 200 to acknowledge receipt
+    res.status(200).send('OK');
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
