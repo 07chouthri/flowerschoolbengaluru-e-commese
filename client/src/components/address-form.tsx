@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, User, Phone, Mail } from "lucide-react";
+import { LocationDetector } from "./location-detector";
+import type { DetectedAddress } from "@/lib/location";
 
 interface AddressFormProps {
   onSubmit: (address: InsertAddress) => Promise<void>;
@@ -192,7 +194,20 @@ export function AddressForm({
 
             {/* Address Details */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Address Details</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Address Details</h3>
+                <LocationDetector
+                  onLocationDetected={(detectedAddress: DetectedAddress) => {
+                    // Fill form fields with detected address data
+                    form.setValue('addressLine1', detectedAddress.addressLine1);
+                    form.setValue('city', detectedAddress.city);
+                    form.setValue('state', detectedAddress.state);
+                    form.setValue('postalCode', detectedAddress.postalCode);
+                    form.setValue('country', detectedAddress.country);
+                  }}
+                  variant="outline"
+                  size="sm"
+                /></div>
               
               <FormField
                 control={form.control}

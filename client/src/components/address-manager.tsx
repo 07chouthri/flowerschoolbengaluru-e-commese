@@ -26,6 +26,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Address, AddressValidation } from "@shared/schema";
 import { z } from "zod";
+import { LocationDetector } from "./location-detector";
+import type { DetectedAddress } from "@/lib/location";
 
 // Address validation schema
 const addressSchema = z.object({
@@ -354,6 +356,9 @@ export default function AddressManager({ className, userId }: AddressManagerProp
       // Create new guest address
       const newAddress: Address = {
         ...formData,
+        email: formData.email || null, // Convert undefined to null
+        addressLine2: formData.addressLine2 || null, // Convert undefined to null
+        landmark: formData.landmark || null, // Convert undefined to null
         id: `guest-address-${Date.now()}`,
         userId: 'guest',
         createdAt: new Date(),
@@ -800,6 +805,28 @@ function AddressForm({
       </div>
 
       {/* Address Lines */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Address Details</span>
+          <LocationDetector
+            onLocationDetected={(detectedAddress: DetectedAddress) => {
+              // Fill form fields with detected address data
+              setFormData({
+                ...formData,
+                addressLine1: detectedAddress.addressLine1,
+                city: detectedAddress.city,
+                state: detectedAddress.state,
+                postalCode: detectedAddress.postalCode,
+                country: detectedAddress.country,
+              });
+              // Note: Form errors will be cleared when user starts typing in the updated fields
+            }}
+            variant="outline"
+            size="sm"
+          />
+        </div>
+      </div>
+
       <div>
         <Label htmlFor="addressLine1">Address Line 1 *</Label>
         <Input
