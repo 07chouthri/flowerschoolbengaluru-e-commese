@@ -1138,6 +1138,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Background scheduler management routes (admin only)
+  app.get("/api/admin/scheduler/status", async (req, res) => {
+    try {
+      const user = await getUserFromSession(req);
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      // Admin authorization - check if user email is in admin list or has admin role
+      const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map(email => email.trim());
+      const isAdmin = adminEmails.includes(user.email) || user.userType === "admin";
+      
+      if (!isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { backgroundScheduler } = await import("./services/background-scheduler");
+      const status = backgroundScheduler.getStatus();
+      
+      res.json({
+        status: status.running ? "running" : "stopped",
+        inProgress: status.inProgress,
+        nextRun: status.nextRun,
+        lastRun: status.lastRun,
+        lastResult: status.lastResult,
+        message: `Background scheduler is ${status.running ? "active" : "inactive"}`
+      });
+    } catch (error) {
+      console.error("Error getting scheduler status:", error);
+      res.status(500).json({ message: "Failed to get scheduler status" });
+    }
+  });
+
+  app.post("/api/admin/scheduler/trigger", async (req, res) => {
+    try {
+      const user = await getUserFromSession(req);
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      // Admin authorization - check if user email is in admin list or has admin role
+      const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map(email => email.trim());
+      const isAdmin = adminEmails.includes(user.email) || user.userType === "admin";
+      
+      if (!isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { backgroundScheduler } = await import("./services/background-scheduler");
+      const result = await backgroundScheduler.triggerStatusProgression();
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error triggering scheduler:", error);
+      res.status(500).json({ message: "Failed to trigger scheduler" });
+    }
+  });
+
   // Favorites Management Routes
   app.get("/api/favorites", async (req, res) => {
     try {

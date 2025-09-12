@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { backgroundScheduler } from "./services/background-scheduler";
 
 const app = express();
 app.use(express.json());
@@ -69,5 +70,13 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Start background scheduler for order status progression
+    try {
+      backgroundScheduler.start();
+      log("Background scheduler started for order status progression");
+    } catch (error) {
+      console.error("Failed to start background scheduler:", error);
+    }
   });
 })();
