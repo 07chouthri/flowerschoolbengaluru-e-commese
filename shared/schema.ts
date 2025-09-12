@@ -16,6 +16,7 @@ export const users = pgTable("users", {
   deliveryAddress: text("delivery_address"),
   country: varchar("country"),
   state: varchar("state"),
+  points: integer("points").default(0),
   createdAt: timestamp("created_at"),
   updatedAt: timestamp("updated_at"),
 });
@@ -65,6 +66,8 @@ export const orders = pgTable("orders", {
   occasion: text("occasion"),
   requirements: text("requirements"),
   status: text("status").default("pending"), // pending, confirmed, processing, shipped, delivered, cancelled
+  statusUpdatedAt: timestamp("status_updated_at").defaultNow(),
+  pointsAwarded: boolean("points_awarded").default(false),
   items: jsonb("items").notNull(),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   deliveryOptionId: varchar("delivery_option_id").references(() => deliveryOptions.id),
@@ -82,6 +85,14 @@ export const orders = pgTable("orders", {
   estimatedDeliveryDate: timestamp("estimated_delivery_date"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const orderStatusHistory = pgTable("order_status_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id").notNull().references(() => orders.id),
+  status: text("status").notNull(), // pending, confirmed, processing, shipped, delivered, cancelled
+  note: text("note"), // Optional note about the status change
+  changedAt: timestamp("changed_at").defaultNow(),
 });
 
 export const favorites = pgTable("favorites", {
@@ -322,6 +333,11 @@ export const insertCouponSchema = createInsertSchema(coupons).omit({
   updatedAt: true,
 });
 
+export const insertOrderStatusHistorySchema = createInsertSchema(orderStatusHistory).omit({
+  id: true,
+  changedAt: true,
+});
+
 export const validateCouponSchema = z.object({
   code: z.string().min(1, "Coupon code is required"),
   cartSubtotal: z.number().positive("Cart subtotal must be positive"),
@@ -377,6 +393,8 @@ export type InsertDeliveryOption = z.infer<typeof insertDeliveryOptionSchema>;
 export type DeliveryOption = typeof deliveryOptions.$inferSelect;
 export type InsertCoupon = z.infer<typeof insertCouponSchema>;
 export type Coupon = typeof coupons.$inferSelect;
+export type InsertOrderStatusHistory = z.infer<typeof insertOrderStatusHistorySchema>;
+export type OrderStatusHistory = typeof orderStatusHistory.$inferSelect;
 export type ValidateCoupon = z.infer<typeof validateCouponSchema>;
 export type AddressValidation = z.infer<typeof addressValidationSchema>;
 export type OrderPlacement = z.infer<typeof orderPlacementSchema>;
