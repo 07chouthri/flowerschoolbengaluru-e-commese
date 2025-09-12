@@ -41,7 +41,7 @@ import {
   type InsertOrderStatusHistory
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, inArray, lte } from "drizzle-orm";
 import { IStorage } from "./storage";
 
 export class DatabaseStorage implements IStorage {
@@ -1105,6 +1105,29 @@ export class DatabaseStorage implements IStorage {
 
     await this.addOrderStatusHistory(orderId, nextStatus, "Status automatically updated");
     
+    return updatedOrder;
+  }
+
+  async updateOrderAddress(orderId: string, deliveryAddress: string, deliveryPhone?: string): Promise<Order> {
+    const updateData: any = {
+      deliveryAddress,
+      updatedAt: new Date()
+    };
+
+    if (deliveryPhone) {
+      updateData.phone = deliveryPhone;
+    }
+
+    const [updatedOrder] = await db
+      .update(orders)
+      .set(updateData)
+      .where(eq(orders.id, orderId))
+      .returning();
+
+    if (!updatedOrder) {
+      throw new Error("Order not found");
+    }
+
     return updatedOrder;
   }
 }

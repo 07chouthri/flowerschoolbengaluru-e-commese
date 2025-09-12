@@ -1067,6 +1067,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Order address change route
+  app.post("/api/orders/:id/address", async (req, res) => {
+    try {
+      const user = await getUserFromSession(req);
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const orderId = req.params.id;
+      const { deliveryAddress, deliveryPhone } = req.body;
+
+      if (!deliveryAddress) {
+        return res.status(400).json({ message: "Delivery address is required" });
+      }
+
+      // Get the order first
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Check if user owns this order
+      if (order.userId !== user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Check if order can still have address changed (not shipped or delivered)
+      if (["shipped", "delivered", "cancelled"].includes(order.status)) {
+        return res.status(400).json({ 
+          message: `Cannot change address for ${order.status} orders` 
+        });
+      }
+
+      // Update the order address
+      const updatedOrder = await storage.updateOrderAddress(orderId, deliveryAddress, deliveryPhone);
+
+      // Add status history entry
+      await storage.addOrderStatusHistory(orderId, order.status, `Address updated to: ${deliveryAddress}`);
+
+      res.json({
+        success: true,
+        order: updatedOrder,
+        message: "Delivery address updated successfully"
+      });
+    } catch (error) {
+      console.error("Error updating order address:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to update address";
+      res.status(500).json({ message: errorMessage });
+    }
+  });
+
   // Order tracking route
   app.get("/api/orders/:id/tracking", async (req, res) => {
     try {

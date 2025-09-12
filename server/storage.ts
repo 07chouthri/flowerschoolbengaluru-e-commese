@@ -56,6 +56,9 @@ export interface IStorage {
   listAdvancableOrders(cutoffDate: Date, statuses: string[]): Promise<Order[]>;
   advanceOrderStatus(orderId: string, nextStatus: string): Promise<Order>;
   
+  // Order address updates
+  updateOrderAddress(orderId: string, deliveryAddress: string, deliveryPhone?: string): Promise<Order>;
+  
   // Enhanced order processing methods
   generateOrderNumber(): Promise<string>;
   validateAndProcessOrder(orderData: OrderPlacement): Promise<{
@@ -1495,6 +1498,23 @@ export class MemStorage implements IStorage {
     this.orders.set(orderId, updatedOrder);
     await this.addOrderStatusHistory(orderId, nextStatus, "Status automatically updated");
     
+    return updatedOrder;
+  }
+
+  async updateOrderAddress(orderId: string, deliveryAddress: string, deliveryPhone?: string): Promise<Order> {
+    const order = this.orders.get(orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    const updatedOrder: Order = {
+      ...order,
+      deliveryAddress,
+      phone: deliveryPhone || order.phone,
+      updatedAt: new Date()
+    };
+
+    this.orders.set(orderId, updatedOrder);
     return updatedOrder;
   }
 }

@@ -9,9 +9,9 @@ export interface OrderStatusProgression {
   progressionTime: number; // minutes
 }
 
-// Define the order status progression rules
+// Define the order status progression rules - Expedited timing: 1 hour after order creation
 const statusProgressions: OrderStatusProgression[] = [
-  { currentStatus: "pending", nextStatus: "confirmed", progressionTime: 30 },
+  { currentStatus: "pending", nextStatus: "confirmed", progressionTime: 60 }, // 1 hour expedited
   { currentStatus: "confirmed", nextStatus: "processing", progressionTime: 60 },
   { currentStatus: "processing", nextStatus: "shipped", progressionTime: 120 },
   { currentStatus: "shipped", nextStatus: "delivered", progressionTime: 60 }
