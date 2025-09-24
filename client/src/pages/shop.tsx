@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -33,23 +33,84 @@ import { apiRequest } from "@/lib/queryClient";
 import bouquetBarLogo from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 import { type Product, type User } from "@shared/schema";
 import { useCart } from "@/hooks/cart-context";
+import FlowerCategory from "./FlowerCategory";
+import PostFile from "./PostFileProps";
+import SmallImages from "./SmallImages";
+import PostFileOne from "./PostFileOne";
+import PostFileTwo from "./PostFileTwo";
+import PostThree from "./PostThree";
+import PostFileFour from "./PostFileFour";
+import VideoFile from "./VideoFile";
+import PostFileFive from "./PostFileFive";
+import PostFileSix from "./PostFileSix";
 
 export default function Shop() {
+    const [animatedText, setAnimatedText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("name");
   const [priceRange, setPriceRange] = useState([0, 2000]);
   const [showInStockOnly, setShowInStockOnly] = useState(false);
-  const [showCartModal, setShowCartModal] = useState(false);
-  const [, setLocation] = useLocation();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   
+const [isVisible, setIsVisible] = useState(true);
+
+    const [showCartModal, setShowCartModal] = useState(false);
+    const [location, setLocation] = useLocation();
+    const { toast } = useToast();
+    const queryClient = useQueryClient();
+  
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [categoryIndex, setCategoryIndex] = useState(0);
+    const [typingSpeed, setTypingSpeed] = useState(100);
+    const animationRef = useRef<NodeJS.Timeout | null>(null);
+  
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+
+  // Add this useEffect to your Shop component (after your existing useEffects):
+
+useEffect(() => {
+  // Handle hash navigation when component loads
+  const hash = window.location.hash.substring(1);
+  if (hash) {
+    // Wait a bit for components to render
+    setTimeout(() => {
+      const element = document.getElementById(hash);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 500);
+  }
+}, []);
+
+// Also update your existing scrollToSection function to be more robust:
+const scrollToSection = (sectionId: string) => {
+  const element = document.getElementById(sectionId);
+  if (element) {
+    // Add some offset to account for sticky header
+    const headerOffset = 100;
+    const elementPosition = element.offsetTop;
+    const offsetPosition = elementPosition - headerOffset;
+    
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: "smooth"
+    });
+  }
+};
+
   // Get current user data first
   const { data: user } = useQuery<User>({
     queryKey: ["/api/auth/user"],
     retry: false,
   });
+
+
+  
   
   const { 
     addToCart, 
@@ -165,6 +226,51 @@ export default function Shop() {
     },
   });
 
+
+   // Typing animation effect
+    useEffect(() => {
+      if (searchQuery) return; // Stop animation if user is typing
+      
+      const currentCategory = categories[categoryIndex];
+      
+      const handleTyping = () => {
+        if (isDeleting) {
+          // Backspace effect
+          setAnimatedText(currentCategory.substring(0, animatedText.length - 1));
+          setTypingSpeed(50);
+        } else {
+          // Typing effect
+          setAnimatedText(currentCategory.substring(0, animatedText.length + 1));
+          setTypingSpeed(100);
+        }
+        
+        // Check if we've finished typing a word
+        if (!isDeleting && animatedText === currentCategory) {
+          // Pause at the end of typing
+          setTimeout(() => setIsDeleting(true), 1000);
+        } else if (isDeleting && animatedText === "") {
+          // Move to next category after deleting
+          setIsDeleting(false);
+          setCategoryIndex((prev) => (prev + 1) % categories.length);
+        }
+      };
+      
+      animationRef.current = setTimeout(handleTyping, typingSpeed);
+      
+      return () => {
+        if (animationRef.current) {
+          clearTimeout(animationRef.current);
+        }
+      };
+    }, [animatedText, isDeleting, categoryIndex, searchQuery]);
+  
+
+    const handleInputFocus = () => {
+    if (animationRef.current) {
+      clearTimeout(animationRef.current);
+    }
+  };
+
   const removeFromFavoritesMutation = useMutation({
     mutationFn: async (productId: string) => {
       return apiRequest(`/api/favorites/${productId}`, {
@@ -218,109 +324,36 @@ export default function Shop() {
   };
 
   const categories = [
-    "Birthday", "Occasions", "Anniversary", "Flowers", "Cakes", 
-    "Personalised", "Plants", "Chocolates", "Luxe", "Combos", 
-    "Lifestyle", "International", "On Trend"
+    "Birthday Flowers",
+    "Anniversary Flowers",
+    "Wedding Flowers",
+    "Valentine's Day Flowers",
+    "Roses",
+    "Tulips",
+    "Lilies",
+    "Orchids",
+    "Sympathy Flowers",
+    "Get Well Soon Flowers",
+    "Congratulations Flowers",
+    "Flower Bouquets",
+    "Flower Baskets",
+    "Vase Arrangements",
+    "Floral Centerpieces",
+    "Dried Flower Arrangements",
+    "Floral Gift Hampers",
+    "Flower with Chocolates",
+    "Wedding Floral Decor",
+    "Corporate Event Flowers",
+    "Garlands",
+    "Luxury Rose Boxes",
+    "Same-Day Flower Delivery",
+    "Customized Message Cards"
   ];
 
-  const heroSections = [
-    {
-      title: "Make Birthdays Unforgettable",
-      subtitle: "Surprise them with thoughtful gifts",
-      image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400",
-      buttonText: "ORDER NOW",
-      bgColor: "from-purple-900 to-purple-700"
-    },
-    {
-      title: "Floral Gifts in Full Bloom",
-      subtitle: "Fabulous arrangements for life's special moments",
-      image: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400",
-      buttonText: "ORDER NOW",
-      bgColor: "from-pink-50 to-white"
-    },
-    {
-      title: "Send Gifts 'I Miss You'",
-      subtitle: "Make them feel loved from miles away",
-      image: "https://images.unsplash.com/photo-1606041008023-472dfb5e530f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400",
-      buttonText: "ORDER NOW",
-      bgColor: "from-green-100 to-white"
-    }
-  ];
 
-  const giftCategories = [
-    {
-      title: "PERSONALISED MUGS",
-      image: "https://images.unsplash.com/photo-1514228742587-6b1558fcf93d?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200",
-      color: "bg-blue-500"
-    },
-    {
-      title: "GIFT JEWELLERY", 
-      image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200",
-      color: "bg-amber-500"
-    },
-    {
-      title: "GIFT LOVE",
-      image: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200", 
-      color: "bg-red-500"
-    },
-    {
-      title: "BIRTHDAY GIFTS",
-      image: "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200",
-      color: "bg-purple-500"
-    },
-    {
-      title: "ANNIVERSARY GIFTS",
-      image: "https://images.unsplash.com/photo-1511988617509-a57c8a288659?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200",
-      color: "bg-green-500"
-    },
-    {
-      title: "SEND CAKES",
-      image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200",
-      color: "bg-orange-500"
-    }
-  ];
-
-  const flowerProducts = [
-    {
-      title: "Red Roses Bouquet",
-      image: "https://images.unsplash.com/photo-1455659817273-f2fd8e6c4787?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=300",
-      price: "₹899",
-      rating: 4.8
-    },
-    {
-      title: "Mixed Flower Arrangement",
-      image: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=300",
-      price: "₹1,299",
-      rating: 4.9
-    },
-    {
-      title: "Elegant White Lilies",
-      image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=300",
-      price: "₹1,099",
-      rating: 4.7
-    },
-    {
-      title: "Colorful Gerbera Mix",
-      image: "https://images.unsplash.com/photo-1587814962239-f38e37d8bbf8?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=300",
-      price: "₹799",
-      rating: 4.6
-    },
-    {
-      title: "Premium Orchid Basket",
-      image: "https://images.unsplash.com/photo-1606041008023-472dfb5e530f?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=300",
-      price: "₹1,599",
-      rating: 4.9
-    },
-    {
-      title: "Purple Flower Bouquet",
-      image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=300",
-      price: "₹999",
-      rating: 4.8
-    }
-  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
+    <div className="min-h-screen ">
       {/* Top Bar */}
       <div className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -338,450 +371,150 @@ export default function Shop() {
               </div>
             </Link>
             
-            <div className="flex-1 max-w-lg mx-8">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  placeholder="Birthday Gift"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-3 w-full border-2 border-gray-200 rounded-lg focus:border-primary"
-                  data-testid="input-search"
-                />
-              </div>
-            </div>
+          {/* Search Bar */}
+<div className="flex-1 max-w-xl mx-4 md:mx-6">
+  <div className="relative">
+    <Input
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      onFocus={handleInputFocus}
+      className="pl-4 pr-10 py-2.5 w-full rounded-xl border border-gray-300 focus:border-gray-400 focus:ring-1 focus:ring-gray-200 shadow-sm transition-all duration-200 font-sans text-sm md:text-base h-10 md:h-11"
+    />
+    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none w-3/4">
+      <span className="text-gray-500 font-medium text-xs md:text-sm truncate">
+        {!searchQuery ? `Searching for ${animatedText}` : ""}
+        {!searchQuery && <span className="animate-pulse font-bold">|</span>}
+      </span>
+    </div>
+    <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
+  </div>
+</div>
             
-            <div className="flex items-center gap-4">
-              {/* Smart Cart/Checkout Button */}
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="relative" 
-                  onClick={() => {
-                    // Always show cart modal to display details first
-                    setShowCartModal(true);
-                  }}
-                  data-testid="button-cart"
-                >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Cart
-                  {totalItems > 0 && (
-                    <Badge className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center text-xs">
-                      {totalItems}
-                    </Badge>
-                  )}
-                </Button>
-              </div>
-              <Button variant="outline" size="sm" data-testid="button-contact">
-                <Phone className="w-4 h-4 mr-2" />
-                Contact
-              </Button>
-              {user ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-700 font-medium">
-                    Hello, {user.firstName || 'User'}!
-                  </span>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setLocation("/my-account")}
-                    data-testid="button-account"
-                  >
-                    <UserIcon className="w-4 h-4 mr-2" />
-                    Account
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleLogout}
-                    disabled={logoutMutation.isPending}
-                    data-testid="button-logout"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    {logoutMutation.isPending ? 'Logging out...' : 'Log Out'}
-                  </Button>
-                </div>
-              ) : (
-                <Button 
-                  size="sm" 
-                  onClick={() => setLocation("/signin")}
-                  data-testid="button-login"
-                >
-                  <UserIcon className="w-4 h-4 mr-2" />
-                  Login
-                </Button>
-              )}
-            </div>
-          </div>
-          
-          {/* Category Navigation */}
-          <div className="flex items-center gap-8 py-4 overflow-x-auto">
-            <button
-              onClick={() => setSelectedCategory("all")}
-              className={`whitespace-nowrap font-medium flex items-center gap-1 hover-elevate px-3 py-2 rounded-md ${
-                selectedCategory === "all" ? "text-primary bg-primary/10" : "text-gray-700 hover:text-primary"
-              }`}
-              data-testid="button-category-all"
-            >
-              All Categories
-            </button>
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category.toLowerCase())}
-                className={`whitespace-nowrap font-medium flex items-center gap-1 hover-elevate px-3 py-2 rounded-md ${
-                  selectedCategory === category.toLowerCase() ? "text-primary bg-primary/10" : "text-gray-700 hover:text-primary"
-                }`}
-                data-testid={`button-category-${category.toLowerCase()}`}
-              >
-                {category}
-                <ChevronDown className="w-4 h-4" />
-              </button>
-            ))}
-          </div>
+<div className="flex items-center gap-3 md:gap-1 relative">
+  {/* Cart Button with Hover Text */}
+  <div className="relative group">
+    <Button 
+      variant="ghost" 
+      size="icon" 
+      className="relative h-12 w-12 rounded-full" 
+      onClick={() => setShowCartModal(true)}
+      data-testid="button-cart"
+    >
+      <ShoppingCart className="w-7 h-7" />
+       {totalItems > 0 && (
+    <span className="absolute -right-1 flex items-center justify-center h-4 min-w-[1rem] px-1 text-[10px] font-semibold rounded-full bg-pink-600 text-white">
+      {totalItems}
+    </span>
+  )}
+    </Button>
+     <div className="absolute top-full left-1/2 -translate-x-1/2 opacity-0  duration-200 pointer-events-none   py-1 rounded">
+    Cart
+  </div>
+  </div>
+
+  {/* Contact Button with Hover Text */}
+  <div className="relative group">
+    <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full" data-testid="button-contact">
+      <Phone className="w-6 h-6" />
+    </Button>
+    <div className="absolute top-full left-1/2 transform -translate-x-1/2 opacity-0  transition-opacity duration-200 pointer-events-none mt-1 bg-black text-white text-xs px-2 py-1 rounded">
+      Contact
+    </div>
+  </div>
+
+  {user ? (
+    <>
+      {/* Account Button with Hover Text */}
+      <div className="relative group">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-12 w-12 rounded-full"
+          onClick={() => setLocation("/my-account")}
+          data-testid="button-account"
+        >
+          <UserIcon className="w-6 h-6" />
+        </Button>
+        <div className="absolute top-full left-1/2 transform -translate-x-1/2 opacity-0 transition-opacity duration-200 pointer-events-none mt-1 bg-black text-white text-xs px-2 py-1 rounded">
+          Account
         </div>
       </div>
+      
+    {/* User greeting and Logout Button */}
+<div className="flex items-center gap-4">
+  <span className="text-sm text-gray-700 font-medium hidden md:block">
+    Hello, {user.firstname || 'User'}!
+  </span>
 
-      {/* Hero Section with 3 Promotional Banners */}
-      <section className="py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-3 gap-6">
-            {heroSections.map((section, index) => (
-              <Card key={index} className="overflow-hidden hover-elevate">
-                <div className={`bg-gradient-to-r ${section.bgColor} p-8 text-center relative`}>
-                  <div className="relative z-10">
-                    <h3 className="text-2xl font-bold mb-2 text-gray-900">
-                      {section.title}
-                    </h3>
-                    <p className="text-gray-600 mb-6">{section.subtitle}</p>
-                    <Button 
-                      className="font-semibold"
-                      onClick={() => {
-                        // Scroll to products section
-                        document.querySelector('#products-section')?.scrollIntoView({ behavior: 'smooth' });
-                      }}
-                      data-testid={`button-hero-${index}`}
-                    >
-                      {section.buttonText}
-                    </Button>
-                  </div>
-                  <div className="absolute inset-0 opacity-20">
-                    <img 
-                      src={section.image} 
-                      alt={section.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+  <Button 
+    variant="outline" 
+    size="sm"
+    onClick={handleLogout}
+    disabled={logoutMutation.isPending}
+    data-testid="button-logout"
+    className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-pink-700 text-white border-0 transition-all duration-300"
+  >
+    {logoutMutation.isPending ? 'Logging out...' : 'Log Out'}
+  </Button>
+</div>
 
-      {/* Enhanced Advanced Filters */}
-      <section className="py-8 bg-gradient-to-r from-pink-50 via-purple-50 to-pink-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-xl p-6 shadow-lg border border-pink-100">
-            {/* Filter Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-purple-500 rounded-lg flex items-center justify-center">
-                  <Filter className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900">Advanced Filters</h3>
-                  <p className="text-sm text-gray-600">Find your perfect flowers</p>
-                </div>
-              </div>
-              <div className="text-sm text-gray-600">
-                {filteredProducts.length} of {products.length} products
-              </div>
-            </div>
+    </>
+  ) : (
+  <Button 
+  size="sm" 
+  onClick={() => setLocation("/signin")}
+  data-testid="button-login"
+  className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white transition-all duration-300"
+>
+  <UserIcon className="w-4 h-4 mr-2" />
+  Login
+</Button>
+  )}
+</div>
+</div>
 
-            {/* Filter Controls Grid */}
-            <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-6">
-              {/* Search & Sort */}
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-semibold text-gray-800 mb-2 block">Search</label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                      type="text"
-                      placeholder="Search flowers..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 border-gray-200 focus:border-pink-300 focus:ring-pink-200"
-                      data-testid="input-search"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-sm font-semibold text-gray-800 mb-2 block">Sort by</label>
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="border-gray-200 focus:border-pink-300 focus:ring-pink-200" data-testid="select-sort">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="name">Name A-Z</SelectItem>
-                      <SelectItem value="price-low">Price: Low to High</SelectItem>
-                      <SelectItem value="price-high">Price: High to Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+</div>
+<FlowerCategory />
+ </div>
 
-              {/* Category Selection */}
-              <div>
-                <label className="text-sm font-semibold text-gray-800 mb-2 block">Category</label>
-                <div className="space-y-2">
-                  {["all", "roses", "orchids", "wedding", "seasonal"].map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                        selectedCategory === category
-                          ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md"
-                          : "bg-gray-50 text-gray-700 hover:bg-gray-100 hover-elevate"
-                      }`}
-                      data-testid={`button-category-${category}`}
-                    >
-                      {category === "all" ? "All Categories" : category.charAt(0).toUpperCase() + category.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Price Range */}
-              <div>
-                <label className="text-sm font-semibold text-gray-800 mb-2 block">Price Range</label>
-                <div className="space-y-4">
-                  <div className="px-3 py-2 bg-gray-50 rounded-lg">
-                    <div className="flex items-center justify-between text-sm font-medium text-gray-700 mb-2">
-                      <span>₹{priceRange[0].toLocaleString()}</span>
-                      <span>to</span>
-                      <span>₹{priceRange[1].toLocaleString()}</span>
-                    </div>
-                    <Slider
-                      value={priceRange}
-                      onValueChange={setPriceRange}
-                      max={5000}
-                      step={100}
-                      className="w-full"
-                      data-testid="slider-price-range"
-                    />
-                  </div>
-                  
-                  {/* Quick Price Filters */}
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { label: "Under ₹1K", range: [0, 1000] },
-                      { label: "₹1K - ₹2K", range: [1000, 2000] },
-                      { label: "₹2K - ₹3K", range: [2000, 3000] },
-                      { label: "Above ₹3K", range: [3000, 5000] }
-                    ].map((preset) => (
-                      <button
-                        key={preset.label}
-                        onClick={() => setPriceRange(preset.range)}
-                        className={`px-2 py-1 text-xs rounded-md font-medium transition-all ${
-                          priceRange[0] === preset.range[0] && priceRange[1] === preset.range[1]
-                            ? "bg-pink-500 text-white"
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                        }`}
-                        data-testid={`button-price-preset-${preset.label.replace(/[₹\s-]/g, '')}`}
-                      >
-                        {preset.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Additional Filters */}
-              <div>
-                <label className="text-sm font-semibold text-gray-800 mb-2 block">Additional Filters</label>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <input
-                      type="checkbox"
-                      id="inStock"
-                      checked={showInStockOnly}
-                      onChange={(e) => setShowInStockOnly(e.target.checked)}
-                      className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
-                      data-testid="checkbox-in-stock"
-                    />
-                    <label htmlFor="inStock" className="text-sm font-medium text-gray-700 cursor-pointer">
-                      In Stock Only
-                    </label>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={clearFilters}
-                      className="w-full border-gray-200 hover:border-pink-300 hover:text-pink-600"
-                      data-testid="button-clear-filters"
-                    >
-                      Clear All Filters
-                    </Button>
-                    
-                    {(searchQuery || selectedCategory !== "all" || priceRange[0] !== 0 || priceRange[1] !== 5000 || showInStockOnly) && (
-                      <div className="text-xs text-gray-500 text-center">
-                        Active filters applied
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Active Filter Tags */}
-            {(searchQuery || selectedCategory !== "all" || showInStockOnly) && (
-              <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t border-gray-100">
-                <span className="text-sm font-medium text-gray-600">Active filters:</span>
-                {searchQuery && (
-                  <Badge variant="secondary" className="bg-pink-100 text-pink-700">
-                    Search: "{searchQuery}"
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="ml-1 hover:text-pink-900"
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                )}
-                {selectedCategory !== "all" && (
-                  <Badge variant="secondary" className="bg-purple-100 text-purple-700">
-                    Category: {selectedCategory}
-                    <button
-                      onClick={() => setSelectedCategory("all")}
-                      className="ml-1 hover:text-purple-900"
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                )}
-                {showInStockOnly && (
-                  <Badge variant="secondary" className="bg-green-100 text-green-700">
-                    In Stock Only
-                    <button
-                      onClick={() => setShowInStockOnly(false)}
-                      className="ml-1 hover:text-green-900"
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Search Gifts Quicker Section */}
-      <section className="py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-3 gap-8 items-center">
-            <div className="lg:col-span-1">
-              <h2 className="text-3xl font-bold mb-8 flex items-center gap-2">
-                Search Gifts Quicker ⚡
-              </h2>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="p-6 text-center hover-elevate" data-testid="card-occasion">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
-                    <img 
-                      src="https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"
-                      alt="Party"
-                      className="w-12 h-12 object-cover rounded-lg"
-                    />
-                  </div>
-                  <p className="font-medium text-gray-700">Occasion</p>
-                </Card>
-                
-                <Card className="p-6 text-center hover-elevate" data-testid="card-gift-type">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
-                    <img 
-                      src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"
-                      alt="Gift"
-                      className="w-12 h-12 object-cover rounded-lg"
-                    />
-                  </div>
-                  <p className="font-medium text-gray-700">Gift Type</p>
-                </Card>
-              </div>
-            </div>
-            
-            <div className="lg:col-span-2">
-              <div className="relative rounded-full bg-gradient-to-r from-green-100 to-blue-100 p-8">
-                <img 
-                  src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400"
-                  alt="Gift searching illustration"
-                  className="w-full h-72 object-cover rounded-full"
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-white/90 backdrop-blur-sm p-6 rounded-xl text-center">
-                    <Gift className="w-12 h-12 mx-auto mb-4 text-primary" />
-                    <h3 className="text-xl font-bold text-gray-900">Find Perfect Gifts</h3>
-                    <p className="text-gray-600">Quick & Easy Search</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Gift Categories */}
-      <section className="py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {giftCategories.map((category, index) => (
-              <Card 
-                key={index} 
-                className="overflow-hidden hover-elevate cursor-pointer" 
-                onClick={() => {
-                  // Set search query based on category title
-                  const searchTerm = category.title.toLowerCase().includes('gift') ? 'gift' : 
-                                   category.title.toLowerCase().includes('birthday') ? 'birthday' :
-                                   category.title.toLowerCase().includes('anniversary') ? 'anniversary' :
-                                   category.title.toLowerCase().includes('cake') ? 'cake' : '';
-                  setSearchQuery(searchTerm);
-                  document.querySelector('#products-section')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                data-testid={`card-category-${index}`}
-              >
-                <div className="relative h-32">
-                  <img 
-                    src={category.image}
-                    alt={category.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className={`absolute inset-0 ${category.color} opacity-80 flex items-end`}>
-                    <div className="p-3 text-white">
-                      <h4 className="font-bold text-sm">{category.title}</h4>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      <div>
+        
+        <PostFile />
+      <section id="flower-categories">
+      <SmallImages/>
+    </section>
+       <section id="fresh-flowers">
+      <PostFileOne/>
+    </section>
+        {/* <PostFileTwo/> */}
+    <section id="premium">
+      <PostThree/>
+    </section>
+     <section id="wedding">
+      <PostFileFour/>
+    </section>
+    <VideoFile/>  
+       <section id="corporate">
+      <PostFileFive/>
+    </section>
+ <section id="floral-design-courses">
+      <PostFileSix/>
+    </section>
+      </div>
+    
 
       {/* Products Section */}
       <section id="products-section" className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold">
-              {searchQuery ? `Search Results for "${searchQuery}"` : 
-               selectedCategory === "all" ? "All Products" : 
-               `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Products`}
-            </h2>
+           <h2 className="text-3xl font-bold">
+  {searchQuery 
+    ? `Search Results for "${searchQuery}"` 
+    : selectedCategory === "all" 
+      ? "All Products" 
+      : `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Products`}
+</h2>
+
             <div className="text-sm text-gray-600">
               {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} found
             </div>
@@ -824,7 +557,7 @@ export default function Shop() {
                 <Card key={product.id} className="overflow-hidden hover-elevate" data-testid={`card-product-${product.id}`}>
                   <div className="relative">
                     <img 
-                      src={product.image}
+                      src={`data:image/jpeg;base64,${product.image}`}
                       alt={product.name}
                       className="w-full h-64 object-cover cursor-pointer"
                       onClick={() => setLocation(`/product/${product.id}`)}
@@ -911,14 +644,15 @@ export default function Shop() {
       </section>
 
       {/* Cart Modal */}
+      {/* Cart Modal - Updated styling */}
       <Dialog open={showCartModal} onOpenChange={setShowCartModal}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShoppingCart className="h-5 w-5" />
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-white border border-pink-100">
+          <DialogHeader className="bg-pink-25 -m-6 mb-4 p-6 border-b border-pink-100">
+            <DialogTitle className="flex items-center gap-2 text-gray-900">
+              <ShoppingCart className="h-5 w-5 text-pink-600" />
               Shopping Cart ({totalItems} {totalItems === 1 ? 'item' : 'items'})
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-gray-600">
               Review your items and proceed to checkout
             </DialogDescription>
           </DialogHeader>
@@ -926,10 +660,13 @@ export default function Shop() {
           <div className="space-y-4">
             {items.length === 0 ? (
               <div className="text-center py-8">
-                <ShoppingCart className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                <ShoppingCart className="h-16 w-16 mx-auto text-pink-300 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Your cart is empty</h3>
                 <p className="text-gray-500 mb-4">Start shopping to add items to your cart</p>
-                <Button onClick={() => setShowCartModal(false)}>
+                <Button 
+                  onClick={() => setShowCartModal(false)}
+                  className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
+                >
                   Continue Shopping
                 </Button>
               </div>
@@ -938,11 +675,11 @@ export default function Shop() {
                 {/* Cart Items */}
                 <div className="space-y-3">
                   {items.map((item: any) => (
-                    <div key={item.id} className="flex items-center gap-4 p-4 border rounded-lg">
+                    <div key={item.id} className="flex items-center gap-4 p-4 border border-pink-100 rounded-lg bg-white hover:bg-pink-25 transition-colors">
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="w-16 h-16 object-cover rounded"
+                        className="w-16 h-16 object-cover rounded border border-pink-100"
                       />
                       <div className="flex-1">
                         <h4 className="font-medium text-gray-900">{item.name}</h4>
@@ -955,15 +692,17 @@ export default function Shop() {
                           variant="outline"
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           disabled={isLoading}
+                          className="border-pink-200 hover:bg-pink-50"
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
-                        <span className="w-8 text-center font-medium">{item.quantity}</span>
+                        <span className="w-8 text-center font-medium bg-pink-50 py-1 rounded">{item.quantity}</span>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           disabled={isLoading}
+                          className="border-pink-200 hover:bg-pink-50"
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
@@ -972,7 +711,7 @@ export default function Shop() {
                           variant="outline"
                           onClick={() => removeFromCart(item.id)}
                           disabled={isLoading}
-                          className="ml-2 text-red-600 hover:text-red-700"
+                          className="ml-2 text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -981,10 +720,10 @@ export default function Shop() {
                   ))}
                 </div>
 
-                <Separator />
+                <Separator className="border-pink-100" />
 
                 {/* Cart Summary */}
-                <div className="space-y-2">
+                <div className="space-y-2 bg-pink-25 p-4 rounded-lg border border-pink-100">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal ({totalItems} {totalItems === 1 ? 'item' : 'items'})</span>
                     <span>₹{totalPrice.toLocaleString()}</span>
@@ -993,7 +732,7 @@ export default function Shop() {
                     <span>Delivery</span>
                     <span className="text-green-600">Free</span>
                   </div>
-                  <Separator />
+                  <Separator className="border-pink-100" />
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total</span>
                     <span className="text-pink-600">₹{totalPrice.toLocaleString()}</span>
@@ -1018,7 +757,11 @@ export default function Shop() {
                   >
                     Checkout
                   </Button>
-                  <Button variant="outline" onClick={() => setShowCartModal(false)} className="w-full">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowCartModal(false)} 
+                    className="w-full border-pink-200 text-pink-700 hover:bg-pink-50"
+                  >
                     Continue Shopping
                   </Button>
                 </DialogFooter>

@@ -140,13 +140,7 @@ export default function Navigation() {
             >
               Gallery
             </button>
-            <button 
-              onClick={() => scrollToSection('blog')}
-              className="text-muted-foreground hover:text-primary transition-colors"
-              data-testid="nav-blog"
-            >
-              Blog
-            </button>
+           
             <button 
               onClick={() => scrollToSection('contact')}
               className="text-muted-foreground hover:text-primary transition-colors"
@@ -163,7 +157,7 @@ export default function Navigation() {
                   <div className="text-sm">
                     <span className="text-muted-foreground">Welcome,</span>
                     <span className="font-semibold text-primary ml-1">
-                      {user.firstName || 'User'}!
+                      {user?.firstname || 'User'}!
                     </span>
                   </div>
                   <Button 
@@ -251,13 +245,7 @@ export default function Navigation() {
               >
                 Gallery
               </button>
-              <button 
-                onClick={() => scrollToSection('blog')}
-                className="text-left text-muted-foreground hover:text-primary transition-colors"
-                data-testid="nav-mobile-blog"
-              >
-                Blog
-              </button>
+             
               <button 
                 onClick={() => scrollToSection('contact')}
                 className="text-left text-muted-foreground hover:text-primary transition-colors"
@@ -273,7 +261,7 @@ export default function Navigation() {
                     <div className="text-sm mb-3">
                       <span className="text-muted-foreground">Welcome,</span>
                       <span className="font-semibold text-primary ml-1">
-                        {user.firstName || 'User'}!
+                        {user?.firstname || 'User'}!
                       </span>
                     </div>
                     <div className="space-y-2">
@@ -324,27 +312,18 @@ export default function Navigation() {
             </div>
           </div>
         )}
+        
       </div>
 
-      {/* Cart Modal */}
+     {/* Cart Modal - Updated styling */}
       <Dialog open={showCartModal} onOpenChange={setShowCartModal}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto [&>button]:hidden">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5" />
-                Shopping Cart ({totalItems} {totalItems === 1 ? 'item' : 'items'})
-              </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setShowCartModal(false)}
-                className="h-auto p-2"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-white border border-pink-100">
+          <DialogHeader className="bg-pink-25 -m-6 mb-4 p-6 border-b border-pink-100">
+            <DialogTitle className="flex items-center gap-2 text-gray-900">
+              <ShoppingCart className="h-5 w-5 text-pink-600" />
+              Shopping Cart ({totalItems} {totalItems === 1 ? 'item' : 'items'})
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-gray-600">
               Review your items and proceed to checkout
             </DialogDescription>
           </DialogHeader>
@@ -352,10 +331,13 @@ export default function Navigation() {
           <div className="space-y-4">
             {items.length === 0 ? (
               <div className="text-center py-8">
-                <ShoppingCart className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                <ShoppingCart className="h-16 w-16 mx-auto text-pink-300 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Your cart is empty</h3>
                 <p className="text-gray-500 mb-4">Start shopping to add items to your cart</p>
-                <Button onClick={() => setShowCartModal(false)}>
+                <Button 
+                  onClick={() => setShowCartModal(false)}
+                  className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
+                >
                   Continue Shopping
                 </Button>
               </div>
@@ -364,11 +346,11 @@ export default function Navigation() {
                 {/* Cart Items */}
                 <div className="space-y-3">
                   {items.map((item: any) => (
-                    <div key={item.id} className="flex items-center gap-4 p-4 border rounded-lg">
+                    <div key={item.id} className="flex items-center gap-4 p-4 border border-pink-100 rounded-lg bg-white hover:bg-pink-25 transition-colors">
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="w-16 h-16 object-cover rounded"
+                        className="w-16 h-16 object-cover rounded border border-pink-100"
                       />
                       <div className="flex-1">
                         <h4 className="font-medium text-gray-900">{item.name}</h4>
@@ -381,15 +363,17 @@ export default function Navigation() {
                           variant="outline"
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           disabled={isLoading}
+                          className="border-pink-200 hover:bg-pink-50"
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
-                        <span className="w-8 text-center font-medium">{item.quantity}</span>
+                        <span className="w-8 text-center font-medium bg-pink-50 py-1 rounded">{item.quantity}</span>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           disabled={isLoading}
+                          className="border-pink-200 hover:bg-pink-50"
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
@@ -398,7 +382,7 @@ export default function Navigation() {
                           variant="outline"
                           onClick={() => removeFromCart(item.id)}
                           disabled={isLoading}
-                          className="ml-2 text-red-600 hover:text-red-700"
+                          className="ml-2 text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -407,10 +391,10 @@ export default function Navigation() {
                   ))}
                 </div>
 
-                <Separator />
+                <Separator className="border-pink-100" />
 
                 {/* Cart Summary */}
-                <div className="space-y-2">
+                <div className="space-y-2 bg-pink-25 p-4 rounded-lg border border-pink-100">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal ({totalItems} {totalItems === 1 ? 'item' : 'items'})</span>
                     <span>₹{totalPrice.toLocaleString()}</span>
@@ -419,57 +403,39 @@ export default function Navigation() {
                     <span>Delivery</span>
                     <span className="text-green-600">Free</span>
                   </div>
-                  <Separator />
+                  <Separator className="border-pink-100" />
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total</span>
                     <span className="text-pink-600">₹{totalPrice.toLocaleString()}</span>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 pt-4">
-                  {/* Always show Proceed to Checkout - handle auth on checkout page */}
-                  <div 
-                    className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-medium py-2 px-4 rounded-md cursor-pointer text-center transition-colors"
-                    onClick={(e) => { 
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setShowCartModal(false); 
-                      setLocation('/checkout'); 
-                    }}
-                    data-testid="button-proceed-checkout"
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setShowCartModal(false);
+                <DialogFooter className="flex-col gap-2">
+                  {/* Always show Checkout button - behavior changes based on login status */}
+                  <Button 
+                    className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
+                    onClick={() => {
+                      setShowCartModal(false);
+                      if (user) {
+                        // User is logged in - go to checkout
                         setLocation('/checkout');
+                      } else {
+                        // User is not logged in - go to signin
+                        setLocation('/signin');
                       }
                     }}
+                    data-testid="button-checkout"
                   >
-                    Proceed to Checkout
-                  </div>
-                  
-                  {/* Show sign in suggestion for unauthenticated users */}
-                  {!user && (
-                    <div className="w-full space-y-2 mt-2">
-                      <p className="text-xs text-gray-500 text-center">
-                        Sign in for faster checkout or continue as guest
-                      </p>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1" onClick={() => { setShowCartModal(false); setLocation('/signin'); }}>
-                          Sign In
-                        </Button>
-                        <Button variant="outline" size="sm" className="flex-1" onClick={() => { setShowCartModal(false); setLocation('/signup'); }}>
-                          Sign Up
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  <Button variant="outline" onClick={() => setShowCartModal(false)} className="w-full">
+                    Checkout
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowCartModal(false)} 
+                    className="w-full border-pink-200 text-pink-700 hover:bg-pink-50"
+                  >
                     Continue Shopping
                   </Button>
-                </div>
+                </DialogFooter>
               </>
             )}
           </div>

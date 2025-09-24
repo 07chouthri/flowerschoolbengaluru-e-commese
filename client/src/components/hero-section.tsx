@@ -1,11 +1,49 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingBag, GraduationCap, Star, ArrowRight, Flower, Users, Award, Calendar, Truck, Gift } from "lucide-react";
+import { ShoppingBag, GraduationCap, Star, ArrowRight, Flower, Users, Award, Calendar, Truck, Gift, Sparkles } from "lucide-react";
 import { Link } from "wouter";
+import { useState, useEffect, useRef } from "react";
 import bouquetBarLogo from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 import flowerSchoolLogo from "@assets/Flower_School_Logo_1757484169081.png";
 
 export default function HeroSection() {
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  
+  useEffect(() => {
+    // Intersection Observer for scroll animations
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    // Mouse position tracking for parallax effects
+    const handleMouseMove = (e) => {
+      setMousePosition({
+        x: (e.clientX / window.innerWidth - 0.5) * 20,
+        y: (e.clientY / window.innerHeight - 0.5) * 20
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current);
+      }
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -14,123 +52,214 @@ export default function HeroSection() {
   };
 
   return (
-    <section id="home" className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-100 pt-24 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section 
+      id="home" 
+      ref={sectionRef}
+      className="min-h-screen bg-white pt-20 pb-20 relative overflow-hidden flex items-center"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
         {/* Header Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-2xl md:text-3xl text-gray-700 mb-8 font-light leading-relaxed">
+        <div className={`text-center mb-12 transition-all duration-1000 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <h1 className="text-2xl md:text-3xl text-gray-700 mb-8 font-medium leading-relaxed">
             Your one-stop destination for beautiful flowers and professional floral education
           </h1>
           
-          {/* Feature Badges */}
+          {/* Feature Badges with staggered animation */}
           <div className="flex flex-wrap justify-center gap-4 mb-16">
-            <Badge className="bg-pink-100 text-pink-700 border border-pink-200 px-4 py-2 text-sm font-medium">
-              <Flower className="w-4 h-4 mr-2" />
-              Premium Flowers
-            </Badge>
-            <Badge className="bg-orange-100 text-orange-700 border border-orange-200 px-4 py-2 text-sm font-medium">
-              <GraduationCap className="w-4 h-4 mr-2" />
-              Expert Training
-            </Badge>
-            <Badge className="bg-blue-100 text-blue-700 border border-blue-200 px-4 py-2 text-sm font-medium">
-              <Truck className="w-4 h-4 mr-2" />
-              Fast Delivery
-            </Badge>
-            <Badge className="bg-purple-100 text-purple-700 border border-purple-200 px-4 py-2 text-sm font-medium">
-              <Gift className="w-4 h-4 mr-2" />
-              Gift Packages
-            </Badge>
+            {[
+              { icon: Flower, text: "Premium Flowers", color: "pink" },
+              { icon: GraduationCap, text: "Expert Training", color: "orange" },
+              { icon: Truck, text: "Fast Delivery", color: "blue" },
+              { icon: Gift, text: "Gift Packages", color: "purple" }
+            ].map((badge, index) => {
+              const Icon = badge.icon;
+              return (
+                <Badge 
+                  key={index}
+                  className={`bg-${badge.color}-100 text-${badge.color}-700 border border-${badge.color}-200 px-4 py-2 text-sm font-semibold transition-all duration-500 hover:scale-105 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+                  style={{ transitionDelay: `${index * 100}ms` }}
+                >
+                  <Icon className="w-4 h-4 mr-2" />
+                  {badge.text}
+                </Badge>
+              );
+            })}
           </div>
         </div>
         
         {/* Two Cards Layout */}
         <div className="grid lg:grid-cols-2 gap-8 items-stretch">
-          {/* Online Flower Shop Card */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-pink-200 flex flex-col justify-between">
-            {/* Bouquet Bar Logo */}
-            <div className="text-center mb-6">
-              <img 
-                src={bouquetBarLogo}
-                alt="Bouquet Bar Bengaluru Logo"
-                className="w-32 h-auto mx-auto mb-2"
-              />
-            </div>
-            
-            <div className="text-center flex-grow">
-              <h2 className="text-3xl font-bold text-gray-800 mb-4">
-                Online Flower Shop
-              </h2>
-              <p className="text-gray-600 mb-8 leading-relaxed">
-                Browse our exclusive collection of fresh flowers, bouquets, and arrangements
-              </p>
-              
-              <Link href="/shop">
-                <Button 
-                  size="lg"
-                  className="w-full text-lg py-4 h-auto font-semibold mb-8"
-                  data-testid="button-visit-shop"
-                >
-                  Visit Shop Now
-                </Button>
-              </Link>
-            </div>
-            
-            {/* Features */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-2 text-gray-600">
-                <Flower className="w-5 h-5 text-pink-500" />
-                <span className="text-sm font-medium">500+ Varieties</span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <Calendar className="w-5 h-5 text-pink-500" />
-                <span className="text-sm font-medium">Same Day Delivery</span>
-              </div>
-            </div>
-          </div>
-          
           {/* Floral Design School Card */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-pink-200 flex flex-col justify-between">
-            {/* The Flower School Logo */}
+          <div className={`bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-8 border border-orange-200 shadow-lg transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+            style={{ transitionDelay: '200ms' }}
+          >
             <div className="text-center mb-6">
               <img 
                 src={flowerSchoolLogo}
                 alt="The Flower School Bengaluru Logo"
-                className="w-24 h-24 mx-auto mb-2"
+                className={`w-24 h-24 mx-auto mb-4 transition-all duration-1000 ${isVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}`}
+                style={{ transitionDelay: '300ms' }}
               />
             </div>
-            
+
             <div className="text-center flex-grow">
-              <h2 className="text-3xl font-bold text-gray-800 mb-4">
+              <h2 className={`text-3xl font-bold text-gray-800 mb-4 transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ transitionDelay: '400ms' }}>
                 Floral Design School
               </h2>
-              <p className="text-gray-600 mb-8 leading-relaxed">
+              <p className={`text-gray-600 mb-8 leading-relaxed font-medium transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ transitionDelay: '500ms' }}>
                 Learn professional floral design from expert instructors
               </p>
               
               <Button 
                 size="lg"
                 onClick={() => scrollToSection('school')}
-                className="w-full text-lg py-4 h-auto font-semibold mb-8 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-                data-testid="button-explore-courses"
+                className={`w-full text-lg py-4 h-auto font-semibold mb-8 bg-orange-500 hover:bg-orange-600 transition-all duration-500 hover:scale-105 ${isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
+                style={{ transitionDelay: '600ms' }}
               >
                 Explore Courses
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
-            
-            {/* Features */}
+
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-2 text-gray-600">
-                <Award className="w-5 h-5 text-orange-500" />
-                <span className="text-sm font-medium">Certified Courses</span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <Users className="w-5 h-5 text-orange-500" />
-                <span className="text-sm font-medium">Expert Instructors</span>
-              </div>
+              {[
+                { icon: Award, text: "Certified Courses", color: "orange" },
+                { icon: Users, text: "Expert Instructors", color: "orange" }
+              ].map((feature, index) => {
+                const Icon = feature.icon;
+                return (
+                  <div 
+                    key={index}
+                    className={`flex items-center gap-2 text-gray-600 transition-all duration-500 hover:text-${feature.color}-700 font-medium ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}
+                    style={{ transitionDelay: `${700 + index * 100}ms` }}
+                  >
+                    <Icon className={`w-5 h-5 text-${feature.color}-500 transition-transform duration-300 hover:scale-110`} />
+                    <span className="text-sm">{feature.text}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Online Flower Shop Card */}
+          <div className={`bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl p-8 border border-pink-200 shadow-lg transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+            style={{ transitionDelay: '300ms' }}
+          >
+            <div className="text-center mb-6">
+              <img 
+                src={bouquetBarLogo}
+                alt="Bouquet Bar Bengaluru Logo"
+                className={`w-40 h-auto mx-auto mb-4 transition-all duration-1000 ${isVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}`}
+                style={{ transitionDelay: '400ms' }}
+              />
+            </div>
+            
+            <div className="text-center">
+              <h2 className={`text-3xl font-bold text-gray-800 mb-4 transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ transitionDelay: '500ms' }}>
+                Online Flower Shop
+              </h2>
+              <p className={`text-gray-600 mb-8 leading-relaxed font-medium transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ transitionDelay: '600ms' }}>
+                Browse our exclusive collection of fresh flowers, bouquets, and arrangements
+              </p>
+              
+              <Link href="/shop">
+                <Button 
+                  size="lg"
+                  className={`w-full text-lg py-4 h-auto font-semibold mb-8 bg-pink-500 hover:bg-pink-600 transition-all duration-500 hover:scale-105 ${isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
+                  style={{ transitionDelay: '700ms' }}
+                >
+                  Visit Shop Now
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { icon: Flower, text: "500+ Varieties", color: "pink" },
+                { icon: Calendar, text: "Same Day Delivery", color: "pink" }
+              ].map((feature, index) => {
+                const Icon = feature.icon;
+                return (
+                  <div 
+                    key={index}
+                    className={`flex items-center gap-2 text-gray-600 transition-all duration-500 hover:text-${feature.color}-700 font-medium ${isVisible ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'}`}
+                    style={{ transitionDelay: `${800 + index * 100}ms` }}
+                  >
+                    <Icon className={`w-5 h-5 text-${feature.color}-500 transition-transform duration-300 hover:scale-110`} />
+                    <span className="text-sm">{feature.text}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Auto-trigger button animation */}
+      <style jsx>{`
+        @keyframes pulse-glow {
+          0% {
+            box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.5);
+          }
+          70% {
+            box-shadow: 0 0 0 10px rgba(249, 115, 22, 0);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(249, 115, 22, 0);
+          }
+        }
+        
+        @keyframes pulse-glow-pink {
+          0% {
+            box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.5);
+          }
+          70% {
+            box-shadow: 0 0 0 10px rgba(236, 72, 153, 0);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(236, 72, 153, 0);
+          }
+        }
+        
+        .animate-pulse-glow {
+          animation: pulse-glow 2s infinite;
+        }
+        
+        .animate-pulse-glow-pink {
+          animation: pulse-glow-pink 2s infinite;
+        }
+        
+        .bg-grid-pattern {
+          background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(251 113 133 / 0.1)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e");
+        }
+      `}</style>
+      
+      {/* Add auto-trigger animation to buttons after component mounts */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            setTimeout(() => {
+              const schoolButton = document.querySelector('[href="/school"]');
+              const shopButton = document.querySelector('[href="/shop"]');
+              
+              if (schoolButton) {
+                schoolButton.classList.add('animate-pulse-glow');
+                setTimeout(() => {
+                  schoolButton.classList.remove('animate-pulse-glow');
+                }, 6000);
+              }
+              
+              if (shopButton) {
+                shopButton.classList.add('animate-pulse-glow-pink');
+                setTimeout(() => {
+                  shopButton.classList.remove('animate-pulse-glow-pink');
+                }, 6000);
+              }
+            }, 2000);
+          `,
+        }}
+      />
     </section>
   );
 }

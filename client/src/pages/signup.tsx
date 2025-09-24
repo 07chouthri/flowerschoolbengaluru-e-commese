@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/user-auth";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -24,20 +25,20 @@ export default function SignUp() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
+  const { login } = useAuth();
+
   const signupMutation = useMutation({
     mutationFn: async (userData: { firstName: string; lastName: string; email: string; phone: string; password: string }) => {
       return await apiRequest("/api/auth/signup", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
     },
-    onSuccess: (data) => {
-      toast({
-        title: "Success!",
-        description: "Account created successfully. Please sign in.",
-      });
-      setLocation("/signin");
+    onSuccess: async (response) => {
+      const data = await response.json();
+      // Save user data in localStorage and context
+      login(data.user); // This saves to cookies and sessionStorage
+      setLocation("/"); // Redirect to home
     },
     onError: (error: any) => {
       toast({

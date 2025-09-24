@@ -4,6 +4,7 @@ import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/hooks/cart-context";
+import { AuthProvider } from "@/hooks/user-auth";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Shop from "@/pages/shop";
@@ -18,12 +19,17 @@ import Checkout from "@/pages/checkout";
 import OrderConfirmation from "@/pages/order-confirmation";
 import OrderTracking from "@/pages/order-tracking";
 import type { User } from "@shared/schema";
+import ProductsListing from "./pages/ProductsListing";
 
+
+ 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/shop" component={Shop} />
+    <Route path="/products" component={ProductsListing} />
+      <Route path="/product/:id" component={ProductDetail} />
       <Route path="/product/:id" component={ProductDetail} />
       <Route path="/cart" component={Cart} />
       <Route path="/checkout" component={Checkout} />
@@ -39,14 +45,14 @@ function Router() {
     </Switch>
   );
 }
-
+ 
 function AppWithCart() {
   // Get current user data to provide to CartProvider
   const { data: user } = useQuery<User>({
     queryKey: ["/api/auth/user"],
     retry: false,
   });
-
+ 
   return (
     <CartProvider userId={user?.id}>
       <TooltipProvider>
@@ -56,13 +62,17 @@ function AppWithCart() {
     </CartProvider>
   );
 }
-
+ 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppWithCart />
+      <AuthProvider>
+        <AppWithCart />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
-
+ 
 export default App;
+ 
+ 

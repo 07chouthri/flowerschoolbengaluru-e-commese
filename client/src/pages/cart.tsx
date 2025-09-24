@@ -50,16 +50,17 @@ export default function Cart() {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-rose-100">
+      <div className="min-h-screen bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center py-16">
-            <ShoppingCart className="w-24 h-24 mx-auto text-gray-400 mb-6" />
+          <div className="text-center py-16 bg-pink-25 rounded-2xl border border-pink-100">
+            <ShoppingCart className="w-24 h-24 mx-auto text-pink-300 mb-6" />
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Your Cart is Empty</h1>
             <p className="text-gray-600 mb-8">Looks like you haven't added any beautiful flowers yet!</p>
             <Button 
               size="lg"
               onClick={() => setLocation("/shop")}
               data-testid="button-shop-now"
+              className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
             >
               Start Shopping
             </Button>
@@ -70,9 +71,9 @@ export default function Cart() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-rose-100">
+    <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
+        <div className="mb-8 p-6 bg-pink-25 rounded-2xl border border-pink-100">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Shopping Cart</h1>
           <p className="text-gray-600">
             {totalItems} {totalItems === 1 ? 'item' : 'items'} in your cart
@@ -83,14 +84,14 @@ export default function Cart() {
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             {cartItems.map((item) => (
-              <Card key={item.id} className="overflow-hidden" data-testid={`cart-item-${item.id}`}>
+              <Card key={item.id} className="overflow-hidden bg-white border border-pink-100 hover:shadow-lg hover:border-pink-200 transition-all duration-200" data-testid={`cart-item-${item.id}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
                     <div className="relative flex-shrink-0">
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="w-20 h-20 object-cover rounded-md cursor-pointer"
+                        className="w-20 h-20 object-cover rounded-md cursor-pointer border border-pink-100"
                         onClick={() => setLocation(`/product/${item.id}`)}
                       />
                     </div>
@@ -106,10 +107,10 @@ export default function Cart() {
                         {item.description}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs border-pink-200 text-pink-700 bg-pink-25">
                           {item.category}
                         </Badge>
-                        <span className="text-lg font-bold text-primary">
+                        <span className="text-lg font-bold text-pink-600">
                           ₹{item.price}
                         </span>
                       </div>
@@ -121,16 +122,18 @@ export default function Cart() {
                         size="sm"
                         onClick={() => handleRemoveItem(item.id, item.name)}
                         data-testid={`button-remove-${item.id}`}
+                        className="text-pink-500 hover:text-pink-700 hover:bg-pink-50"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
 
-                      <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                      <div className="flex items-center gap-2 bg-pink-50 rounded-lg p-1 border border-pink-100">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleQuantityChange(item.id, -1)}
                           data-testid={`button-decrease-${item.id}`}
+                          className="hover:bg-pink-100"
                         >
                           <Minus className="w-4 h-4" />
                         </Button>
@@ -145,13 +148,14 @@ export default function Cart() {
                           size="sm"
                           onClick={() => handleQuantityChange(item.id, 1)}
                           data-testid={`button-increase-${item.id}`}
+                          className="hover:bg-pink-100"
                         >
                           <Plus className="w-4 h-4" />
                         </Button>
                       </div>
 
                       <div className="text-right">
-                        <div className="font-bold text-lg">
+                        <div className="font-bold text-lg text-pink-600">
                           ₹{(parseFloat(item.price) * item.quantity).toLocaleString('en-IN')}
                         </div>
                       </div>
@@ -164,11 +168,11 @@ export default function Cart() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-8">
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+            <Card className="sticky top-8 bg-white border border-pink-100 shadow-lg">
+              <CardHeader className="bg-pink-25 border-b border-pink-100">
+                <CardTitle className="text-gray-900">Order Summary</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 p-6">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal ({totalItems} items)</span>
@@ -178,16 +182,16 @@ export default function Cart() {
                     <span>Delivery</span>
                     <span className="text-green-600">FREE</span>
                   </div>
-                  <div className="border-t pt-2">
+                  <div className="border-t border-pink-100 pt-2">
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
-                      <span data-testid="cart-total">₹{totalPrice.toLocaleString('en-IN')}</span>
+                      <span data-testid="cart-total" className="text-pink-600">₹{totalPrice.toLocaleString('en-IN')}</span>
                     </div>
                   </div>
                 </div>
 
                 <Button
-                  className="w-full"
+                  className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-medium"
                   size="lg"
                   onClick={handleCheckout}
                   data-testid="button-checkout"
@@ -197,7 +201,7 @@ export default function Cart() {
 
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className="w-full border-pink-200 text-pink-700 hover:bg-pink-50 hover:border-pink-300"
                   onClick={() => setLocation("/shop")}
                   data-testid="button-continue-shopping"
                 >

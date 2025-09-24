@@ -193,7 +193,7 @@ export default function Checkout() {
     const steps: CheckoutStep[] = ['cart', 'shipping', 'payment', 'review'];
     const currentIndex = steps.indexOf(currentStep);
     
-    // Mark current step as completed
+    
     handleStepComplete(currentStep);
     
     if (currentIndex < steps.length - 1) {

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/user-auth";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -19,16 +20,19 @@ export default function SignIn() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
+  const { login } = useAuth();
+
   const signinMutation = useMutation({
     mutationFn: async (userData: { email: string; password: string }) => {
       return await apiRequest("/api/auth/signin", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
     },
     onSuccess: async (response) => {
       const data = await response.json();
+      // Save user data in localStorage and context
+      login(data.user); // This saves to cookies and sessionStorage
       // Set user data in cache to trigger cart sync
       queryClient.setQueryData(["/api/auth/user"], data.user);
       // Invalidate auth queries to ensure fresh data
@@ -37,7 +41,7 @@ export default function SignIn() {
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
-      setLocation("/");
+      setLocation("/"); // Redirect to home
     },
     onError: (error: any) => {
       toast({

@@ -46,8 +46,8 @@ type PasswordFormData = z.infer<typeof passwordFormSchema>;
 interface UserProfile {
   id: string;
   email: string;
-  firstName: string | null;
-  lastName: string | null;
+  firstname: string | null;
+  lastname: string | null;
   phone: string | null;
   profileImageUrl: string | null;
   defaultAddress: string | null;
@@ -134,7 +134,20 @@ export default function MyAccount() {
   // Fetch user favorites
   const { data: favorites = [], isLoading: favoritesLoading } = useQuery<any[]>({
     queryKey: ["/api/favorites"],
-    enabled: !!profile, // Only fetch when profile is available
+    queryFn: async () => {
+      const response = await fetch("/api/favorites", {
+        headers: {
+          "Authorization": `Bearer ${profile}`,
+          "Content-Type": "application/json"
+        },
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch favorites');
+      }
+      return response.json();
+    },
+    enabled: !!profile?.token, // Only fetch when profile and token are available
   });
 
   // Initialize form with profile data
@@ -154,12 +167,22 @@ export default function MyAccount() {
     },
   });
 
+useEffect(() => {
+  if (profile) {
+    console.log("Profile data received:", profile);
+    console.log("First Name:", profile.firstname);
+    console.log("Last Name:", profile.lastname);
+  }
+}, [profile]);
+
+
   // Reset form when profile data loads
   useEffect(() => {
+   
     if (profile) {
       reset({
-        firstName: profile.firstName || "",
-        lastName: profile.lastName || "",
+        firstName: profile.firstname || "",
+        lastName: profile.lastname || "",
         phone: profile.phone || "",
         country: profile.country || "",
         state: profile.state || "",
@@ -168,30 +191,45 @@ export default function MyAccount() {
   }, [profile, reset]);
 
   // Update profile mutation
-  const updateProfileMutation = useMutation({
-    mutationFn: async (data: ProfileFormData) => {
-      return apiRequest("/api/profile", {
-        method: "PUT",
-        body: JSON.stringify(data),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      setIsEditing(false);
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update profile",
-        variant: "destructive",
-      });
-    },
-  });
+ // Update profile mutation
+const updateProfileMutation = useMutation({
+  mutationFn: async (data: ProfileFormData) => {
+    console.log("Updating profile with data:", data);
+    
+    // Transform camelCase to lowercase for API
+    const apiData = {
+      firstname: data.firstName,  // map firstName → firstname
+      lastname: data.lastName,    // map lastName → lastname
+      phone: data.phone,
+      country: data.country,
+      state: data.state,
+      id: profile?.id,
+    };
+    
+    console.log("Sending to API:", apiData);
+    
+    return apiRequest("/api/profile", {
+      method: "PUT",
+      body: JSON.stringify(apiData),
+    });
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    setIsEditing(false);
+    toast({
+      title: "Profile updated",
+      description: "Your profile has been updated successfully.",
+    });
+  },
+  onError: (error: any) => {
+    toast({
+      title: "Error",
+      description: error.message || "Failed to update profile",
+      variant: "destructive",
+    });
+  },
+});
 
   // Delete account mutation
   const deleteAccountMutation = useMutation({
@@ -333,7 +371,7 @@ export default function MyAccount() {
 
   const handleAddressChange = () => {
     if (!selectedOrderForAddress) return;
-    
+
     changeAddressMutation.mutate({
       orderId: selectedOrderForAddress.id,
       deliveryAddress: addressChangeForm.deliveryAddress,
@@ -343,18 +381,18 @@ export default function MyAccount() {
   };
 
   const getInitials = () => {
-    if (profile?.firstName && profile?.lastName) {
-      return `${profile.firstName[0]}${profile.lastName[0]}`.toUpperCase();
-    }
-    return profile?.email?.[0]?.toUpperCase() || "U";
-  };
+  if (profile?.firstname && profile?.lastname) {  // use lowercase
+    return `${profile.firstname[0]}${profile.lastname[0]}`.toUpperCase();
+  }
+  return profile?.email?.[0]?.toUpperCase() || "U";
+};
 
   const getFullName = () => {
-    if (profile?.firstName && profile?.lastName) {
-      return `${profile.firstName} ${profile.lastName}`;
-    }
-    return profile?.firstName || profile?.lastName || "User";
-  };
+  if (profile?.firstname && profile?.lastname) {  // use lowercase
+    return `${profile.firstname} ${profile.lastname}`;
+  }
+  return profile?.firstname || profile?.lastname || "User";
+};
 
   if (isLoading) {
     return (
@@ -428,45 +466,45 @@ export default function MyAccount() {
                 </Badge>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button 
-                  variant={activeTab === "profile" ? "secondary" : "ghost"} 
-                  className="w-full justify-start" 
+                <Button
+                  variant={activeTab === "profile" ? "secondary" : "ghost"}
+                  className="w-full justify-start"
                   onClick={() => setActiveTab("profile")}
                   data-testid="button-nav-account"
                 >
                   <User className="h-4 w-4 mr-3" />
                   Account Details
                 </Button>
-                <Button 
-                  variant={activeTab === "orders" ? "secondary" : "ghost"} 
-                  className="w-full justify-start" 
+                <Button
+                  variant={activeTab === "orders" ? "secondary" : "ghost"}
+                  className="w-full justify-start"
                   onClick={() => setActiveTab("orders")}
                   data-testid="button-nav-orders"
                 >
                   <ShoppingBag className="h-4 w-4 mr-3" />
                   My Orders
                 </Button>
-                <Button 
-                  variant={activeTab === "addresses" ? "secondary" : "ghost"} 
-                  className="w-full justify-start" 
+                <Button
+                  variant={activeTab === "addresses" ? "secondary" : "ghost"}
+                  className="w-full justify-start"
                   onClick={() => setActiveTab("addresses")}
                   data-testid="button-nav-addresses"
                 >
                   <MapPin className="h-4 w-4 mr-3" />
                   My Addresses
                 </Button>
-                <Button 
-                  variant={activeTab === "favorites" ? "secondary" : "ghost"} 
-                  className="w-full justify-start" 
+                <Button
+                  variant={activeTab === "favorites" ? "secondary" : "ghost"}
+                  className="w-full justify-start"
                   onClick={() => setActiveTab("favorites")}
                   data-testid="button-nav-favorites"
                 >
                   <Heart className="h-4 w-4 mr-3" />
                   Favorites
                 </Button>
-                <Button 
-                  variant={activeTab === "settings" ? "secondary" : "ghost"} 
-                  className="w-full justify-start" 
+                <Button
+                  variant={activeTab === "settings" ? "secondary" : "ghost"}
+                  className="w-full justify-start"
                   onClick={() => setActiveTab("settings")}
                   data-testid="button-nav-settings"
                 >
@@ -474,14 +512,14 @@ export default function MyAccount() {
                   Settings
                 </Button>
                 <Separator className="my-4" />
-                <Button variant="ghost" className="w-full justify-start" data-testid="button-nav-help">
+                {/* <Button variant="ghost" className="w-full justify-start" data-testid="button-nav-help">
                   <HelpCircle className="h-4 w-4 mr-3" />
                   Help & Support
-                </Button>
-                <Button variant="ghost" className="w-full justify-start" data-testid="button-nav-contact">
+                </Button> */}
+                {/* <Button variant="ghost" className="w-full justify-start" data-testid="button-nav-contact">
                   <MessageCircle className="h-4 w-4 mr-3" />
                   Contact Us
-                </Button>
+                </Button> */}
               </CardContent>
             </Card>
           </div>
@@ -493,197 +531,200 @@ export default function MyAccount() {
               {/* Profile Tab */}
               {activeTab === "profile" && (
                 <div className="space-y-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <User className="h-5 w-5" />
-                        Personal Information
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          <User className="h-5 w-5" />
+                          Personal Information
+                        </CardTitle>
+                        <CardDescription>
+                          Update your personal details and contact information
+                        </CardDescription>
+                      </div>
+                      {!isEditing && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsEditing(true)}
+                          data-testid="button-edit-profile"
+                        >
+                          <Edit3 className="h-4 w-4 mr-2" />
+                          Edit
+                        </Button>
+                      )}
+                    </CardHeader>
+                    <CardContent>
+                      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                        <div className="grid md:grid-cols-2 gap-6">
+                          {/* First Name */}
+                          <div className="space-y-2">
+                            <Label htmlFor="firstName">First Name</Label>
+                            <Input
+                              id="firstName"
+                              {...register("firstName")}
+                              disabled={!isEditing}
+                              className={!isEditing ? "bg-gray-50" : ""}
+                              data-testid="input-first-name"
+                             
+
+                                
+                            />
+                            {errors.firstName && (
+                              <p className="text-sm text-red-600">{errors.firstName.message}</p>
+                            )}
+                          </div>
+
+                          {/* Last Name */}
+                          <div className="space-y-2">
+                            <Label htmlFor="lastName">Last Name</Label>
+                            <Input
+                              id="lastName"
+                              {...register("lastName")}
+                              disabled={!isEditing}
+                              className={!isEditing ? "bg-gray-50" : ""}
+                           
+                              data-testid="input-last-name"
+                         
+                            />
+                            
+                          </div>
+
+                          {/* Email (Read-only) */}
+                          <div className="space-y-2">
+                            <Label htmlFor="email">Email Address</Label>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                              <Input
+                                id="email"
+                                value={profile?.email || ""}
+                                disabled
+                                className="pl-10 bg-gray-50"
+                                data-testid="input-email"
+                              />
+                            </div>
+                            <p className="text-xs text-gray-500">Email cannot be changed</p>
+                          </div>
+
+                          {/* Phone */}
+                          <div className="space-y-2">
+                            <Label htmlFor="phone">Phone Number</Label>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                              <Input
+                                id="phone"
+                                {...register("phone")}
+                                disabled={!isEditing}
+                                className={`pl-10 ${!isEditing ? "bg-gray-50" : ""}`}
+                                placeholder="+91 98765 43210"
+                                data-testid="input-phone"
+                              />
+                            </div>
+                            {errors.phone && (
+                              <p className="text-sm text-red-600">{errors.phone.message}</p>
+                            )}
+                          </div>
+
+                          {/* Country */}
+                          <div className="space-y-2">
+                            <Label htmlFor="country">Country</Label>
+                            <div className="relative">
+                              <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                              <Input
+                                id="country"
+                                {...register("country")}
+                                disabled={!isEditing}
+                                className={`pl-10 ${!isEditing ? "bg-gray-50" : ""}`}
+                                placeholder="India"
+                                data-testid="input-country"
+                              />
+                            </div>
+                          </div>
+
+                          {/* State */}
+                          <div className="space-y-2">
+                            <Label htmlFor="state">State</Label>
+                            <Input
+                              id="state"
+                              {...register("state")}
+                              disabled={!isEditing}
+                              className={!isEditing ? "bg-gray-50" : ""}
+                              placeholder="India"
+                              data-testid="input-state"
+                            />
+                          </div>
+                        </div>
+
+
+                        {/* Form Actions */}
+                        {isEditing && (
+                          <div className="flex gap-4 pt-4 border-t">
+                            <Button
+                              type="submit"
+                              disabled={updateProfileMutation.isPending || !isDirty}
+                              className="flex items-center gap-2"
+                              data-testid="button-save-profile"
+                            >
+                              <Save className="h-4 w-4" />
+                              {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleCancel}
+                              className="flex items-center gap-2"
+                              data-testid="button-cancel-edit"
+                            >
+                              <X className="h-4 w-4" />
+                              Cancel
+                            </Button>
+                          </div>
+                        )}
+                      </form>
+                    </CardContent>
+                  </Card>
+
+                  {/* Account Actions */}
+                  <Card className="border-red-200">
+                    <CardHeader>
+                      <CardTitle className="text-red-600 flex items-center gap-2">
+                        <Shield className="h-5 w-5" />
+                        Account Actions
                       </CardTitle>
                       <CardDescription>
-                        Update your personal details and contact information
+                        Manage your account settings and data
                       </CardDescription>
-                    </div>
-                    {!isEditing && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsEditing(true)}
-                        data-testid="button-edit-profile"
-                      >
-                        <Edit3 className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                      <div className="grid md:grid-cols-2 gap-6">
-                        {/* First Name */}
-                        <div className="space-y-2">
-                          <Label htmlFor="firstName">First Name</Label>
-                          <Input
-                            id="firstName"
-                            {...register("firstName")}
-                            disabled={!isEditing}
-                            className={!isEditing ? "bg-gray-50" : ""}
-                            data-testid="input-first-name"
-                          />
-                          {errors.firstName && (
-                            <p className="text-sm text-red-600">{errors.firstName.message}</p>
-                          )}
-                        </div>
-
-                        {/* Last Name */}
-                        <div className="space-y-2">
-                          <Label htmlFor="lastName">Last Name</Label>
-                          <Input
-                            id="lastName"
-                            {...register("lastName")}
-                            disabled={!isEditing}
-                            className={!isEditing ? "bg-gray-50" : ""}
-                            data-testid="input-last-name"
-                          />
-                          {errors.lastName && (
-                            <p className="text-sm text-red-600">{errors.lastName.message}</p>
-                          )}
-                        </div>
-
-                        {/* Email (Read-only) */}
-                        <div className="space-y-2">
-                          <Label htmlFor="email">Email Address</Label>
-                          <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                            <Input
-                              id="email"
-                              value={profile?.email || ""}
-                              disabled
-                              className="pl-10 bg-gray-50"
-                              data-testid="input-email"
-                            />
-                          </div>
-                          <p className="text-xs text-gray-500">Email cannot be changed</p>
-                        </div>
-
-                        {/* Phone */}
-                        <div className="space-y-2">
-                          <Label htmlFor="phone">Phone Number</Label>
-                          <div className="relative">
-                            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                            <Input
-                              id="phone"
-                              {...register("phone")}
-                              disabled={!isEditing}
-                              className={`pl-10 ${!isEditing ? "bg-gray-50" : ""}`}
-                              placeholder="+91 98765 43210"
-                              data-testid="input-phone"
-                            />
-                          </div>
-                          {errors.phone && (
-                            <p className="text-sm text-red-600">{errors.phone.message}</p>
-                          )}
-                        </div>
-
-                        {/* Country */}
-                        <div className="space-y-2">
-                          <Label htmlFor="country">Country</Label>
-                          <div className="relative">
-                            <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                            <Input
-                              id="country"
-                              {...register("country")}
-                              disabled={!isEditing}
-                              className={`pl-10 ${!isEditing ? "bg-gray-50" : ""}`}
-                              placeholder="India"
-                              data-testid="input-country"
-                            />
-                          </div>
-                        </div>
-
-                        {/* State */}
-                        <div className="space-y-2">
-                          <Label htmlFor="state">State</Label>
-                          <Input
-                            id="state"
-                            {...register("state")}
-                            disabled={!isEditing}
-                            className={!isEditing ? "bg-gray-50" : ""}
-                            placeholder="Maharashtra"
-                            data-testid="input-state"
-                          />
-                        </div>
-                      </div>
-
-
-                      {/* Form Actions */}
-                      {isEditing && (
-                        <div className="flex gap-4 pt-4 border-t">
-                          <Button
-                            type="submit"
-                            disabled={updateProfileMutation.isPending || !isDirty}
-                            className="flex items-center gap-2"
-                            data-testid="button-save-profile"
-                          >
-                            <Save className="h-4 w-4" />
-                            {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" className="flex items-center gap-2" data-testid="button-delete-account">
+                            <Trash2 className="h-4 w-4" />
+                            Delete Account
                           </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleCancel}
-                            className="flex items-center gap-2"
-                            data-testid="button-cancel-edit"
-                          >
-                            <X className="h-4 w-4" />
-                            Cancel
-                          </Button>
-                        </div>
-                      )}
-                    </form>
-                  </CardContent>
-                </Card>
-
-                {/* Account Actions */}
-                <Card className="border-red-200">
-                  <CardHeader>
-                    <CardTitle className="text-red-600 flex items-center gap-2">
-                      <Shield className="h-5 w-5" />
-                      Account Actions
-                    </CardTitle>
-                    <CardDescription>
-                      Manage your account settings and data
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" className="flex items-center gap-2" data-testid="button-delete-account">
-                          <Trash2 className="h-4 w-4" />
-                          Delete Account
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete your account
-                            and remove your data from our servers.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={handleDeleteAccount}
-                            className="bg-red-600 hover:bg-red-700"
-                            disabled={deleteAccountMutation.isPending}
-                          >
-                            {deleteAccountMutation.isPending ? "Deleting..." : "Delete Account"}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </CardContent>
-                </Card>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete your account
+                              and remove your data from our servers.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleDeleteAccount}
+                              className="bg-red-600 hover:bg-red-700"
+                              disabled={deleteAccountMutation.isPending}
+                            >
+                              {deleteAccountMutation.isPending ? "Deleting..." : "Delete Account"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
 
@@ -707,10 +748,10 @@ export default function MyAccount() {
                           <p className="text-sm text-gray-600 mb-4">
                             Last updated: {profile?.updatedAt ? new Date(profile.updatedAt).toLocaleDateString() : "Never"}
                           </p>
-                          
+
                           {!showPasswordForm ? (
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              variant="outline"
                               onClick={() => setShowPasswordForm(true)}
                               data-testid="button-change-password"
                             >
@@ -726,18 +767,18 @@ export default function MyAccount() {
                                     <FormItem>
                                       <FormLabel>Current Password</FormLabel>
                                       <FormControl>
-                                        <Input 
-                                          type="password" 
+                                        <Input
+                                          type="password"
                                           placeholder="Enter current password"
                                           data-testid="input-current-password"
-                                          {...field} 
+                                          {...field}
                                         />
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
                                   )}
                                 />
-                                
+
                                 <FormField
                                   control={passwordForm.control}
                                   name="newPassword"
@@ -745,18 +786,18 @@ export default function MyAccount() {
                                     <FormItem>
                                       <FormLabel>New Password</FormLabel>
                                       <FormControl>
-                                        <Input 
-                                          type="password" 
+                                        <Input
+                                          type="password"
                                           placeholder="Enter new password (min 6 characters)"
                                           data-testid="input-new-password"
-                                          {...field} 
+                                          {...field}
                                         />
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
                                   )}
                                 />
-                                
+
                                 <FormField
                                   control={passwordForm.control}
                                   name="confirmPassword"
@@ -764,29 +805,29 @@ export default function MyAccount() {
                                     <FormItem>
                                       <FormLabel>Confirm New Password</FormLabel>
                                       <FormControl>
-                                        <Input 
-                                          type="password" 
+                                        <Input
+                                          type="password"
                                           placeholder="Confirm new password"
                                           data-testid="input-confirm-password"
-                                          {...field} 
+                                          {...field}
                                         />
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
                                   )}
                                 />
-                                
+
                                 <div className="flex gap-2">
-                                  <Button 
-                                    type="submit" 
+                                  <Button
+                                    type="submit"
                                     disabled={changePasswordMutation.isPending}
                                     data-testid="button-submit-password"
                                   >
                                     {changePasswordMutation.isPending ? "Updating..." : "Update Password"}
                                   </Button>
-                                  <Button 
-                                    type="button" 
-                                    variant="outline" 
+                                  <Button
+                                    type="button"
+                                    variant="outline"
                                     onClick={() => {
                                       setShowPasswordForm(false);
                                       passwordForm.reset();
@@ -801,7 +842,7 @@ export default function MyAccount() {
                             </Form>
                           )}
                         </div>
-                        
+
                         <div className="p-4 bg-gray-50 rounded-lg">
                           <h3 className="font-semibold mb-2">Two-Factor Authentication</h3>
                           <p className="text-sm text-gray-600 mb-4">
@@ -814,7 +855,7 @@ export default function MyAccount() {
                       </div>
                     </CardContent>
                   </Card>
-                  
+
                 </div>
               )}
 
@@ -862,15 +903,15 @@ export default function MyAccount() {
                                   </p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Badge 
+                                  <Badge
                                     variant={order.status === 'delivered' ? 'default' : 'secondary'}
                                     className={order.status === 'delivered' ? 'bg-green-100 text-green-700' : ''}
                                   >
                                     {order.status}
                                   </Badge>
                                   {canChangeAddress(order) && (
-                                    <Button 
-                                      variant="outline" 
+                                    <Button
+                                      variant="outline"
                                       size="sm"
                                       className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                       onClick={() => handleOpenAddressChange(order)}
@@ -884,8 +925,8 @@ export default function MyAccount() {
                                   {canCancelOrder(order) && (
                                     <AlertDialog>
                                       <AlertDialogTrigger asChild>
-                                        <Button 
-                                          variant="outline" 
+                                        <Button
+                                          variant="outline"
                                           size="sm"
                                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                           disabled={cancelOrderMutation.isPending}
@@ -899,12 +940,12 @@ export default function MyAccount() {
                                         <AlertDialogHeader>
                                           <AlertDialogTitle>Cancel Order</AlertDialogTitle>
                                           <AlertDialogDescription>
-                                            Are you sure you want to cancel Order #{order.id.slice(-8)}? 
+                                            Are you sure you want to cancel Order #{order.id.slice(-8)}?
                                             This action cannot be undone and you will receive a refund according to our policy.
                                           </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
-                                          <AlertDialogCancel 
+                                          <AlertDialogCancel
                                             disabled={cancelOrderMutation.isPending}
                                             data-testid={`button-keep-order-${order.id}`}
                                           >
@@ -991,13 +1032,13 @@ export default function MyAccount() {
                           {favorites.map((favorite: any) => (
                             <Card key={favorite.id} className="overflow-hidden hover-elevate" data-testid={`card-favorite-${favorite.productId}`}>
                               <div className="relative">
-                                <img 
+                                <img
                                   src={favorite.product?.image || "/placeholder-image.jpg"}
                                   alt={favorite.product?.name || "Product"}
                                   className="w-full h-48 object-cover cursor-pointer"
                                   onClick={() => setLocation(`/product/${favorite.productId}`)}
                                 />
-                                <button 
+                                <button
                                   className="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover-elevate"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1017,7 +1058,7 @@ export default function MyAccount() {
                                 )}
                               </div>
                               <CardContent className="p-4">
-                                <h3 
+                                <h3
                                   className="font-semibold text-gray-900 mb-2 cursor-pointer hover:text-pink-600 transition-colors"
                                   onClick={() => setLocation(`/product/${favorite.productId}`)}
                                 >
@@ -1035,7 +1076,7 @@ export default function MyAccount() {
                                   </Badge>
                                 </div>
                                 <div className="flex gap-2">
-                                  <Button 
+                                  <Button
                                     size="sm"
                                     variant="outline"
                                     className="flex-1"
@@ -1044,7 +1085,7 @@ export default function MyAccount() {
                                   >
                                     View Product
                                   </Button>
-                                  <Button 
+                                  <Button
                                     size="sm"
                                     className="flex-1"
                                     onClick={() => {
@@ -1134,14 +1175,14 @@ export default function MyAccount() {
             </div>
           </div>
           <DialogFooter className="mt-6">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setSelectedOrderForAddress(null)}
               data-testid="button-cancel-address-change"
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleAddressChange}
               disabled={!addressChangeForm.deliveryAddress.trim() || changeAddressMutation.isPending}
               className="bg-pink-600 hover:bg-pink-700"

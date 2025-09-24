@@ -1,121 +1,169 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import CenterFlower from "../images/CenterFlower.jpg";
+import RightImage1 from "../images/rightimage1.jpg";
+import RightImage2 from "../images/rightimage2.jpg";
+import LeftImage1 from "../images/leftimage1.jpg";
+import LeftImage2 from "../images/leftimage2.jpg";
 
 export default function Gallery() {
   const [activeTab, setActiveTab] = useState<'shop' | 'school'>('shop');
 
-  const shopImages = [
-    {
-      src: "https://images.unsplash.com/photo-1606800052052-a08af7148866?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      alt: "Elegant wedding bouquet arrangement",
+  const shopImages = {
+    center: {
+      src: CenterFlower,
+      
     },
-    {
-      src: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      alt: "Vibrant spring flower bouquet",
-    },
-    {
-      src: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      alt: "Premium red roses arrangement",
-    },
-    {
-      src: "https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      alt: "White orchid elegance",
-    },
-  ];
+    right: [
+      {
+        src: RightImage1,
+        alt: "",
+      },
+      {
+        src: RightImage2,
+        alt: "",
+      }
+    ],
+    left: [
+      {
+        src: LeftImage1,
+        alt: "",
+      },
+      {
+        src: LeftImage2,
+        alt: "",
+      }
+    ]
+  };
 
-  const schoolImages = [
-    {
-      src: "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      alt: "Students in floral design workshop",
+  const schoolImages = {
+    center: {
+      src: "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600",
+      alt: "Floral design workshop in progress",
     },
-    {
-      src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      alt: "Professional creating floral arrangement",
-    },
-    {
-      src: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      alt: "Student working on bouquet design",
-    },
-    {
-      src: "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
-      alt: "Hands-on floral arrangement class",
-    },
-  ];
+    right: [
+      {
+        src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=300",
+        alt: "Professional instructor teaching",
+      },
+      {
+        src: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=300",
+        alt: "Student practicing floral design",
+      }
+    ],
+    left: [
+      {
+        src: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=300",
+        alt: "Hands-on learning experience",
+      },
+      {
+        src: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=300",
+        alt: "Floral design certification",
+      }
+    ]
+  };
 
   const currentImages = activeTab === 'shop' ? shopImages : schoolImages;
 
   return (
-    <section id="gallery" className="section-padding">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   <section 
+  id="gallery" 
+  className="bg-white pt-38 pb-10"
+>
+
+
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Our Gallery</h2>
+            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight text-gray-900 tracking-tight ">
+            Our Gallery
+          </h2>
           <p className="text-xl text-muted-foreground">Explore our beautiful creations and learning moments</p>
         </div>
 
-        <div className="mb-8 text-center">
-          <Button
-            variant={activeTab === 'shop' ? 'default' : 'secondary'}
-            className="rounded-full mr-4"
-            onClick={() => setActiveTab('shop')}
-            data-testid="button-gallery-shop"
-          >
-            Shop Gallery
-          </Button>
-          <Button
-            variant={activeTab === 'school' ? 'default' : 'secondary'}
-            className="rounded-full"
-            onClick={() => setActiveTab('school')}
-            data-testid="button-gallery-school"
-          >
-            School Gallery
-          </Button>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {currentImages.map((image, index) => (
-            <div 
-              key={`${activeTab}-${index}`} 
-              className="group cursor-pointer relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2"
-              data-testid={`gallery-item-${index}`}
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-12">
+          <div className="bg-muted rounded-full p-1">
+            <Button
+              variant={activeTab === 'shop' ? "default" : "ghost"}
+              onClick={() => setActiveTab('shop')}
+              className="rounded-full px-6 py-2"
             >
-              <div className="relative overflow-hidden rounded-xl">
-                <img 
-                  src={image.src} 
-                  alt={image.alt} 
-                  className="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110" 
-                />
-                {/* Professional overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
-                {/* Modern hover content */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
-                  <h3 className="font-semibold text-sm mb-1">{image.alt}</h3>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs opacity-80">View Details</span>
-                    <div className="w-4 h-0.5 bg-white/60 group-hover:bg-white transition-colors duration-300"></div>
+              Flower Shop
+            </Button>
+            <Button
+              variant={activeTab === 'school' ? "default" : "ghost"}
+              onClick={() => setActiveTab('school')}
+              className="rounded-full px-6 py-2"
+            >
+              Flower School
+            </Button>
+          </div>
+        </div>
+
+        {/* Gallery Layout */}
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-6">
+          {/* Left Side Images - Vertical Stack */}
+          <div className="lg:w-1/4 space-y-6">
+            {currentImages.left.map((image, index) => (
+              <div 
+                key={`left-${index}`}
+                className="group cursor-pointer relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2"
+              >
+                <div className="relative overflow-hidden rounded-xl">
+                  <img 
+                    src={image.src} 
+                    alt={image.alt} 
+                    className="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110" 
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+                    <h3 className="font-semibold text-sm mb-1">{image.alt}</h3>
+                   
                   </div>
+                  <div className="absolute inset-0 rounded-xl ring-1 ring-white/20 group-hover:ring-pink-300/50 transition-all duration-500"></div>
                 </div>
-
-                {/* Elegant border glow */}
-                <div className="absolute inset-0 rounded-xl ring-1 ring-white/20 group-hover:ring-pink-300/50 transition-all duration-500"></div>
-                
-                {/* Shimmer effect */}
-                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 ease-out"></div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        <div className="text-center mt-12">
-          <Button 
-            variant="secondary" 
-            size="lg"
-            data-testid="button-view-more"
-          >
-            View More Gallery
-          </Button>
+          {/* Center Image - Larger */}
+          <div className="lg:w-2/4 group cursor-pointer relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2">
+            <div className="relative overflow-hidden rounded-xl">
+              <img 
+                src={currentImages.center.src} 
+                alt={currentImages.center.alt} 
+                className="w-full h-[550px] object-cover transition-transform duration-700 group-hover:scale-110" 
+              />
+              <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+                <h3 className="font-semibold text-lg mb-2">{currentImages.center.alt}</h3>
+               
+              </div>
+              <div className="absolute inset-0 rounded-xl ring-1 ring-white/20 group-hover:ring-pink-300/50 transition-all duration-500"></div>
+            </div>
+          </div>
+
+          {/* Right Side Images - Vertical Stack */}
+          <div className="lg:w-1/4 space-y-6">
+            {currentImages.right.map((image, index) => (
+              <div 
+                key={`right-${index}`}
+                className="group cursor-pointer relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2"
+              >
+                <div className="relative overflow-hidden rounded-xl">
+                  <img 
+                    src={image.src} 
+                    alt={image.alt} 
+                    className="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110" 
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+                    <h3 className="font-semibold text-sm mb-1">{image.alt}</h3>
+                   
+                  </div>
+                  <div className="absolute inset-0 rounded-xl ring-1 ring-white/20 group-hover:ring-pink-300/50 transition-all duration-500"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+ 
     </section>
   );
 }
