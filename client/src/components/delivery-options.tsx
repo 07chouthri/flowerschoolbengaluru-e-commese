@@ -6,7 +6,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Truck, Clock, Zap, AlertCircle } from "lucide-react";
 import { useCart } from "@/hooks/cart-context";
-import type { DeliveryOption } from "@shared/schema";
+import type { DeliveryOption as BaseDeliveryOption } from "@shared/schema";
+
+interface DeliveryOption extends BaseDeliveryOption {
+  description: string;
+}
 
 interface DeliveryOptionsProps {
   className?: string;
@@ -29,12 +33,17 @@ export default function DeliveryOptions({ className }: DeliveryOptionsProps) {
       try {
         setIsLoading(true);
         setError(null);
-        const deliveryOptions = await loadDeliveryOptions();
-        setOptions(deliveryOptions);
+        const fetchedOptions = await loadDeliveryOptions();
+        // Transform the data to include descriptions
+        const transformedOptions: DeliveryOption[] = fetchedOptions.map(option => ({
+          ...option,
+          description: `${option.name} delivery within ${option.estimatedDays}`
+        }));
+        setOptions(transformedOptions);
         
         // Auto-select the first option if none is selected
-        if (!deliveryOption && deliveryOptions.length > 0) {
-          setDeliveryOption(deliveryOptions[0]);
+        if (!deliveryOption && transformedOptions.length > 0) {
+          setDeliveryOption(transformedOptions[0]);
         }
       } catch (err) {
         console.error("Error loading delivery options:", err);

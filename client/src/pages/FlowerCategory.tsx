@@ -289,10 +289,11 @@ const allCategories: Category[] = [
 const CategoryCard: React.FC<{ 
   category: Category | null; 
   isVisible: boolean;
+  position: { left: number; width: number; } | null;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onItemClick: (item: string, categoryId: string) => void;
-}> = ({ category, isVisible, onMouseEnter, onMouseLeave, onItemClick }) => {
+}> = ({ category, isVisible, position, onMouseEnter, onMouseLeave, onItemClick }) => {
   if (!category) return null;
 
   return (

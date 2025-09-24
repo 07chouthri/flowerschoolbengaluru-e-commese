@@ -27,7 +27,7 @@ export default function HeroSection() {
     }
 
     // Mouse position tracking for parallax effects
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (e: MouseEvent): void => {
       setMousePosition({
         x: (e.clientX / window.innerWidth - 0.5) * 20,
         y: (e.clientY / window.innerHeight - 0.5) * 20

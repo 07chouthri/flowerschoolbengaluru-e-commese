@@ -7,7 +7,7 @@ import { motion, useAnimation, AnimatePresence } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { X, Mail, Check, Flower, Users, Award, Heart } from "lucide-react";
 import freshFlower from "../images/pexels-ameliacui-134530801.jpg";
-
+import { apiRequest } from "@/lib/queryClient";
 import logo from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 // FrontCard Component
 function FrontCard({ isVisible, onClose, onSubscribe }: { 
@@ -27,7 +27,10 @@ const handleSubmit = async (e: React.FormEvent) => {
   
   try {
     // Call your API endpoint
-    await apiRequest('POST', '/api/landing/email', { email });
+    await apiRequest('/api/landing/email', {
+      method: 'POST',
+      body: JSON.stringify({ email })
+    });
     
     onSubscribe(email);
     setIsSubmitted(true);

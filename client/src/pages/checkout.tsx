@@ -30,6 +30,15 @@ import OrderReview from "@/components/order-review";
 import { type CheckoutStep } from "@/components/checkout-steps";
 import bouquetBarLogo from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 
+interface CartItem {
+  id: string;
+  name: string;
+  price: number | string;
+  quantity: number;
+  category?: string;
+  image?: string;
+}
+
 export default function Checkout() {
   const { 
     items, 
@@ -63,8 +72,14 @@ export default function Checkout() {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [, setLocation] = useLocation();
 
+  interface User {
+    id: string;
+    email: string;
+    name?: string;
+  }
+
   // Fetch user profile using React Query like My Account does
-  const { data: user, isLoading: isLoadingUser } = useQuery({
+  const { data: user, isLoading: isLoadingUser } = useQuery<User>({
     queryKey: ["/api/auth/user"],
     retry: false, // Don't retry on auth failures
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -220,12 +235,12 @@ export default function Checkout() {
       if (result.success) {
         toast({
           title: "Order Placed Successfully!",
-          description: `Your order has been confirmed. Order ID: ${result.order?.id || result.order?.orderNumber}`,
+          description: `Your order has been confirmed. Order ID: ${result.orderId}`,
           duration: 5000,
         });
         
         // Redirect to success page or order confirmation
-        setLocation(`/order-confirmation/${result.order?.id}`);
+        setLocation(`/order-confirmation/${result.orderId}`);
       } else {
         toast({
           title: "Order Failed",
@@ -401,7 +416,8 @@ export default function Checkout() {
                           ) : (
                             items.map((item) => {
                               const isUpdating = updatingItems.has(item.id);
-                              const lineTotal = parseFloat(item.price) * item.quantity;
+                              const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+                              const lineTotal = itemPrice * item.quantity;
                               
                               return (
                                 <TableRow key={item.id} data-testid={`row-cart-item-${item.id}`}>
@@ -707,7 +723,14 @@ export default function Checkout() {
                           <div className="flex justify-between text-base">
                             <span>Delivery ({deliveryOption.name})</span>
                             <span data-testid="text-delivery-charge">
-                              {parseFloat(deliveryOption.price) > 0 ? formatPrice(deliveryOption.price) : 'Free'}
+                              {typeof deliveryOption.price === 'string' 
+                                ? parseFloat(deliveryOption.price) > 0 
+                                  ? formatPrice(deliveryOption.price) 
+                                  : 'Free'
+                                : deliveryOption.price > 0 
+                                  ? formatPrice(deliveryOption.price) 
+                                  : 'Free'
+                              }
                             </span>
                           </div>
                         )}

@@ -137,17 +137,16 @@ export default function MyAccount() {
     queryFn: async () => {
       const response = await fetch("/api/favorites", {
         headers: {
-          "Authorization": `Bearer ${profile}`,
           "Content-Type": "application/json"
         },
-        credentials: 'include'
+        credentials: 'include'  // This will send the session cookie if it exists
       });
       if (!response.ok) {
         throw new Error('Failed to fetch favorites');
       }
       return response.json();
     },
-    enabled: !!profile?.token, // Only fetch when profile and token are available
+    enabled: !!profile?.id, // Only fetch when profile is available
   });
 
   // Initialize form with profile data

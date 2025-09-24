@@ -1,8 +1,14 @@
 import React, { useState, useRef } from "react";
 import { X, Play } from "lucide-react";
 
+interface Video {
+  id: number;
+  title: string;
+  filename: string;
+}
+
 const VideoFile = () => {
-  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const videos = [
@@ -14,7 +20,7 @@ const VideoFile = () => {
     { id: 6, title: "Gifts Making", filename: "Giftsmakingvideo.mp4" }
   ];
 
-  const handleVideoClick = (video) => {
+  const handleVideoClick = (video: Video) => {
     setSelectedVideo(video);
     setIsModalOpen(true);
   };
@@ -48,10 +54,11 @@ const VideoFile = () => {
                   preload="metadata"
                   muted
                   playsInline
-                  onMouseEnter={(e) => e.target.play()}
+                  onMouseEnter={(e) => (e.target as HTMLVideoElement).play()}
                   onMouseLeave={(e) => {
-                    e.target.pause();
-                    e.target.currentTime = 0;
+                    const video = e.target as HTMLVideoElement;
+                    video.pause();
+                    video.currentTime = 0;
                   }}
                 >
                   <source src={`src/CategoryImages/${video.filename}`} type="video/mp4" />

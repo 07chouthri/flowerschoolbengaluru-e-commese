@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/hooks/cart-context";
 import type { PaymentMethod } from "@/hooks/cart-context";
+import type { Address, DeliveryOption } from "../types";
 
 interface OrderReviewProps {
   className?: string;
@@ -57,6 +58,7 @@ export default function OrderReview({
   // Format price in INR currency
   const formatPrice = (price: number | string) => {
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    if (isNaN(numPrice)) return 'N/A';
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
@@ -207,7 +209,7 @@ export default function OrderReview({
                 </div>
                 <div className="text-right">
                   <div className="font-medium" data-testid={`text-item-total-${item.id}`}>
-                    {formatPrice(parseFloat(item.price) * item.quantity)}
+                    {formatPrice(parseFloat(item.price as string) * item.quantity)}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {formatPrice(item.price)} each
@@ -246,15 +248,17 @@ export default function OrderReview({
               <div className="text-sm">
                 {shippingAddress.addressLine1}
                 {shippingAddress.addressLine2 && <><br />{shippingAddress.addressLine2}</>}
-                {shippingAddress.landmark && <><br />Near {shippingAddress.landmark}</>}
+                {shippingAddress?.landmark && <><br />Near {shippingAddress.landmark}</>}
                 <br />
                 {shippingAddress.city}, {shippingAddress.state} {shippingAddress.postalCode}
                 <br />
                 {shippingAddress.country}
               </div>
-              <Badge variant="secondary" className="text-xs">
-                {shippingAddress.addressType}
-              </Badge>
+              {(shippingAddress as any).addressType && (
+                <Badge variant="secondary" className="text-xs">
+                  {(shippingAddress as any).addressType}
+                </Badge>
+              )}
             </div>
           ) : (
             <Alert>
@@ -289,9 +293,11 @@ export default function OrderReview({
             <div className="flex items-center justify-between" data-testid="text-delivery-option">
               <div>
                 <div className="font-medium">{deliveryOption.name}</div>
-                <div className="text-sm text-muted-foreground">
-                  {deliveryOption.description}
-                </div>
+                {(deliveryOption as any).description && (
+                  <div className="text-sm text-muted-foreground">
+                    {(deliveryOption as any).description}
+                  </div>
+                )}
                 <div className="text-xs text-muted-foreground">
                   Estimated delivery: {deliveryOption.estimatedDays} day(s)
                 </div>

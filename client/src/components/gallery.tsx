@@ -12,26 +12,26 @@ export default function Gallery() {
   const shopImages = {
     center: {
       src: CenterFlower,
-      
+      alt: "Beautiful Flower Arrangement",
     },
     right: [
       {
         src: RightImage1,
-        alt: "",
+        alt: "Featured Floral Design 1",
       },
       {
         src: RightImage2,
-        alt: "",
+        alt: "Featured Floral Design 2",
       }
     ],
     left: [
       {
         src: LeftImage1,
-        alt: "",
+        alt: "Signature Arrangement 1",
       },
       {
         src: LeftImage2,
-        alt: "",
+        alt: "Signature Arrangement 2",
       }
     ]
   };

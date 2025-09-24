@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Instagram, MessageCircle, Facebook, Linkedin, Twitter, Globe2, CreditCard, Headphones } from "lucide-react";
 import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757433847861.png";
 import { Link } from "wouter";
-import { useState } from "react"; // Import useState
-// import { apiRequest } from '@/lib/api'; // Import the API utility
+import { useState } from "react";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Footer() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
@@ -46,7 +46,10 @@ export default function Footer() {
 
     try {
       // Call your API endpoint
-      await apiRequest('POST', '/api/landing/email', { email: newsletterEmail });
+      await apiRequest('/api/landing/email', {
+        method: 'POST',
+        body: JSON.stringify({ email: newsletterEmail })
+      });
       
       setSubscriptionStatus("success");
       setNewsletterEmail("");

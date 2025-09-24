@@ -1,8 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type InsertAddress, type Address } from "@shared/schema";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { type Address, type InsertAddress, addressFormSchema, type AddressFormData } from "@/types/address-form";
 import {
   Form,
   FormControl,
@@ -33,28 +32,6 @@ interface AddressFormProps {
   isLoading?: boolean;
 }
 
-const addressFormSchema = z.object({
-  userId: z.string(),
-  fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  phone: z.string().regex(
-    /^(\+91|0)?[6-9]\d{9}$/,
-    "Please enter a valid Indian mobile number"
-  ),
-  email: z.string().email("Please enter a valid email address").optional().or(z.literal("")),
-  addressLine1: z.string().min(5, "Address must be at least 5 characters"),
-  addressLine2: z.string().optional(),
-  landmark: z.string().optional(),
-  city: z.string().min(2, "City must be at least 2 characters"),
-  state: z.string().min(2, "State must be at least 2 characters"),
-  postalCode: z.string().regex(
-    /^[1-9][0-9]{5}$/,
-    "Please enter a valid 6-digit postal code"
-  ),
-  country: z.string().min(1, "Country is required").default("India"),
-  addressType: z.enum(["Home", "Office", "Other"]).default("Home"),
-  isDefault: z.boolean().default(false),
-});
-
 export function AddressForm({ 
   onSubmit, 
   onCancel,
@@ -63,7 +40,6 @@ export function AddressForm({
   submitLabel = "Save Address",
   isLoading = false 
 }: AddressFormProps) {
-  type AddressFormData = z.infer<typeof addressFormSchema>;
 
   const form = useForm<AddressFormData>({
     resolver: zodResolver(addressFormSchema),

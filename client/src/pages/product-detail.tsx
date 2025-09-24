@@ -132,7 +132,7 @@ export default function ProductDetail() {
   const getRelatedProducts = () => {
     if (!allProducts || allProducts.length === 0) return [];
     
-    const currentPrice = parseFloat(product.price);
+    const currentPrice = Number(product.price);
     const priceRange = currentPrice * 0.3; // 30% price tolerance
     
     // Score products based on multiple factors
@@ -140,7 +140,7 @@ export default function ProductDetail() {
       .filter(p => p.id !== product.id && p.inStock) // Exclude current product and out-of-stock items
       .map(p => {
         let score = 0;
-        const productPrice = parseFloat(p.price);
+        const productPrice = Number(p.price);
         
         // Factor 1: Same category (highest priority) - 100 points
         if (p.category === product.category) {
@@ -159,15 +159,15 @@ export default function ProductDetail() {
         }
         
         // Factor 4: Price tier similarity - 20 points
-        const currentTier = currentPrice < 1000 ? 'budget' : currentPrice < 3000 ? 'mid' : 'premium';
-        const productTier = productPrice < 1000 ? 'budget' : productPrice < 3000 ? 'mid' : 'premium';
+        const currentTier = Number(currentPrice) < 1000 ? 'budget' : Number(currentPrice) < 3000 ? 'mid' : 'premium';
+        const productTier = Number(productPrice) < 1000 ? 'budget' : Number(productPrice) < 3000 ? 'mid' : 'premium';
         if (currentTier === productTier) {
           score += 20;
         }
         
         // Factor 5: Alphabetical tiebreaker - small score based on name similarity
         const nameSimilarity = product.name.toLowerCase().split(' ').some(word => 
-          p.name.toLowerCase().includes(word) || p.description.toLowerCase().includes(word)
+          p.name.toLowerCase().includes(word) || (p.description?.toLowerCase() || '').includes(word)
         );
         if (nameSimilarity) {
           score += 10;
@@ -181,7 +181,7 @@ export default function ProductDetail() {
           return b.score - a.score;
         }
         // Secondary sort by price (ascending) for tiebreaker
-        return parseFloat(a.product.price) - parseFloat(b.product.price);
+        return Number(a.product.price) - Number(b.product.price);
       })
       .slice(0, 8) // Get top 8 candidates
       .map(item => item.product);
@@ -199,8 +199,8 @@ export default function ProductDetail() {
           if (a.featured && !b.featured) return -1;
           if (!a.featured && b.featured) return 1;
           // Then sort by price similarity
-          const aPriceDiff = Math.abs(parseFloat(a.price) - currentPrice);
-          const bPriceDiff = Math.abs(parseFloat(b.price) - currentPrice);
+          const aPriceDiff = Math.abs(Number(a.price) - Number(currentPrice));
+          const bPriceDiff = Math.abs(Number(b.price) - Number(currentPrice));
           return aPriceDiff - bPriceDiff;
         })
         .slice(0, 4 - scoredProducts.length);
@@ -242,7 +242,7 @@ export default function ProductDetail() {
   const handleShare = async () => {
     const url = window.location.href;
     const title = product.name;
-    const text = `Check out this beautiful ${product.name} - ${product.description.slice(0, 100)}...`;
+    const text = `Check out this beautiful ${product.name} - ${product.description?.slice(0, 100) || ''}...`;
 
     // Try Web Share API first (mobile/modern browsers)
     if (navigator.share) {
@@ -377,7 +377,7 @@ export default function ProductDetail() {
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Badge variant="secondary" className="text-xs">
-                    {product.category.charAt(0).toUpperCase() + product.category.slice(1)}
+                    {(product.category || '').charAt(0).toUpperCase() + (product.category || '').slice(1)}
                   </Badge>
                   {product.featured && (
                     <Badge className="bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs">
@@ -400,7 +400,7 @@ export default function ProductDetail() {
                 </div>
 
                 <p className="text-4xl font-bold text-pink-600 mb-6" data-testid="text-product-price">
-                  ₹{parseFloat(product.price).toLocaleString()}
+                  ₹{product.price.toLocaleString()}
                 </p>
               </div>
 
@@ -543,7 +543,7 @@ export default function ProductDetail() {
                               {relatedProduct.name}
                             </h3>
                             <p className="text-sm font-bold text-pink-600 mt-1">
-                              ₹{parseFloat(relatedProduct.price).toLocaleString()}
+                              ₹{relatedProduct.price.toLocaleString()}
                             </p>
                           </div>
                         </CardContent>

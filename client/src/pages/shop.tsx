@@ -133,20 +133,27 @@ const scrollToSection = (sectionId: string) => {
   const filteredProducts = products
     .filter((product: Product) => {
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           product.description.toLowerCase().includes(searchQuery.toLowerCase());
+                           (product.description?.toLowerCase() || '').includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === "all" || 
-                             product.category.toLowerCase() === selectedCategory.toLowerCase();
-      const productPrice = parseFloat(product.price);
-      const matchesPrice = productPrice >= priceRange[0] && productPrice <= priceRange[1];
-      const matchesStock = !showInStockOnly || product.inStock;
+                             (product.category?.toLowerCase() || '') === selectedCategory.toLowerCase();
+      // Convert price to number to ensure type safety
+      const productPrice = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+      const matchesPrice = !isNaN(productPrice) && 
+                          productPrice >= priceRange[0] && 
+                          productPrice <= priceRange[1];
+      const matchesStock = !showInStockOnly || product.inStock === true;
       return matchesSearch && matchesCategory && matchesPrice && matchesStock;
     })
     .sort((a, b) => {
+      // Convert prices to numbers for comparison
+      const priceA = typeof a.price === 'string' ? parseFloat(a.price) : a.price;
+      const priceB = typeof b.price === 'string' ? parseFloat(b.price) : b.price;
+      
       switch (sortBy) {
         case "price-low":
-          return parseFloat(a.price) - parseFloat(b.price);
+          return priceA - priceB;
         case "price-high":
-          return parseFloat(b.price) - parseFloat(a.price);
+          return priceB - priceA;
         case "name":
         default:
           return a.name.localeCompare(b.name);

@@ -112,14 +112,19 @@ export default function ProductsListing() {
     }
   });
 
+  interface PriceRange {
+    label: string;
+    value: [number, number];  // explicitly typed as tuple
+  }
+
   // Convert filterConfigs to state
   const [filterConfigs, setFilterConfigs] = useState({
     priceRanges: [
-      { label: '500 to 999', value: [500, 999] },
-      { label: '1000 to 1499', value: [1000, 1499] },
-      { label: '1500 to 2999', value: [1500, 2999] },
-      { label: '3000 and Above', value: [3000, 10000] }
-    ],
+      { label: '500 to 999', value: [500, 999] as [number, number] },
+      { label: '1000 to 1499', value: [1000, 1499] as [number, number] },
+      { label: '1500 to 2999', value: [1500, 2999] as [number, number] },
+      { label: '3000 and Above', value: [3000, 10000] as [number, number] }
+    ] as PriceRange[],
     flowerTypes: [
       { label: 'Roses', count: 0 },
       { label: 'Lilies', count: 0 },
@@ -251,7 +256,7 @@ export default function ProductsListing() {
                           onCheckedChange={() => {
                             setFilters(prev => ({
                               ...prev,
-                              priceRange: range.value
+                              priceRange: range.value as [number, number]
                             }));
                           }}
                         />

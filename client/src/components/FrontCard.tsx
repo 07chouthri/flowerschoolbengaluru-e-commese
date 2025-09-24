@@ -74,18 +74,17 @@ export default function FrontCard({ isVisible, onClose, onSubscribe }: FrontCard
                 >
                   <X className="h-4 w-4 text-gray-500" />
                 </button>
-            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
-    <img 
-      src="/E_Commerce_Bouquet_Bar_Logo_1757433847861.png" 
-      alt="Blossom Studio Logo" 
-      className="w-12 h-12 object-contain"
-    />
-  </div>
-
-
-<CardTitle className="text-2xl font-bold text-gray-900">
-  {isSubmitted ? "Welcome to Blossom Studio! 🌸" : "Get Flower Updates!"}
-</CardTitle>
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                  <img 
+                    src="/E_Commerce_Bouquet_Bar_Logo_1757433847861.png" 
+                    alt="Blossom Studio Logo" 
+                    className="w-12 h-12 object-contain"
+                  />
+                </div>
+                <CardTitle className="text-2xl font-bold text-gray-900">
+                  {isSubmitted ? "Welcome to Blossom Studio! 🌸" : "Get Flower Updates!"}
+                </CardTitle>
+              </CardHeader>
 
               <CardContent className="relative z-10">
                 {!isSubmitted ? (

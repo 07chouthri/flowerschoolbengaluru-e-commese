@@ -191,7 +191,7 @@ export default function ShopNav() {
             {user ? (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-700 font-medium">
-                  Hello, {user.firstname || "User"}!
+                  Hello, {user.name || "User"}!
                 </span>
                 <Button
                   size="sm"

@@ -38,7 +38,7 @@ export default function FeatureImageSection() {
     if (sectionRef.current) observer.observe(sectionRef.current);
 
     // Mouse position tracking for parallax effects
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (e: MouseEvent): void => {
       setMousePosition({
         x: (e.clientX / window.innerWidth - 0.5) * 10,
         y: (e.clientY / window.innerHeight - 0.5) * 10
@@ -91,7 +91,7 @@ export default function FeatureImageSection() {
     }, 300);
   };
 
-  const goToImage = (index) => {
+  const goToImage = (index: number): void => {
     setIsTransitioning(true);
     setTimeout(() => {
       setCurrentImageIndex(index);

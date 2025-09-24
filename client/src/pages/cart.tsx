@@ -156,7 +156,7 @@ export default function Cart() {
 
                       <div className="text-right">
                         <div className="font-bold text-lg text-pink-600">
-                          ₹{(parseFloat(item.price) * item.quantity).toLocaleString('en-IN')}
+                          ₹{(Number(item?.price || 0) * (item?.quantity || 0)).toLocaleString('en-IN')}
                         </div>
                       </div>
                     </div>

@@ -30,7 +30,10 @@ export default function ContactSection() {
   const { toast } = useToast();
 
   const shopOrderMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('POST', '/api/orders', data),
+    mutationFn: (data: any) => apiRequest('/api/orders', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
     onSuccess: () => {
       toast({
         title: "Order Request Sent!",
@@ -54,7 +57,10 @@ export default function ContactSection() {
   });
 
   const enrollmentMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('POST', '/api/enrollments', data),
+    mutationFn: (data: any) => apiRequest('/api/enrollments', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
     onSuccess: () => {
       toast({
         title: "Enrollment Request Sent!",
