@@ -1,3 +1,14 @@
+// Get the API base URL from environment variable
+const getApiUrl = (path: string) => {
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  // If path starts with /api, use it directly with base URL
+  if (path.startsWith('/api')) {
+    return `${baseUrl}${path}`;
+  }
+  // Otherwise, assume it's already a full URL
+  return path;
+};
+
 export async function apiRequest(method: string, url: string, data?: any) {
   const options: RequestInit = {
     method,
@@ -11,7 +22,8 @@ export async function apiRequest(method: string, url: string, data?: any) {
     options.body = JSON.stringify(data);
   }
 
-  const response = await fetch(url, options);
+  const fullUrl = getApiUrl(url);
+  const response = await fetch(fullUrl, options);
   
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);

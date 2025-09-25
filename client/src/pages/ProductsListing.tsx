@@ -90,7 +90,10 @@ export default function ProductsListing() {
       if (filters.inStock) params.append('inStock', 'true');
       if (filters.featured) params.append('featured', 'true');
 
-      const response = await fetch(`/api/products?${params.toString()}`);
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${baseUrl}/api/products?${params.toString()}`, {
+        credentials: 'include'
+      });
       if (!response.ok) throw new Error('Failed to fetch products');
       const data = await response.json();
 
