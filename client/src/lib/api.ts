@@ -1,6 +1,6 @@
 // Get the API base URL from environment variable
 const getApiUrl = (path: string) => {
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const baseUrl = import.meta.env.VITE_API_URL || 'https://flowerschoolbengaluru.com';
   // Always use the full API URL for all requests
   if (path.startsWith('/api')) {
     return `${baseUrl}${path}`;

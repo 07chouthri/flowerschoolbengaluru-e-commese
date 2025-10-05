@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => ({
     // API proxy configuration for development
     proxy: {
       '/api': {
-        target: process.env.VITE_API_URL || 'http://localhost:5000',
+        target: process.env.VITE_API_URL || 'https://flowerschoolbengaluru.com',
         changeOrigin: true,
         secure: false,
         configure: (proxy, options) => {
