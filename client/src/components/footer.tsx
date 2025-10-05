@@ -21,15 +21,15 @@ export default function Footer() {
   const handleNavigation = (path: string) => {
     if (path === '/') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      
+
       setTimeout(() => {
         const heroSection = document.getElementById('home');
         const ShopSection = document.getElementById('shop')
         if (heroSection) {
           heroSection.scrollIntoView({ behavior: "smooth", block: "start" });
         }
-        if(ShopSection) {
-          ShopSection.scrollIntoView({behavior:"smooth", block:"start"})
+        if (ShopSection) {
+          ShopSection.scrollIntoView({ behavior: "smooth", block: "start" })
         }
       }, 100);
     }
@@ -38,7 +38,7 @@ export default function Footer() {
   // Updated newsletter submission with API integration
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newsletterEmail.trim()) return;
 
     setIsSubmitting(true);
@@ -50,19 +50,19 @@ export default function Footer() {
         method: 'POST',
         body: JSON.stringify({ email: newsletterEmail })
       });
-      
+
       setSubscriptionStatus("success");
       setNewsletterEmail("");
-      
+
       // Reset success message after 5 seconds
       setTimeout(() => {
         setSubscriptionStatus("idle");
       }, 5000);
-      
+
     } catch (error) {
       console.error('Newsletter subscription failed:', error);
       setSubscriptionStatus("error");
-      
+
       // Reset error message after 5 seconds
       setTimeout(() => {
         setSubscriptionStatus("idle");
@@ -104,21 +104,24 @@ export default function Footer() {
 
             {/* Brand Description */}
             <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed font-light">
-              India's premier floral design institute and online flower marketplace. 
+              India's premier floral design institute and online flower marketplace.
               Transforming passion into expertise through professional floral education and premium flower collections.
             </p>
 
             {/* Info Section (3 columns directly below description) */}
             <div className="mt-12">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-                {/* Worldwide Delivery */}
+                {/* Delivery Across India */}
                 <div className="flex flex-col items-center md:items-start">
                   <Globe2 className="w-8 h-8 text-pink-600 mb-3" />
                   <h4 className="text-lg font-semibold text-gray-900">
-                    Worldwide Delivery
+                    Delivery Across India
                   </h4>
                   <p className="text-sm text-gray-600 mt-2">
-                    We deliver gifts to over 70 countries
+                    We deliver gifts to every major city across India 🇮🇳
+                  </p>
+                  <p className="text-sm text-gray-600 font-medium mt-1">
+                    📍 Based in <span className="text-pink-600 font-semibold">Bengaluru</span>
                   </p>
                 </div>
 
@@ -129,7 +132,7 @@ export default function Footer() {
                     100% Safe & Secure Payments
                   </h4>
                   <p className="text-sm text-gray-600 mt-2">
-                    Pay using secure payment methods
+                    Pay using trusted and secure payment methods
                   </p>
                 </div>
 
@@ -143,6 +146,7 @@ export default function Footer() {
                 </div>
               </div>
             </div>
+
           </div>
 
           {/* Footer Links Grid */}
@@ -234,9 +238,9 @@ export default function Footer() {
                 </li>
                 <li>
                   <Link href="/shop">
-                    <button 
-                    onClick={() => handleNavigation('/shop')}
-                    className="text-gray-600 hover:text-gray-900 transition-all duration-300 font-medium w-full text-left">
+                    <button
+                      onClick={() => handleNavigation('/shop')}
+                      className="text-gray-600 hover:text-gray-900 transition-all duration-300 font-medium w-full text-left">
                       Shop
                     </button>
                   </Link>
@@ -276,7 +280,7 @@ export default function Footer() {
               <ul className="space-y-3">
                 <li>
                   <Link href="/shop">
-                    <button 
+                    <button
                       onClick={() => {
                         if (window.location.pathname !== '/shop') {
                           window.location.href = '/shop#fresh-flowers';
@@ -292,7 +296,7 @@ export default function Footer() {
                 </li>
                 <li>
                   <Link href="/shop">
-                    <button 
+                    <button
                       onClick={() => {
                         if (window.location.pathname !== '/shop') {
                           window.location.href = '/shop#premium';
@@ -308,7 +312,7 @@ export default function Footer() {
                 </li>
                 <li>
                   <Link href="/shop">
-                    <button 
+                    <button
                       onClick={() => {
                         if (window.location.pathname !== '/shop') {
                           window.location.href = '/shop#wedding';
@@ -324,7 +328,7 @@ export default function Footer() {
                 </li>
                 <li>
                   <Link href="/shop">
-                    <button 
+                    <button
                       onClick={() => {
                         if (window.location.pathname !== '/shop') {
                           window.location.href = '/shop#corporate';
@@ -413,14 +417,14 @@ export default function Footer() {
                 <p className="text-gray-600 text-xs mb-3">
                   Get updates on promotions and offers coupons.
                 </p>
-                
+
                 {/* Status Messages */}
                 {subscriptionStatus === "success" && (
                   <div className="mb-3 p-2 bg-green-100 text-green-700 text-xs rounded">
                     ✅ Thank you for subscribing!
                   </div>
                 )}
-                
+
                 {subscriptionStatus === "error" && (
                   <div className="mb-3 p-2 bg-red-100 text-red-700 text-xs rounded">
                     ❌ Subscription failed. Please try again.

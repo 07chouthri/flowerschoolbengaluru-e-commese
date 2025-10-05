@@ -10,7 +10,7 @@ export default function HeroSection() {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  
+
   useEffect(() => {
     // Intersection Observer for scroll animations
     const observer = new IntersectionObserver(
@@ -52,8 +52,8 @@ export default function HeroSection() {
   };
 
   return (
-    <section 
-      id="home" 
+    <section
+      id="home"
       ref={sectionRef}
       className="min-h-screen bg-white pt-20 pb-20 relative overflow-hidden flex items-center"
     >
@@ -63,7 +63,7 @@ export default function HeroSection() {
           <h1 className="text-2xl md:text-3xl text-gray-700 mb-8 font-medium leading-relaxed">
             Your one-stop destination for beautiful flowers and professional floral education
           </h1>
-          
+
           {/* Feature Badges with staggered animation */}
           <div className="flex flex-wrap justify-center gap-4 mb-16">
             {[
@@ -74,7 +74,7 @@ export default function HeroSection() {
             ].map((badge, index) => {
               const Icon = badge.icon;
               return (
-                <Badge 
+                <Badge
                   key={index}
                   className={`bg-${badge.color}-100 text-${badge.color}-700 border border-${badge.color}-200 px-4 py-2 text-sm font-semibold transition-all duration-500 hover:scale-105 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
                   style={{ transitionDelay: `${index * 100}ms` }}
@@ -86,7 +86,7 @@ export default function HeroSection() {
             })}
           </div>
         </div>
-        
+
         {/* Two Cards Layout */}
         <div className="grid lg:grid-cols-2 gap-8 items-stretch">
           {/* Floral Design School Card */}
@@ -94,7 +94,7 @@ export default function HeroSection() {
             style={{ transitionDelay: '200ms' }}
           >
             <div className="text-center mb-6">
-              <img 
+              <img
                 src={flowerSchoolLogo}
                 alt="The Flower School Bengaluru Logo"
                 className={`w-24 h-24 mx-auto mb-4 transition-all duration-1000 ${isVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}`}
@@ -109,16 +109,17 @@ export default function HeroSection() {
               <p className={`text-gray-600 mb-8 leading-relaxed font-medium transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ transitionDelay: '500ms' }}>
                 Learn professional floral design from expert instructors
               </p>
-              
-              <Button 
+
+              <Button
                 size="lg"
-                onClick={() => scrollToSection('school')}
-                className={`w-full text-lg py-4 h-auto font-semibold mb-8 bg-orange-500 hover:bg-orange-600 transition-all duration-500 hover:scale-105 ${isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
+                onClick={() => window.open("https://app.flowerschoolbengaluru.com/", "_blank")}
+                className={`mt-5 w-full text-lg py-4 h-auto font-semibold mb-8 bg-orange-500 hover:bg-orange-600 transition-all duration-500 hover:scale-105 ${isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
                 style={{ transitionDelay: '600ms' }}
               >
                 Explore Courses
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
+
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -128,7 +129,7 @@ export default function HeroSection() {
               ].map((feature, index) => {
                 const Icon = feature.icon;
                 return (
-                  <div 
+                  <div
                     key={index}
                     className={`flex items-center gap-2 text-gray-600 transition-all duration-500 hover:text-${feature.color}-700 font-medium ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}
                     style={{ transitionDelay: `${700 + index * 100}ms` }}
@@ -146,14 +147,14 @@ export default function HeroSection() {
             style={{ transitionDelay: '300ms' }}
           >
             <div className="text-center mb-6">
-              <img 
+              <img
                 src={bouquetBarLogo}
                 alt="Bouquet Bar Bengaluru Logo"
                 className={`w-40 h-auto mx-auto mb-4 transition-all duration-1000 ${isVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}`}
                 style={{ transitionDelay: '400ms' }}
               />
             </div>
-            
+
             <div className="text-center">
               <h2 className={`text-3xl font-bold text-gray-800 mb-4 transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ transitionDelay: '500ms' }}>
                 Online Flower Shop
@@ -161,9 +162,9 @@ export default function HeroSection() {
               <p className={`text-gray-600 mb-8 leading-relaxed font-medium transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ transitionDelay: '600ms' }}>
                 Browse our exclusive collection of fresh flowers, bouquets, and arrangements
               </p>
-              
+
               <Link href="/shop">
-                <Button 
+                <Button
                   size="lg"
                   className={`w-full text-lg py-4 h-auto font-semibold mb-8 bg-pink-500 hover:bg-pink-600 transition-all duration-500 hover:scale-105 ${isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
                   style={{ transitionDelay: '700ms' }}
@@ -173,7 +174,7 @@ export default function HeroSection() {
                 </Button>
               </Link>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               {[
                 { icon: Flower, text: "500+ Varieties", color: "pink" },
@@ -181,7 +182,7 @@ export default function HeroSection() {
               ].map((feature, index) => {
                 const Icon = feature.icon;
                 return (
-                  <div 
+                  <div
                     key={index}
                     className={`flex items-center gap-2 text-gray-600 transition-all duration-500 hover:text-${feature.color}-700 font-medium ${isVisible ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'}`}
                     style={{ transitionDelay: `${800 + index * 100}ms` }}
@@ -234,7 +235,7 @@ export default function HeroSection() {
           background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(251 113 133 / 0.1)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e");
         }
       `}</style>
-      
+
       {/* Add auto-trigger animation to buttons after component mounts */}
       <script
         dangerouslySetInnerHTML={{

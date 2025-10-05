@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation } from 'wouter';
-import { Card } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import ShopNav from './ShopNav';
 import Footer from '@/components/footer';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-
+import { ChevronDown, ChevronUp, Filter, X } from 'lucide-react';
+import noimage from '../images/NoImage.jpg'
 interface Product {
   id: string;
   name: string;
@@ -41,6 +39,10 @@ export default function ProductsListing() {
   const searchParams = new URLSearchParams(window.location.search);
   const categoryParam = searchParams.get('category');
   const subcategoryParam = searchParams.get('subcategory');
+  const searchParam = searchParams.get('search');
+
+  // Mobile filter drawer state
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const [filters, setFilters] = useState<FilterState>({
     priceRange: [0, 10000],
@@ -52,15 +54,11 @@ export default function ProductsListing() {
     featured: false
   });
 
-
-    const [forceRefetch, setForceRefetch] = useState(0);
-
-
-    
+  const [forceRefetch, setForceRefetch] = useState(0);
+  
   useEffect(() => {
     // Increment forceRefetch when category/subcategory changes
     setForceRefetch(prev => prev + 1);
-    
     // Reset filters when category changes
     setFilters({
       priceRange: [0, 10000],
@@ -71,16 +69,17 @@ export default function ProductsListing() {
       inStock: false,
       featured: false
     });
-  }, [categoryParam, subcategoryParam]);
+  }, [categoryParam, subcategoryParam, searchParam]);
 
-  // Update query to include filters
-  const { data: products, isLoading } = useQuery<Product[]>({
-    queryKey: ['/api/products', categoryParam, subcategoryParam, filters],
+  // Update query to include search parameter with proper refetch
+  const { data: products, isLoading, refetch } = useQuery<Product[]>({
+    queryKey: ['/api/products', categoryParam, subcategoryParam, searchParam, filters, forceRefetch],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (categoryParam) params.append('category', categoryParam);
       if (subcategoryParam) params.append('subcategory', subcategoryParam);
-      
+      if (searchParam) params.append('search', searchParam);
+
       // Add filter parameters
       if (filters.priceRange[0] > 0) params.append('minPrice', filters.priceRange[0].toString());
       if (filters.priceRange[1] < 10000) params.append('maxPrice', filters.priceRange[1].toString());
@@ -90,8 +89,8 @@ export default function ProductsListing() {
       if (filters.inStock) params.append('inStock', 'true');
       if (filters.featured) params.append('featured', 'true');
 
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${baseUrl}/api/products?${params.toString()}`, {
+      // Use proxy route instead of direct API call to avoid CORS issues
+      const response = await fetch(`/api/products?${params.toString()}`, {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to fetch products');
@@ -100,27 +99,37 @@ export default function ProductsListing() {
       // Filter products client-side as well
       return data.filter((product: Product) => {
         const price = parseFloat(product.price);
+        const matchesSearch = !searchParam || 
+          product.name.toLowerCase().includes(searchParam.toLowerCase()) ||
+          product.description.toLowerCase().includes(searchParam.toLowerCase()) ||
+          product.category.toLowerCase().includes(searchParam.toLowerCase());
         const matchesPrice = price >= filters.priceRange[0] && price <= filters.priceRange[1];
         const matchesType = filters.flowerTypes.length === 0 || filters.flowerTypes.includes(product.category);
         const matchesArrangement = filters.arrangements.length === 0 || filters.arrangements.includes(product.subcategory);
-        const matchesColor = filters.colors.length === 0 || filters.colors.some(color => 
+        const matchesColor = filters.colors.length === 0 || filters.colors.some(color =>
           product.name.toLowerCase().includes(color.toLowerCase())
         );
         const matchesStock = !filters.inStock || product.inStock;
         const matchesFeatured = !filters.featured || product.featured;
 
-        return matchesPrice && matchesType && matchesArrangement && 
-               matchesColor && matchesStock && matchesFeatured;
+        return matchesSearch && matchesPrice && matchesType && matchesArrangement &&
+          matchesColor && matchesStock && matchesFeatured;
       });
-    }
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Trigger refetch when search params change
+  useEffect(() => {
+    refetch();
+  }, [searchParam, refetch]);
 
   interface PriceRange {
     label: string;
-    value: [number, number];  // explicitly typed as tuple
+    value: [number, number];
   }
 
-  // Convert filterConfigs to state
   const [filterConfigs, setFilterConfigs] = useState({
     priceRanges: [
       { label: '500 to 999', value: [500, 999] as [number, number] },
@@ -152,16 +161,15 @@ export default function ProductsListing() {
     ]
   });
 
-  // Update useEffect to reset counts before counting
   useEffect(() => {
     if (products) {
-      const newFilterConfigs = {...filterConfigs};
-      
+      const newFilterConfigs = { ...filterConfigs };
+
       // Reset all counts first
       newFilterConfigs.flowerTypes.forEach(type => type.count = 0);
       newFilterConfigs.arrangements.forEach(arr => arr.count = 0);
       newFilterConfigs.colors.forEach(color => color.count = 0);
-      
+
       // Count products
       products.forEach(product => {
         newFilterConfigs.flowerTypes.forEach(type => {
@@ -187,7 +195,6 @@ export default function ProductsListing() {
     }
   }, [products]);
 
-  // Add filter reset function
   const resetFilters = () => {
     setFilters({
       priceRange: [0, 10000],
@@ -200,7 +207,6 @@ export default function ProductsListing() {
     });
   };
 
-  // Add this to your component before the return statement
   const [openSections, setOpenSections] = useState({
     price: true,
     flowerTypes: true,
@@ -216,223 +222,306 @@ export default function ProductsListing() {
     }));
   };
 
+  // Filter component (reusable for both desktop and mobile)
+  const FilterComponent = ({ isMobile = false }: { isMobile?: boolean }) => (
+    <div className={`bg-white rounded-lg shadow-sm p-4 space-y-4 ${isMobile ? 'h-full overflow-y-auto' : 'sticky top-4'}`}>
+      {/* Mobile header */}
+      {isMobile && (
+        <div className="flex justify-between items-center border-b pb-4">
+          <h2 className="text-lg font-semibold">Filters</h2>
+          <button
+            onClick={() => setIsFilterOpen(false)}
+            className="p-2 hover:bg-gray-100 rounded-full"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Reset Filters */}
+      <button
+        onClick={resetFilters}
+        className="w-full text-xs bg-pink-50 text-pink-600 hover:bg-pink-100 py-2 rounded-md transition-colors"
+      >
+        Reset Filters
+      </button>
+
+      {/* Price Filter */}
+      <div>
+        <button
+          onClick={() => toggleSection('price')}
+          className="w-full flex justify-between items-center text-sm font-semibold text-gray-900 mb-2 hover:text-pink-600"
+        >
+          Price Range
+          {openSections.price ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
+        {openSections.price && (
+          <div className="space-y-2 pt-2">
+            {filterConfigs.priceRanges.map((range) => (
+              <label key={range.label} className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded">
+                <Checkbox
+                  checked={filters.priceRange[0] === range.value[0]}
+                  onCheckedChange={() => {
+                    setFilters(prev => ({
+                      ...prev,
+                      priceRange: range.value as [number, number]
+                    }));
+                  }}
+                />
+                <span className="text-xs text-gray-600">₹{range.label}</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Flower Types */}
+      <div>
+        <button
+          onClick={() => toggleSection('flowerTypes')}
+          className="w-full flex justify-between items-center text-sm font-semibold text-gray-900 mb-2 hover:text-pink-600"
+        >
+          Flower Types
+          {openSections.flowerTypes ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
+        {openSections.flowerTypes && (
+          <div className="space-y-2 pt-2">
+            {filterConfigs.flowerTypes.map((type) => (
+              <label key={type.label} className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded">
+                <Checkbox
+                  checked={filters.flowerTypes.includes(type.label)}
+                  onCheckedChange={(checked) => {
+                    setFilters(prev => ({
+                      ...prev,
+                      flowerTypes: checked
+                        ? [...prev.flowerTypes, type.label]
+                        : prev.flowerTypes.filter(t => t !== type.label)
+                    }));
+                  }}
+                />
+                <span className="text-xs text-gray-600">
+                  {type.label} ({type.count})
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Arrangements */}
+      <div>
+        <button
+          onClick={() => toggleSection('arrangements')}
+          className="w-full flex justify-between items-center text-sm font-semibold text-gray-900 mb-2 hover:text-pink-600"
+        >
+          Arrangements
+          {openSections.arrangements ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
+        {openSections.arrangements && (
+          <div className="space-y-2 pt-2">
+            {filterConfigs.arrangements.map((arr) => (
+              <label key={arr.label} className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded">
+                <Checkbox
+                  checked={filters.arrangements.includes(arr.label)}
+                  onCheckedChange={(checked) => {
+                    setFilters(prev => ({
+                      ...prev,
+                      arrangements: checked
+                        ? [...prev.arrangements, arr.label]
+                        : prev.arrangements.filter(a => a !== arr.label)
+                    }));
+                  }}
+                />
+                <span className="text-xs text-gray-600">
+                  {arr.label} ({arr.count})
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Colors */}
+      <div>
+        <button
+          onClick={() => toggleSection('colors')}
+          className="w-full flex justify-between items-center text-sm font-semibold text-gray-900 mb-2 hover:text-pink-600"
+        >
+          Colors
+          {openSections.colors ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
+        {openSections.colors && (
+          <div className="space-y-2 pt-2">
+            {filterConfigs.colors.map((color) => (
+              <label key={color.label} className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded">
+                <Checkbox
+                  checked={filters.colors.includes(color.label)}
+                  onCheckedChange={(checked) => {
+                    setFilters(prev => ({
+                      ...prev,
+                      colors: checked
+                        ? [...prev.colors, color.label]
+                        : prev.colors.filter(c => c !== color.label)
+                    }));
+                  }}
+                />
+                <span className="text-xs text-gray-600">
+                  {color.label} ({color.count})
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Additional Filters */}
+      <div>
+        <button
+          onClick={() => toggleSection('additional')}
+          className="w-full flex justify-between items-center text-sm font-semibold text-gray-900 mb-2 hover:text-pink-600"
+        >
+          Additional Filters
+          {openSections.additional ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
+        {openSections.additional && (
+          <div className="space-y-2 pt-2">
+            <label className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded">
+              <Checkbox
+                checked={filters.inStock}
+                onCheckedChange={(checked) =>
+                  setFilters(prev => ({ ...prev, inStock: checked as boolean }))
+                }
+              />
+              <span className="text-xs text-gray-600">In Stock Only</span>
+            </label>
+            <label className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded">
+              <Checkbox
+                checked={filters.featured}
+                onCheckedChange={(checked) =>
+                  setFilters(prev => ({ ...prev, featured: checked as boolean }))
+                }
+              />
+              <span className="text-xs text-gray-600">Featured Items</span>
+            </label>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   // Handle loading state
   if (isLoading) {
-    return <div className="container mx-auto p-4">Loading...</div>;
+    return (
+      <>
+        <ShopNav />
+        <div className="container mx-auto p-4">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading products...</p>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
   }
 
   return (
     <>
       <ShopNav />
       <div className="container mx-auto px-2 py-4">
-        <div className="flex gap-4">
-          {/* Filter Sidebar */}
-          <div className="w-56 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow-sm p-4 space-y-4 sticky top-4">
-              {/* Reset Filters */}
-              <button
-                onClick={resetFilters}
-                className="w-full text-xs bg-pink-50 text-pink-600 hover:bg-pink-100 py-2 rounded-md transition-colors"
-              >
-                Reset Filters
-              </button>
+        {/* Breadcrumb Navigation */}
+        <div className="mb-4 text-sm text-gray-600">
+          <div className="flex items-center space-x-2">
+            <Link href="/" className="hover:text-pink-600 transition-colors">
+              Home
+            </Link>
+            <span>/</span>
+            <Link href="/shop" className="hover:text-pink-600 transition-colors">
+              Shop
+            </Link>
+            {/* {categoryParam && (
+              <>
+                <span>/</span>
+                <span className="text-gray-900 font-medium">{categoryParam}</span>
+              </>
+            )} */}
+            {subcategoryParam && (
+              <>
+                <span>/</span>
+                <span className="text-gray-900 font-medium">{subcategoryParam}</span>
+              </>
+            )}
+            {searchParam && (
+              <>
+                <span>/</span>
+                <span className="text-gray-900 font-medium">Search: "{searchParam}"</span>
+              </>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex gap-4 relative">
+          {/* Desktop Filter Sidebar */}
+          <div className="hidden lg:block w-56 flex-shrink-0">
+            <FilterComponent />
+          </div>
 
-              {/* Price Filter */}
-              <div>
-                <button 
-                  onClick={() => toggleSection('price')}
-                  className="w-full flex justify-between items-center text-sm font-semibold text-gray-900 mb-2 hover:text-pink-600"
-                >
-                  Price Range
-                  {openSections.price ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </button>
-                {openSections.price && (
-                  <div className="space-y-2 pt-2">
-                    {filterConfigs.priceRanges.map((range) => (
-                      <label key={range.label} className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded">
-                        <Checkbox
-                          checked={filters.priceRange[0] === range.value[0]}
-                          onCheckedChange={() => {
-                            setFilters(prev => ({
-                              ...prev,
-                              priceRange: range.value as [number, number]
-                            }));
-                          }}
-                        />
-                        <span className="text-xs text-gray-600">₹{range.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Flower Types */}
-              <div>
-                <button 
-                  onClick={() => toggleSection('flowerTypes')}
-                  className="w-full flex justify-between items-center text-sm font-semibold text-gray-900 mb-2 hover:text-pink-600"
-                >
-                  Flower Types
-                  {openSections.flowerTypes ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </button>
-                {openSections.flowerTypes && (
-                  <div className="space-y-2 pt-2">
-                    {filterConfigs.flowerTypes.map((type) => (
-                      <label key={type.label} className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded">
-                        <Checkbox
-                          checked={filters.flowerTypes.includes(type.label)}
-                          onCheckedChange={(checked) => {
-                            setFilters(prev => ({
-                              ...prev,
-                              flowerTypes: checked 
-                                ? [...prev.flowerTypes, type.label]
-                                : prev.flowerTypes.filter(t => t !== type.label)
-                            }));
-                          }}
-                        />
-                        <span className="text-xs text-gray-600">
-                          {type.label} ({type.count})
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Arrangements */}
-              <div>
-                <button 
-                  onClick={() => toggleSection('arrangements')}
-                  className="w-full flex justify-between items-center text-sm font-semibold text-gray-900 mb-2 hover:text-pink-600"
-                >
-                  Arrangements
-                  {openSections.arrangements ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </button>
-                {openSections.arrangements && (
-                  <div className="space-y-2 pt-2">
-                    {filterConfigs.arrangements.map((arr) => (
-                      <label key={arr.label} className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded">
-                        <Checkbox
-                          checked={filters.arrangements.includes(arr.label)}
-                          onCheckedChange={(checked) => {
-                            setFilters(prev => ({
-                              ...prev,
-                              arrangements: checked
-                                ? [...prev.arrangements, arr.label]
-                                : prev.arrangements.filter(a => a !== arr.label)
-                            }));
-                          }}
-                        />
-                        <span className="text-xs text-gray-600">
-                          {arr.label} ({arr.count})
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Colors */}
-              <div>
-                <button 
-                  onClick={() => toggleSection('colors')}
-                  className="w-full flex justify-between items-center text-sm font-semibold text-gray-900 mb-2 hover:text-pink-600"
-                >
-                  Colors
-                  {openSections.colors ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </button>
-                {openSections.colors && (
-                  <div className="space-y-2 pt-2">
-                    {filterConfigs.colors.map((color) => (
-                      <label key={color.label} className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded">
-                        <Checkbox
-                          checked={filters.colors.includes(color.label)}
-                          onCheckedChange={(checked) => {
-                            setFilters(prev => ({
-                              ...prev,
-                              colors: checked
-                                ? [...prev.colors, color.label]
-                                : prev.colors.filter(c => c !== color.label)
-                            }));
-                          }}
-                        />
-                        <span className="text-xs text-gray-600">
-                          {color.label} ({color.count})
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Additional Filters */}
-              <div>
-                <button 
-                  onClick={() => toggleSection('additional')}
-                  className="w-full flex justify-between items-center text-sm font-semibold text-gray-900 mb-2 hover:text-pink-600"
-                >
-                  Additional Filters
-                  {openSections.additional ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </button>
-                {openSections.additional && (
-                  <div className="space-y-2 pt-2">
-                    <label className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded">
-                      <Checkbox
-                        checked={filters.inStock}
-                        onCheckedChange={(checked) => 
-                          setFilters(prev => ({ ...prev, inStock: checked as boolean }))
-                        }
-                      />
-                      <span className="text-xs text-gray-600">In Stock Only</span>
-                    </label>
-                    <label className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded">
-                      <Checkbox
-                        checked={filters.featured}
-                        onCheckedChange={(checked) => 
-                          setFilters(prev => ({ ...prev, featured: checked as boolean }))
-                        }
-                      />
-                      <span className="text-xs text-gray-600">Featured Items</span>
-                    </label>
-                  </div>
-                )}
+          {/* Mobile Filter Drawer */}
+          {isFilterOpen && (
+            <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50">
+              <div className="fixed left-0 top-0 h-full w-80 bg-white shadow-lg">
+                <FilterComponent isMobile={true} />
               </div>
             </div>
-          </div>
+          )}
 
           {/* Products Grid */}
           <div className="flex-1">
-            <div className="flex justify-between items-center mb-3">
-              <h1 className="text-xl font-bold">
-                {subcategoryParam || categoryParam || 'All Products'}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
+              <h1 className="text-lg sm:text-xl font-bold">
+                {searchParam ? `Search Results for "${searchParam}"` : (subcategoryParam || categoryParam || 'All Products')}
               </h1>
-              <p className="text-sm text-gray-600">
-                {products?.length || 0} products found
-              </p>
+              
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-gray-600">
+                  {products?.length || 0} products found
+                </p>
+                
+                {/* Mobile Filter Button */}
+                <button
+                  onClick={() => setIsFilterOpen(true)}
+                  className="lg:hidden flex items-center gap-2 px-3 py-2 bg-pink-50 text-pink-600 rounded-md hover:bg-pink-100 transition-colors"
+                >
+                  <Filter className="h-4 w-4" />
+                  Filters
+                </button>
+              </div>
             </div>
 
-            {/* 6 columns × 40 rows grid */}
-            <div className="grid grid-cols-6 gap-2">
+            {/* Responsive Products Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
               {products?.slice(0, 240).map((product) => (
                 <div
                   key={product.id}
@@ -442,7 +531,7 @@ export default function ProductsListing() {
                   {/* Product Image */}
                   <div className="aspect-square overflow-hidden">
                     <img
-  src={`data:image/jpeg;base64,${product.image}`} 
+                      src={`data:image/jpeg;base64,${product.image}`}
                       alt={product.name}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                       loading="lazy"
@@ -452,13 +541,13 @@ export default function ProductsListing() {
                   {/* Product Info */}
                   <div className="p-2">
                     {/* Product Name */}
-                    <h3 className="font-medium text-xs text-gray-900 line-clamp-2 min-h-[2rem]">
+                    <h3 className="font-medium text-xs sm:text-sm text-gray-900 line-clamp-2 min-h-[2rem]">
                       {product.name}
                     </h3>
 
                     {/* Price and Stock Status */}
                     <div className="flex justify-between items-center mt-1">
-                      <p className="text-sm font-bold text-pink-600">
+                      <p className="text-sm sm:text-base font-bold text-pink-600">
                         ₹{parseFloat(product.price).toLocaleString()}
                       </p>
                       {!product.inStock && (
@@ -472,12 +561,28 @@ export default function ProductsListing() {
               ))}
             </div>
 
-            {/* Show total count */}
-            <div className="mt-4 text-center">
-              <p className="text-xs text-gray-500">
-                Showing {Math.min(products?.length || 0, 240)} products
-              </p>
-            </div>
+            {/* No products found message */}
+            {products && products.length === 0 && (
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  {/* No Flowers Found Image */}
+                  <div className="mb-8">
+                    <img
+                      src={noimage}
+                      alt="No flowers found"
+                      className="w-48 h-48 mx-auto object-cover rounded-full opacity-50 grayscale"
+                    />
+                  </div>
+                  
+                  {/* Message */}
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-semibold text-gray-700">No Flowers Found</h3>
+                    <p className="text-gray-500">We couldn't find any flowers matching your criteria</p>
+                    <p className="text-gray-400 text-sm">Try adjusting your filters or search terms</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -56,17 +56,21 @@ export default function WhyChooseUs() {
   ];
 
   return (
-<section 
-  ref={sectionRef} 
+    <section
+      ref={sectionRef}
 
->
+    >
 
 
       {/* Header */}
       <div className="text-center mb-16">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-          Why Choose Bouquet Bar?
-        </h2>
+        <h6 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-tight text-gray-900 tracking-tight mb-4 sm:mb-6">
+          Why {" "}
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600">
+            Choose
+          </span>{" "}
+          Us
+        </h6>
         <p className="text-lg md:text-xl text-gray-600">
           Experience the difference with our premium services
         </p>
@@ -79,9 +83,8 @@ export default function WhyChooseUs() {
           {features.filter(f => f.side === "left").map((feature, i) => (
             <div
               key={i}
-              className={`flex items-center justify-end gap-4 text-right transition-all duration-700 ${
-                isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-8"
-              }`}
+              className={`flex items-center justify-end gap-4 text-right transition-all duration-700 ${isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-8"
+                }`}
               style={{ transitionDelay: `${i * 200}ms` }}
             >
               <div>
@@ -100,9 +103,8 @@ export default function WhyChooseUs() {
           <img
             src={WhyChooseImage}
             alt="Why Choose Bouquet Bar"
-            className={` h-90 w-110 object-cover rounded-2xl shadow-xl transition-all duration-1000 ${
-              isVisible ? "scale-100 opacity-100" : "scale-90 opacity-0"
-            }`}
+            className={` h-90 w-110 object-cover rounded-2xl shadow-xl transition-all duration-1000 ${isVisible ? "scale-100 opacity-100" : "scale-90 opacity-0"
+              }`}
           />
         </div>
 
@@ -111,9 +113,8 @@ export default function WhyChooseUs() {
           {features.filter(f => f.side === "right").map((feature, i) => (
             <div
               key={i}
-              className={`flex items-center gap-4 transition-all duration-700 ${
-                isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-8"
-              }`}
+              className={`flex items-center gap-4 transition-all duration-700 ${isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-8"
+                }`}
               style={{ transitionDelay: `${i * 200}ms` }}
             >
               <div className={`w-16 h-16 ${feature.bgColor} rounded-full flex items-center justify-center`}>

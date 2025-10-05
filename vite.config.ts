@@ -25,20 +25,24 @@ export default defineConfig(({ mode }) => ({
     emptyOutDir: true,
   },
   server: {
-    port: 5173,
+    port: 5174,
     fs: {
       strict: true,
       deny: ["**/.*"],
     },
-    // Only use proxy in development mode
-    ...(mode === 'development' && {
-      proxy: {
-        '/api': {
-          target: 'http://localhost:5000',
-          changeOrigin: true,
-          secure: false
+    // API proxy configuration for development
+    proxy: {
+      '/api': {
+        target: process.env.VITE_API_URL || 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, options) => {
+          // Log proxy requests for debugging
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('Proxying request:', req.method, req.url || '', '-> target:', (options.target || '') + (req.url || ''));
+          });
         }
       }
-    })
+    }
   }
 }));

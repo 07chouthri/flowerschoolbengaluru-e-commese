@@ -9,12 +9,17 @@ async function throwIfResNotOk(res: Response) {
 
 // Get the API base URL from environment variable
 const getApiUrl = (path: string) => {
-  const baseUrl = import.meta.env.VITE_API_URL || 'https://flowerschoolbengaluru.com';
-  // If path starts with /api, use it directly with base URL
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  console.log('🔧 Environment VITE_API_URL:', import.meta.env.VITE_API_URL);
+  console.log('🔧 Using API URL:', apiUrl);
+  
+  // Always use the full API URL for all requests
   if (path.startsWith('/api')) {
-    return `${baseUrl}${path}`;
+    const fullUrl = `${apiUrl}${path}`;
+    console.log('🔧 Full API URL:', fullUrl);
+    return fullUrl;
   }
-  // Otherwise, assume it's already a full URL
+  // If it's already a full URL, return as is
   return path;
 };
 
@@ -34,6 +39,7 @@ export async function apiRequest(
   }
 
   const fullUrl = getApiUrl(url);
+  console.log('🚀 API Request:', options?.method || 'GET', fullUrl); // Debug log
 
   const res = await fetch(fullUrl, {
     method: options?.method || "GET",
@@ -53,6 +59,8 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const url = getApiUrl(queryKey.join("/") as string);
+    console.log('🔍 Query URL:', url); // Debug log
+    
     const res = await fetch(url, {
       credentials: "include",
     });

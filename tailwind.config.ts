@@ -84,7 +84,7 @@ export default {
 
       /* ✅ NEW FONTS */
       fontFamily: {
-        sans: ["var(--font-sans)"],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
         playfair: ['"Playfair Display"', 'serif'],

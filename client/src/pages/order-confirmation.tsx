@@ -100,136 +100,14 @@ export default function OrderConfirmation() {
               Thank you for your order. We've received your request and will process it shortly.
             </p>
             <div className="flex items-center justify-center gap-4 text-sm text-green-600">
-              <span>Order Number: <strong>{order.orderNumber}</strong></span>
+              <span>Order Number: <strong>{order.ordernumber}</strong></span>
               <span>•</span>
               <span>Order ID: <strong>{order.id}</strong></span>
             </div>
           </CardContent>
         </Card>
 
-        {/* Order Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Truck className="w-5 h-5" />
-              Order Status & Timeline
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4 mb-4">
-              <Badge className={getStatusColor(order.status || '')} data-testid="badge-order-status">
-                {order.status || 'Pending'}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                Placed on {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric'
-                }) : 'N/A'}
-              </span>
-            </div>
-            
-            {order.estimatedDeliveryDate && (
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <span>Estimated Delivery: {new Date(order.estimatedDeliveryDate).toLocaleDateString('en-IN')}</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Order Items */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Order Items</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {(Array.isArray(order.items) ? order.items : JSON.parse(order.items || '[]')).map((item: any, index: number) => (
-                <div key={index} className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-medium">{item.productName}</h4>
-                    <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatPrice(item.unitPrice)} × {item.quantity}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">{formatPrice(item.totalPrice)}</p>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* Delivery & Payment */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Delivery & Payment</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Delivery Address */}
-              <div>
-                <h4 className="font-medium mb-2">Delivery Address</h4>
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <p>{order.customerName}</p>
-                  <p>{order.phone}</p>
-                  {order.email && <p>{order.email}</p>}
-                  <p>{order.deliveryAddress}</p>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Payment Method */}
-              <div>
-                <h4 className="font-medium mb-2">Payment Method</h4>
-                <p className="text-sm text-muted-foreground">{order.paymentMethod || 'Cash on Delivery'}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Order Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Order Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>{formatPrice(order.subtotal)}</span>
-              </div>
-              {parseFloat(order.deliveryCharge?.toString() || '0') > 0 && (
-                <div className="flex justify-between">
-                  <span>Delivery Charges</span>
-                  <span>{formatPrice(order.deliveryCharge || 0)}</span>
-                </div>
-              )}
-              {parseFloat(order.discountAmount?.toString() || '0') > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>Discount Applied</span>
-                  <span>-{formatPrice(order.discountAmount || 0)}</span>
-                </div>
-              )}
-              {parseFloat(order.paymentCharges?.toString() || '0') > 0 && (
-                <div className="flex justify-between">
-                  <span>Payment Charges</span>
-                  <span>{formatPrice(order.paymentCharges || 0)}</span>
-                </div>
-              )}
-              <Separator />
-              <div className="flex justify-between font-semibold text-lg">
-                <span>Total Amount</span>
-                <span data-testid="text-total-amount">{formatPrice(order.total || order.subtotal || 0)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* SMS/WhatsApp Confirmation Notice */}
-        <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-6">
             <div className="flex items-start gap-3">
               <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -244,9 +122,14 @@ export default function OrderConfirmation() {
               </div>
             </div>
           </CardContent>
-        </Card>
 
-        {/* Action Buttons */}
+        {/* Support Note */}
+          <CardContent className="p-4 text-center">
+            <p className="text-sm text-muted-foreground">
+              Need help? Contact us at <strong>support@bouquetbar.com</strong> or call <strong>+91 9876543210</strong>
+            </p>
+          </CardContent>
+               {/* Action Buttons */}
         <div className="flex gap-4 justify-center">
           <Link href="/shop">
             <Button variant="outline" data-testid="button-continue-shopping">
@@ -261,15 +144,6 @@ export default function OrderConfirmation() {
             </Button>
           </Link>
         </div>
-
-        {/* Support Note */}
-        <Card className="border-gray-200">
-          <CardContent className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">
-              Need help? Contact us at <strong>support@bouquetbar.com</strong> or call <strong>+91 9876543210</strong>
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

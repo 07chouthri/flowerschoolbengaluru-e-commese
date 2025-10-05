@@ -9,6 +9,7 @@ import { ArrowLeft, Mail, Lock, ShoppingBag, GraduationCap, Star } from "lucide-
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { getFriendlyErrorMessage, isValidEmail, logError } from "@/lib/error-utils";
 import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
 
 export default function SignIn() {
@@ -24,29 +25,73 @@ export default function SignIn() {
 
   const signinMutation = useMutation({
     mutationFn: async (userData: { email: string; password: string }) => {
-      return await apiRequest("/api/auth/signin", {
-        method: "POST",
-        body: JSON.stringify(userData),
-      });
+      try {
+        const response = await apiRequest("/api/auth/signin", {
+          method: "POST",
+          body: JSON.stringify(userData),
+        });
+        
+        // Check if response is ok
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw {
+            status: response.status,
+            message: errorData.error || errorData.message || "Sign in failed"
+          };
+        }
+        
+        return response;
+      } catch (error) {
+        throw error;
+      }
     },
     onSuccess: async (response) => {
-      const data = await response.json();
-      // Save user data in localStorage and context
-      login(data.user); // This saves to cookies and sessionStorage
-      // Set user data in cache to trigger cart sync
-      queryClient.setQueryData(["/api/auth/user"], data.user);
-      // Invalidate auth queries to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: ["/api/auth"] });
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully signed in.",
-      });
-      setLocation("/"); // Redirect to home
+      try {
+        const data = await response.json();
+        
+        // Validate response data
+        if (!data.user) {
+          throw new Error("Invalid response from server");
+        }
+        
+        // Save user data in localStorage, cookies and context
+        login(data.user); // This saves to cookies and sessionStorage
+        
+        // Additionally save to localStorage for persistence
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('isAuthenticated', 'true');
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+        }
+        
+        // Set user data in cache to trigger cart sync
+        queryClient.setQueryData(["/api/auth/user"], data.user);
+        // Invalidate auth queries to ensure fresh data
+        queryClient.invalidateQueries({ queryKey: ["/api/auth"] });
+        
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully signed in.",
+        });
+        
+        setLocation("/"); // Redirect to home
+      } catch (error) {
+        logError(error, "signin success handler");
+        toast({
+          title: "Sign In Error",
+          description: "Something went wrong while processing your sign in. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
     onError: (error: any) => {
+      logError(error, "signin");
+      
+      const friendlyMessage = getFriendlyErrorMessage(error, "signin");
+      
       toast({
-        title: "Error",
-        description: error.message || "Failed to sign in",
+        title: "Sign In Failed",
+        description: friendlyMessage,
         variant: "destructive",
       });
     },
@@ -55,17 +100,47 @@ export default function SignIn() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.email || !formData.password) {
+    // Enhanced form validation with friendly messages
+    if (!formData.email.trim()) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields",
+        title: "Email Required",
+        description: "Please enter your email address to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.password.trim()) {
+      toast({
+        title: "Password Required",
+        description: "Please enter your password to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Basic email format validation
+    if (!isValidEmail(formData.email)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address (e.g., you@example.com).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Password length validation
+    if (formData.password.length < 6) {
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters long.",
         variant: "destructive",
       });
       return;
     }
 
     signinMutation.mutate({
-      email: formData.email,
+      email: formData.email.trim(),
       password: formData.password,
     });
   };

@@ -1,7 +1,7 @@
 // Get the API base URL from environment variable
 const getApiUrl = (path: string) => {
   const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  // If path starts with /api, use it directly with base URL
+  // Always use the full API URL for all requests
   if (path.startsWith('/api')) {
     return `${baseUrl}${path}`;
   }

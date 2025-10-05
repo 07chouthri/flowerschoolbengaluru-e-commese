@@ -10,6 +10,7 @@ import { ArrowLeft, User, Mail, Phone, Lock, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { getFriendlyErrorMessage, isValidEmail, isValidPhone, validatePassword, logError } from "@/lib/error-utils";
 import logoPath from "@assets/E_Commerce_Bouquet_Bar_Logo_1757484444893.png";
 
 export default function SignUp() {
@@ -22,28 +23,98 @@ export default function SignUp() {
     confirmPassword: ""
   });
   const [countryCode, setCountryCode] = useState("+91");
+  const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
   const { login } = useAuth();
 
+  // Helper functions for real-time validation
+  const isEmailValid = (email: string) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const emailDomainRegex = /\.(com|in|org|net|edu|gov|co|io)$/i;
+    return emailRegex.test(email) && emailDomainRegex.test(email);
+  };
+
+  const isPhoneValid = (phone: string) => {
+    const phoneRegex = /^[0-9]{10}$/;
+    return phoneRegex.test(phone) && !phone.startsWith('0') && !phone.startsWith('1');
+  };
+
+  const getPasswordStrength = (password: string) => {
+    const requirements = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+      noCommon: !['123456', 'password', 'qwerty', 'abc123'].some(pattern => 
+        password.toLowerCase().includes(pattern)
+      )
+    };
+    
+    const score = Object.values(requirements).filter(Boolean).length;
+    return { requirements, score };
+  };
+
   const signupMutation = useMutation({
     mutationFn: async (userData: { firstName: string; lastName: string; email: string; phone: string; password: string }) => {
-      return await apiRequest("/api/auth/signup", {
-        method: "POST",
-        body: JSON.stringify(userData),
-      });
+      try {
+        const response = await apiRequest("/api/auth/signup", {
+          method: "POST",
+          body: JSON.stringify(userData),
+        });
+        
+        // Check if response is ok
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw {
+            status: response.status,
+            message: errorData.error || errorData.message || "Signup failed"
+          };
+        }
+        
+        return response;
+      } catch (error) {
+        throw error;
+      }
     },
     onSuccess: async (response) => {
-      const data = await response.json();
-      // Save user data in localStorage and context
-      login(data.user); // This saves to cookies and sessionStorage
-      setLocation("/"); // Redirect to home
+      try {
+        const data = await response.json();
+        
+        // Validate response data
+        if (!data.user) {
+          throw new Error("Invalid response from server");
+        }
+        
+        // Save user data in localStorage and context
+        login(data.user); // This saves to cookies and sessionStorage
+        
+        toast({
+          title: "Welcome to Bouquet Bar!",
+          description: "Your account has been created successfully.",
+        });
+        
+        setLocation("/"); // Redirect to home
+      } catch (error) {
+        logError(error, "signup success handler");
+        toast({
+          title: "Account Creation Error",
+          description: "Your account was created but there was an issue signing you in. Please try signing in manually.",
+          variant: "destructive",
+        });
+        setLocation("/signin");
+      }
     },
     onError: (error: any) => {
+      logError(error, "signup");
+      
+      const friendlyMessage = getFriendlyErrorMessage(error, "signup");
+      
       toast({
-        title: "Error",
-        description: error.message || "Failed to create account",
+        title: "Account Creation Failed",
+        description: friendlyMessage,
         variant: "destructive",
       });
     },
@@ -52,37 +123,271 @@ export default function SignUp() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (formData.password !== formData.confirmPassword) {
+    // Comprehensive form validation with friendly messages
+    if (!formData.firstName.trim()) {
       toast({
-        title: "Error",
-        description: "Passwords do not match",
+        title: "First Name Required",
+        description: "Please enter your first name to continue.",
         variant: "destructive",
       });
       return;
     }
 
-    if (formData.password.length < 6) {
+    // First name validation - only letters and spaces, min 2 chars
+    if (formData.firstName.trim().length < 2) {
       toast({
-        title: "Error", 
-        description: "Password must be at least 6 characters long",
+        title: "Invalid First Name",
+        description: "First name must be at least 2 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!/^[a-zA-Z\s]+$/.test(formData.firstName.trim())) {
+      toast({
+        title: "Invalid First Name",
+        description: "First name should only contain letters and spaces.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.lastName.trim()) {
+      toast({
+        title: "Last Name Required",
+        description: "Please enter your last name to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Last name validation - only letters and spaces, min 2 chars
+    if (formData.lastName.trim().length < 1) {
+      toast({
+        title: "Invalid Last Name",
+        description: "Last name must be at least 2 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!/^[a-zA-Z\s]+$/.test(formData.lastName.trim())) {
+      toast({
+        title: "Invalid Last Name",
+        description: "Last name should only contain letters and spaces.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Enhanced email validation - must contain @ and .com/.in/.org etc
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address (e.g., you@example.com).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if email contains .com, .in, .org, .net etc
+    const emailDomainRegex = /\.(com|in|org|net|edu|gov|co|io)$/i;
+    if (!emailDomainRegex.test(formData.email.trim())) {
+      toast({
+        title: "Invalid Email Domain",
+        description: "Please use a valid email domain (e.g., .com, .in, .org).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.phone.trim()) {
+      toast({
+        title: "Phone Number Required",
+        description: "Please enter your phone number to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Phone validation - exactly 10 digits, no spaces or special characters
+    const phoneRegex = /^[0-9]{10}$/;
+    const cleanPhone = formData.phone.replace(/\s/g, ''); // Remove any spaces
+    
+    if (!phoneRegex.test(cleanPhone)) {
+      toast({
+        title: "Invalid Phone Number",
+        description: "Phone number must be exactly 10 digits with no spaces or special characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if phone starts with valid digits (not 0 or 1)
+    if (cleanPhone.startsWith('0') || cleanPhone.startsWith('1')) {
+      toast({
+        title: "Invalid Phone Number",
+        description: "Phone number cannot start with 0 or 1.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.password.trim()) {
+      toast({
+        title: "Password Required",
+        description: "Please create a password to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Enhanced password validation
+    if (formData.password.length < 8) {
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 8 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.password.length > 50) {
+      toast({
+        title: "Password Too Long",
+        description: "Password must be less than 50 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check for at least one uppercase letter
+    if (!/[A-Z]/.test(formData.password)) {
+      toast({
+        title: "Password Too Weak",
+        description: "Password must contain at least one uppercase letter (A-Z).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check for at least one lowercase letter
+    if (!/[a-z]/.test(formData.password)) {
+      toast({
+        title: "Password Too Weak",
+        description: "Password must contain at least one lowercase letter (a-z).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check for at least one number
+    if (!/[0-9]/.test(formData.password)) {
+      toast({
+        title: "Password Too Weak",
+        description: "Password must contain at least one number (0-9).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check for at least one special character
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password)) {
+      toast({
+        title: "Password Too Weak",
+        description: "Password must contain at least one special character (!@#$%^&* etc).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check password doesn't contain common weak patterns
+    const weakPatterns = ['123456', 'password', 'qwerty', 'abc123', '111111', '000000'];
+    if (weakPatterns.some(pattern => formData.password.toLowerCase().includes(pattern))) {
+      toast({
+        title: "Password Too Weak",
+        description: "Password contains common patterns. Please choose a stronger password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.confirmPassword.trim()) {
+      toast({
+        title: "Confirm Password Required",
+        description: "Please confirm your password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Passwords Don't Match",
+        description: "Please make sure both passwords are exactly the same.",
         variant: "destructive",
       });
       return;
     }
 
     signupMutation.mutate({
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      phone: countryCode + formData.phone,
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+      email: formData.email.trim().toLowerCase(),
+      phone: countryCode + cleanPhone,
       password: formData.password,
     });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    
+    // Special handling for phone number - only allow digits
+    if (name === 'phone') {
+      // Remove any non-digit characters and limit to 10 digits
+      const cleanValue = value.replace(/\D/g, '').slice(0, 10);
+      setFormData({
+        ...formData,
+        [name]: cleanValue
+      });
+      return;
+    }
+    
+    // Special handling for first name and last name - only allow letters and spaces
+    if (name === 'firstName' || name === 'lastName') {
+      // Remove any non-letter characters except spaces
+      const cleanValue = value.replace(/[^a-zA-Z\s]/g, '');
+      setFormData({
+        ...formData,
+        [name]: cleanValue
+      });
+      return;
+    }
+    
+    // Special handling for email - convert to lowercase and remove spaces
+    if (name === 'email') {
+      const cleanValue = value.toLowerCase().replace(/\s/g, '');
+      setFormData({
+        ...formData,
+        [name]: cleanValue
+      });
+      return;
+    }
+    
+    // Default handling for other fields
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
   };
 
@@ -199,13 +504,29 @@ export default function SignUp() {
                         name="email"
                         type="email"
                         required
-                        className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
+                        className={`pl-10 border-gray-200 focus:border-primary focus:ring-primary/20 ${
+                          formData.email && !isEmailValid(formData.email) ? 'border-red-300 focus:border-red-500' : ''
+                        } ${
+                          formData.email && isEmailValid(formData.email) ? 'border-green-300 focus:border-green-500' : ''
+                        }`}
                         placeholder="your.email@example.com"
                         value={formData.email}
                         onChange={handleInputChange}
                         data-testid="input-email"
                       />
+                      {formData.email && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          {isEmailValid(formData.email) ? (
+                            <span className="text-green-500 text-sm">✓</span>
+                          ) : (
+                            <span className="text-red-500 text-sm">✗</span>
+                          )}
+                        </div>
+                      )}
                     </div>
+                    {formData.email && !isEmailValid(formData.email) && (
+                      <p className="text-sm text-red-600">Please enter a valid email with .com, .in, .org etc.</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -231,14 +552,33 @@ export default function SignUp() {
                           name="phone"
                           type="tel"
                           required
-                          className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
-                          placeholder="98765 43210"
+                          className={`pl-10 border-gray-200 focus:border-primary focus:ring-primary/20 ${
+                            formData.phone && !isPhoneValid(formData.phone) ? 'border-red-300 focus:border-red-500' : ''
+                          } ${
+                            formData.phone && isPhoneValid(formData.phone) ? 'border-green-300 focus:border-green-500' : ''
+                          }`}
+                          placeholder="0000000000"
                           value={formData.phone}
                           onChange={handleInputChange}
                           data-testid="input-phone"
+                          maxLength={10}
                         />
+                        {formData.phone && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            {isPhoneValid(formData.phone) ? (
+                              <span className="text-green-500 text-sm">✓</span>
+                            ) : (
+                              <span className="text-red-500 text-sm">✗</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
+                    {formData.phone && !isPhoneValid(formData.phone) && (
+                      <p className="text-sm text-red-600">
+                        {formData.phone.length !== 10 ? 'Phone must be exactly 10 digits' : 'Phone cannot start with 0 or 1'}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -254,9 +594,46 @@ export default function SignUp() {
                         placeholder="Create a strong password"
                         value={formData.password}
                         onChange={handleInputChange}
+                        onFocus={() => setShowPasswordRequirements(true)}
                         data-testid="input-password"
                       />
                     </div>
+                    {showPasswordRequirements && formData.password && (
+                      <div className="mt-2 p-3 bg-gray-50 rounded-lg text-sm">
+                        <p className="font-medium text-gray-700 mb-2">Password Requirements:</p>
+                        {(() => {
+                          const { requirements } = getPasswordStrength(formData.password);
+                          return (
+                            <div className="space-y-1">
+                              <div className={`flex items-center gap-2 ${requirements.length ? 'text-green-600' : 'text-red-600'}`}>
+                                <span>{requirements.length ? '✓' : '✗'}</span>
+                                <span>At least 8 characters</span>
+                              </div>
+                              <div className={`flex items-center gap-2 ${requirements.uppercase ? 'text-green-600' : 'text-red-600'}`}>
+                                <span>{requirements.uppercase ? '✓' : '✗'}</span>
+                                <span>One uppercase letter (A-Z)</span>
+                              </div>
+                              <div className={`flex items-center gap-2 ${requirements.lowercase ? 'text-green-600' : 'text-red-600'}`}>
+                                <span>{requirements.lowercase ? '✓' : '✗'}</span>
+                                <span>One lowercase letter (a-z)</span>
+                              </div>
+                              <div className={`flex items-center gap-2 ${requirements.number ? 'text-green-600' : 'text-red-600'}`}>
+                                <span>{requirements.number ? '✓' : '✗'}</span>
+                                <span>One number (0-9)</span>
+                              </div>
+                              <div className={`flex items-center gap-2 ${requirements.special ? 'text-green-600' : 'text-red-600'}`}>
+                                <span>{requirements.special ? '✓' : '✗'}</span>
+                                <span>One special character (!@#$%^&*)</span>
+                              </div>
+                              <div className={`flex items-center gap-2 ${requirements.noCommon ? 'text-green-600' : 'text-red-600'}`}>
+                                <span>{requirements.noCommon ? '✓' : '✗'}</span>
+                                <span>Not a common password</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -268,13 +645,29 @@ export default function SignUp() {
                         name="confirmPassword"
                         type="password"
                         required
-                        className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20"
+                        className={`pl-10 border-gray-200 focus:border-primary focus:ring-primary/20 ${
+                          formData.confirmPassword && formData.password !== formData.confirmPassword ? 'border-red-300 focus:border-red-500' : ''
+                        } ${
+                          formData.confirmPassword && formData.password === formData.confirmPassword && formData.confirmPassword.length > 0 ? 'border-green-300 focus:border-green-500' : ''
+                        }`}
                         placeholder="Confirm your password"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
                         data-testid="input-confirm-password"
                       />
+                      {formData.confirmPassword && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          {formData.password === formData.confirmPassword ? (
+                            <span className="text-green-500 text-sm">✓</span>
+                          ) : (
+                            <span className="text-red-500 text-sm">✗</span>
+                          )}
+                        </div>
+                      )}
                     </div>
+                    {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                      <p className="text-sm text-red-600">Passwords do not match</p>
+                    )}
                   </div>
 
                   <Button 

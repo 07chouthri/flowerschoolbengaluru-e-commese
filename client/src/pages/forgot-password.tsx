@@ -190,7 +190,7 @@ export default function ForgotPassword() {
                           type="tel"
                           required
                           className="pl-10 border-gray-200 focus:border-primary focus:ring-primary/20 text-lg"
-                          placeholder="987 654 3210"
+                          placeholder="000 000 0000"
                           value={phoneNumber}
                           onChange={handlePhoneChange}
                           maxLength={13}

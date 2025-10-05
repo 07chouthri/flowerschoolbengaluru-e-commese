@@ -7,11 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Search, 
-  MapPin, 
-  ShoppingCart, 
-  UserIcon, 
+import {
+  Search,
+  MapPin,
+  ShoppingCart,
+  UserIcon,
   Heart,
   Gift,
   Calendar,
@@ -45,25 +45,29 @@ import PostFileFive from "./PostFileFive";
 import PostFileSix from "./PostFileSix";
 
 export default function Shop() {
-    const [animatedText, setAnimatedText] = useState("");
+  const [animatedText, setAnimatedText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("name");
   const [priceRange, setPriceRange] = useState([0, 2000]);
   const [showInStockOnly, setShowInStockOnly] = useState(false);
-  
-const [isVisible, setIsVisible] = useState(true);
 
-    const [showCartModal, setShowCartModal] = useState(false);
-    const [location, setLocation] = useLocation();
-    const { toast } = useToast();
-    const queryClient = useQueryClient();
-  
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [categoryIndex, setCategoryIndex] = useState(0);
-    const [typingSpeed, setTypingSpeed] = useState(100);
-    const animationRef = useRef<NodeJS.Timeout | null>(null);
-  
+  // Add search suggestions state
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState<Array<{ item: string, category: string, categoryId: string }>>([]);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  const [isVisible, setIsVisible] = useState(true);
+  const [showCartModal, setShowCartModal] = useState(false);
+  const [location, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [categoryIndex, setCategoryIndex] = useState(0);
+  const [typingSpeed, setTypingSpeed] = useState(100);
+  const animationRef = useRef<NodeJS.Timeout | null>(null);
+
 
   // Scroll to top when component mounts
   useEffect(() => {
@@ -71,84 +75,153 @@ const [isVisible, setIsVisible] = useState(true);
   }, []);
 
 
-  // Add this useEffect to your Shop component (after your existing useEffects):
-
-useEffect(() => {
   // Handle hash navigation when component loads
-  const hash = window.location.hash.substring(1);
-  if (hash) {
-    // Wait a bit for components to render
-    setTimeout(() => {
-      const element = document.getElementById(hash);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }, 500);
-  }
-}, []);
+  useEffect(() => {
+    const hash = window.location.hash.substring(1);
+    if (hash) {
+      setTimeout(() => {
+        const element = document.getElementById(hash);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 500);
+    }
+  }, []);
 
-// Also update your existing scrollToSection function to be more robust:
-const scrollToSection = (sectionId: string) => {
-  const element = document.getElementById(sectionId);
-  if (element) {
-    // Add some offset to account for sticky header
-    const headerOffset = 100;
-    const elementPosition = element.offsetTop;
-    const offsetPosition = elementPosition - headerOffset;
-    
-    window.scrollTo({
-      top: offsetPosition,
-      behavior: "smooth"
+  // Scroll to section function
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const headerOffset = 100;
+      const elementPosition = element.offsetTop;
+      const offsetPosition = elementPosition - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+    }
+  };
+
+  // Get all items for search suggestions
+  const getAllItems = () => {
+    const allItems: Array<{ item: string, category: string, categoryId: string }> = [];
+
+    categories.forEach((category, index) => {
+      allItems.push({
+        item: category,
+        category: "Flower Categories",
+        categoryId: category.toLowerCase().replace(/\s+/g, '-')
+      });
     });
-  }
-};
+
+    return allItems;
+  };
+
+  // Filter suggestions based on search query
+  const filterSuggestions = (query: string) => {
+    if (!query.trim()) {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const allItems = getAllItems();
+    const filtered = allItems
+      .filter(({ item }) =>
+        item.toLowerCase().includes(query.toLowerCase())
+      )
+      .slice(0, 8);
+
+    setSearchSuggestions(filtered);
+    setShowSuggestions(filtered.length > 0);
+  };
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    filterSuggestions(query);
+  };
+
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion: { item: string, category: string, categoryId: string }) => {
+    setSearchQuery("");
+    setShowSuggestions(false);
+
+    const searchParams = new URLSearchParams();
+    searchParams.set('search', suggestion.item);
+    searchParams.set('category', suggestion.categoryId);
+
+    setLocation(`/products?${searchParams.toString()}`);
+  };
+
+  // Handle search key down
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      setShowSuggestions(false);
+
+      const searchParams = new URLSearchParams();
+      searchParams.set('search', searchQuery.trim());
+
+      setLocation(`/products?${searchParams.toString()}`);
+    }
+  };
+
+  // Handle clicking outside to close suggestions
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Get current user data first
   const { data: user } = useQuery<User>({
     queryKey: ["/api/auth/user"],
     retry: false,
   });
-
-
-  
-  
-  const { 
-    addToCart, 
-    totalItems, 
+  const {
+    addToCart,
+    totalItems,
     totalPrice,
     items,
     isLoading,
-    isInCart, 
+    isInCart,
     getItemQuantity,
     updateQuantity,
-    removeFromCart 
+    removeFromCart
   } = useCart();
-  
+
   // Get products data
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
-  
+
   // Filter and sort products based on search, category, price, and stock
   const filteredProducts = products
     .filter((product: Product) => {
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           (product.description?.toLowerCase() || '').includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === "all" || 
-                             (product.category?.toLowerCase() || '') === selectedCategory.toLowerCase();
-      // Convert price to number to ensure type safety
+        (product.description?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === "all" ||
+        (product.category?.toLowerCase() || '') === selectedCategory.toLowerCase();
       const productPrice = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
-      const matchesPrice = !isNaN(productPrice) && 
-                          productPrice >= priceRange[0] && 
-                          productPrice <= priceRange[1];
+      const matchesPrice = !isNaN(productPrice) &&
+        productPrice >= priceRange[0] &&
+        productPrice <= priceRange[1];
       const matchesStock = !showInStockOnly || product.inStock === true;
       return matchesSearch && matchesCategory && matchesPrice && matchesStock;
     })
     .sort((a, b) => {
-      // Convert prices to numbers for comparison
       const priceA = typeof a.price === 'string' ? parseFloat(a.price) : a.price;
       const priceB = typeof b.price === 'string' ? parseFloat(b.price) : b.price;
-      
+
       switch (sortBy) {
         case "price-low":
           return priceA - priceB;
@@ -162,7 +235,7 @@ const scrollToSection = (sectionId: string) => {
 
   // Handle add to cart with toast notification
   const handleAddToCart = (product: Product) => {
-    addToCart(product, 1); // Explicitly pass quantity=1
+    addToCart(product, 1);
     toast({
       title: "Added to Cart! 🛒",
       description: `${product.name} has been added to your cart.`,
@@ -187,13 +260,11 @@ const scrollToSection = (sectionId: string) => {
       });
     },
     onSuccess: () => {
-      // Clear user data from cache
       queryClient.setQueryData(["/api/auth/user"], null);
       toast({
         title: "Logged out successfully",
         description: "You have been signed out.",
       });
-      // Navigate to home page
       setLocation("/");
     },
     onError: (error: any) => {
@@ -233,46 +304,39 @@ const scrollToSection = (sectionId: string) => {
     },
   });
 
+  // Typing animation effect
+  useEffect(() => {
+    if (searchQuery) return;
 
-   // Typing animation effect
-    useEffect(() => {
-      if (searchQuery) return; // Stop animation if user is typing
-      
-      const currentCategory = categories[categoryIndex];
-      
-      const handleTyping = () => {
-        if (isDeleting) {
-          // Backspace effect
-          setAnimatedText(currentCategory.substring(0, animatedText.length - 1));
-          setTypingSpeed(50);
-        } else {
-          // Typing effect
-          setAnimatedText(currentCategory.substring(0, animatedText.length + 1));
-          setTypingSpeed(100);
-        }
-        
-        // Check if we've finished typing a word
-        if (!isDeleting && animatedText === currentCategory) {
-          // Pause at the end of typing
-          setTimeout(() => setIsDeleting(true), 1000);
-        } else if (isDeleting && animatedText === "") {
-          // Move to next category after deleting
-          setIsDeleting(false);
-          setCategoryIndex((prev) => (prev + 1) % categories.length);
-        }
-      };
-      
-      animationRef.current = setTimeout(handleTyping, typingSpeed);
-      
-      return () => {
-        if (animationRef.current) {
-          clearTimeout(animationRef.current);
-        }
-      };
-    }, [animatedText, isDeleting, categoryIndex, searchQuery]);
-  
+    const currentCategory = categories[categoryIndex];
 
-    const handleInputFocus = () => {
+    const handleTyping = () => {
+      if (isDeleting) {
+        setAnimatedText(currentCategory.substring(0, animatedText.length - 1));
+        setTypingSpeed(50);
+      } else {
+        setAnimatedText(currentCategory.substring(0, animatedText.length + 1));
+        setTypingSpeed(100);
+      }
+
+      if (!isDeleting && animatedText === currentCategory) {
+        setTimeout(() => setIsDeleting(true), 1000);
+      } else if (isDeleting && animatedText === "") {
+        setIsDeleting(false);
+        setCategoryIndex((prev) => (prev + 1) % categories.length);
+      }
+    };
+
+    animationRef.current = setTimeout(handleTyping, typingSpeed);
+
+    return () => {
+      if (animationRef.current) {
+        clearTimeout(animationRef.current);
+      }
+    };
+  }, [animatedText, isDeleting, categoryIndex, searchQuery]);
+
+  const handleInputFocus = () => {
     if (animationRef.current) {
       clearTimeout(animationRef.current);
     }
@@ -335,6 +399,117 @@ const scrollToSection = (sectionId: string) => {
     "Anniversary Flowers",
     "Wedding Flowers",
     "Valentine's Day Flowers",
+    "Mother's Day Flowers",
+    "Get Well Soon Flowers",
+    "Congratulations Flowers",
+    "Sympathy & Funeral Flowers",
+    "New Baby Flowers",
+    "Graduation Flowers",
+    "Housewarming Flowers",
+    "Retirement Flowers",
+    "Christmas Flowers",
+    "New Year Flowers",
+    "Bouquets (hand-tied, wrapped)",
+    "Flower Baskets",
+    "Flower Boxes",
+    "Vase Arrangements",
+    "Floral Centerpieces",
+    "Flower Garlands",
+    "Lobby Arrangements", "Exotic Arrangements",
+    "Floral Cross Arrangement",
+    "Baby's Breath Arrangement",
+    "Gladiolus Arrangement",
+    "Wine Bottle Arrangements",
+    "Floral Wreaths",
+    "Custom Arrangements",
+    "Tulips",
+    "Lilies",
+    "Carnations",
+    "Orchids",
+    "Sunflowers",
+    "Mixed Flowers",
+    "Roses",
+    "Baby's Breath",
+    "Chrysanthemum",
+    "Hydrangea",
+    "Anthurium",
+    "Calla Lilies",
+    "Gerberas",
+    "Peonies",
+    "Flowers with Greeting Cards",
+    "Flower with Fruits",
+    "Floral Gift Hampers",
+    "Flower with Chocolates",
+    "Flower with Cakes",
+    "Flowers with Cheese",
+    "Flowers with Nuts",
+    "Flowers with Customized Gifts",
+    "Flowers with Wine",
+    "Flowers with Perfume",
+    "Flowers with Jewelry",
+    "Flowers with Teddy Bears",
+    "Flowers with Scented Candles",
+    "Flowers with Personalized Items",
+    "Wedding Floral Decor",
+    "Corporate Event Flowers",
+    "Party Flower Decorations",
+    "Stage & Backdrop Flowers",
+    "Car Decoration Flowers",
+    "Temple / Pooja Flowers",
+    "Birthday Decorations",
+    "Entrance Arrangements",
+    "Table Centerpieces",
+    "Aisle Decorations",
+    "Archway Flowers",
+    "Ceiling Installations",
+    "Wall Decorations",
+    "Outdoor Event Flowers",
+    "Same-Day Flower Delivery",
+    "Next Day Delivery",
+    "Customized Message Cards",
+    "Floral Subscriptions Weekly/monthly",
+    "International Delivery",
+    "Express Delivery",
+    "Scheduled Delivery",
+    "Flower Arrangement Workshops",
+    "Custom Bouquet Design",
+    "Event Florist Services",
+    "Floral Consultation",
+    "Wedding Florist Services",
+    "Corporate Account Services",
+    "Subscription Services",
+    "Pet Memorial Flowers",
+    "Funeral Wreaths",
+    "Condolence Bouquets",
+    "Remembrance Flowers",
+    "Memorial Sprays",
+    "Casket Arrangements",
+    "Sympathy Hearts",
+    "Funeral Home Delivery",
+    "Church Arrangements",
+    "Graveside Flowers",
+    "Memorial Service Flowers",
+    "Sympathy Gift Baskets",
+    "Living Tributes",
+    "Memorial Donations",
+    "Office Desk Flowers",
+    "Reception Area Flowers",
+    "Corporate Gifting Flowers",
+    "Brand-Themed Floral Arrangements",
+    "Conference Room Flowers",
+    "Executive Office Arrangements",
+    "Lobby Displays",
+    "Corporate Accounts",
+    "Volume Discounts",
+    "Regular Maintenance",
+    "Custom Corporate Designs",
+    "Event Floristry Services",
+    "Branded Arrangements",
+    "Long-term Contracts",
+    "Birthday Flowers",
+    "Anniversary Flowers",
+    "Wedding Flowers",
+    "Valentine's Day Flowers",
     "Roses",
     "Tulips",
     "Lilies",
@@ -357,276 +532,333 @@ const scrollToSection = (sectionId: string) => {
     "Customized Message Cards"
   ];
 
-
-
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen">
       {/* Top Bar */}
       <div className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+
           {/* Main Navigation */}
-          <div className="flex items-center justify-between py-4">
-            <Link href="/" className="flex items-center gap-3">
-              <img 
+          <div className="flex items-center justify-between py-3 md:py-4">
+            <Link href="/" className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+              <img
                 src={bouquetBarLogo}
                 alt="Bouquet Bar Logo"
-                className="w-20 h-auto"
+                className="w-16 md:w-20 h-auto"
               />
-              <div className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
+              <div className="text-lg md:text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
                 Bouquet Bar
               </div>
             </Link>
-            
-          {/* Search Bar */}
-<div className="flex-1 max-w-xl mx-4 md:mx-6">
-  <div className="relative">
-    <Input
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      onFocus={handleInputFocus}
-      className="pl-4 pr-10 py-2.5 w-full rounded-xl border border-gray-300 focus:border-gray-400 focus:ring-1 focus:ring-gray-200 shadow-sm transition-all duration-200 font-sans text-sm md:text-base h-10 md:h-11"
-    />
-    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none w-3/4">
-      <span className="text-gray-500 font-medium text-xs md:text-sm truncate">
-        {!searchQuery ? `Searching for ${animatedText}` : ""}
-        {!searchQuery && <span className="animate-pulse font-bold">|</span>}
-      </span>
-    </div>
-    <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
-  </div>
-</div>
-            
-<div className="flex items-center gap-3 md:gap-1 relative">
-  {/* Cart Button with Hover Text */}
-  <div className="relative group">
-    <Button 
-      variant="ghost" 
-      size="icon" 
-      className="relative h-12 w-12 rounded-full" 
-      onClick={() => setShowCartModal(true)}
-      data-testid="button-cart"
-    >
-      <ShoppingCart className="w-7 h-7" />
-       {totalItems > 0 && (
-    <span className="absolute -right-1 flex items-center justify-center h-4 min-w-[1rem] px-1 text-[10px] font-semibold rounded-full bg-pink-600 text-white">
-      {totalItems}
-    </span>
-  )}
-    </Button>
-     <div className="absolute top-full left-1/2 -translate-x-1/2 opacity-0  duration-200 pointer-events-none   py-1 rounded">
-    Cart
-  </div>
-  </div>
 
-  {/* Contact Button with Hover Text */}
-  <div className="relative group">
-    <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full" data-testid="button-contact">
-      <Phone className="w-6 h-6" />
-    </Button>
-    <div className="absolute top-full left-1/2 transform -translate-x-1/2 opacity-0  transition-opacity duration-200 pointer-events-none mt-1 bg-black text-white text-xs px-2 py-1 rounded">
-      Contact
-    </div>
-  </div>
+            {/* Search Bar with Suggestions - Responsive */}
+            <div className="flex-1 max-w-md md:max-w-xl mx-2 md:mx-4 lg:mx-6" ref={searchRef}>
+              <div className="relative">
+                <Input
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  onKeyDown={handleSearchKeyDown}
+                  onFocus={() => {
+                    if (animationRef.current) {
+                      clearTimeout(animationRef.current);
+                    }
+                    if (searchQuery && searchSuggestions.length > 0) {
+                      setShowSuggestions(true);
+                    }
+                  }}
+                  className="pl-3 md:pl-4 pr-8 md:pr-10 py-2 md:py-2.5 w-full rounded-lg md:rounded-xl border border-gray-300 focus:border-gray-400 focus:ring-1 focus:ring-gray-200 shadow-sm transition-all duration-200 font-sans text-xs md:text-sm lg:text-base h-9 md:h-10 lg:h-11"
+                />
+                <div className="absolute inset-y-0 left-3 md:left-4 flex items-center pointer-events-none w-2/3 md:w-3/4">
+                  <span className="text-gray-500 font-medium text-xs md:text-sm truncate">
+                    {!searchQuery ? `Searching for ${animatedText}` : ""}
+                    {!searchQuery && <span className="animate-pulse font-bold">|</span>}
+                  </span>
+                </div>
 
-  {user ? (
-    <>
-      {/* Account Button with Hover Text */}
-      <div className="relative group">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-12 w-12 rounded-full"
-          onClick={() => setLocation("/my-account")}
-          data-testid="button-account"
-        >
-          <UserIcon className="w-6 h-6" />
-        </Button>
-        <div className="absolute top-full left-1/2 transform -translate-x-1/2 opacity-0 transition-opacity duration-200 pointer-events-none mt-1 bg-black text-white text-xs px-2 py-1 rounded">
-          Account
-        </div>
-      </div>
-      
-    {/* User greeting and Logout Button */}
-<div className="flex items-center gap-4">
-  <span className="text-sm text-gray-700 font-medium hidden md:block">
-    Hello, {user.firstname || 'User'}!
-  </span>
+                <Search className="absolute right-2 md:right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 text-gray-500" />
 
-  <Button 
-    variant="outline" 
-    size="sm"
-    onClick={handleLogout}
-    disabled={logoutMutation.isPending}
-    data-testid="button-logout"
-    className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-pink-700 text-white border-0 transition-all duration-300"
-  >
-    {logoutMutation.isPending ? 'Logging out...' : 'Log Out'}
-  </Button>
-</div>
+                {/* Mobile-Optimized Search Suggestions Dropdown */}
+                {showSuggestions && searchSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-50 
+                    max-h-[50vh] sm:max-h-80 overflow-y-auto 
+                    min-w-[280px] sm:min-w-0
+                    -mx-2 sm:mx-0">
+                    <div className="p-2">
+                      {/* Header */}
+                      <div className="text-xs text-gray-500 px-3 py-2 border-b border-gray-100 bg-gray-50 rounded-t-md -m-2 mb-2 flex items-center justify-between">
+                        <span className="font-medium">Search Suggestions</span>
+                        <button
+                          onClick={() => setShowSuggestions(false)}
+                          className="sm:hidden p-1 hover:bg-gray-200 rounded"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
 
-    </>
-  ) : (
-  <Button 
-  size="sm" 
-  onClick={() => setLocation("/signin")}
-  data-testid="button-login"
-  className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white transition-all duration-300"
->
-  <UserIcon className="w-4 h-4 mr-2" />
-  Login
-</Button>
-  )}
-</div>
-</div>
+                      {/* Suggestions List */}
+                      <div className="space-y-1">
+                        {searchSuggestions.map((suggestion, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between px-3 py-3 hover:bg-pink-50 cursor-pointer rounded-md transition-colors border-b border-gray-50 last:border-b-0"
+                            onClick={() => handleSuggestionClick(suggestion)}
+                          >
+                            <div className="flex flex-col flex-1 min-w-0 space-y-1">
+                              <span className="text-sm font-medium text-gray-900 leading-tight">
+                                {suggestion.item}
+                              </span>
+                              <span className="text-xs text-gray-500 leading-tight">
+                                in {suggestion.category}
+                              </span>
+                            </div>
+                            <div className="flex-shrink-0 ml-3">
+                              <Search className="w-4 h-4 text-gray-400" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
 
-</div>
-<FlowerCategory />
- </div>
+                      {/* Footer for mobile */}
+                      <div className="sm:hidden border-t border-gray-100 pt-2 mt-2 text-center">
+                        <button
+                          onClick={() => setShowSuggestions(false)}
+                          className="text-xs text-gray-500 px-4 py-2 hover:bg-gray-50 rounded-md"
+                        >
+                          Close suggestions
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
 
-      <div>
-        
-        <PostFile />
-      <section id="flower-categories">
-      <SmallImages/>
-    </section>
-       <section id="fresh-flowers">
-      <PostFileOne/>
-    </section>
-        {/* <PostFileTwo/> */}
-    <section id="premium">
-      <PostThree/>
-    </section>
-     <section id="wedding">
-      <PostFileFour/>
-    </section>
-    <VideoFile/>  
-       <section id="corporate">
-      <PostFileFive/>
-    </section>
- <section id="floral-design-courses">
-      <PostFileSix/>
-    </section>
-      </div>
-    
+            <div className="flex items-center gap-1 md:gap-3 relative">
+              {/* Cart Button with Hover Text */}
+              <div className="relative group">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative h-10 w-10 md:h-12 md:w-12 rounded-full"
+                  onClick={() => setShowCartModal(true)}
+                  data-testid="button-cart"
+                >
+                  <ShoppingCart className="w-5 h-5 md:w-7 md:h-7" />
+                  {totalItems > 0 && (
+                    <span className="absolute -right-1 flex items-center justify-center h-4 min-w-[1rem] px-1 text-[10px] font-semibold rounded-full bg-pink-600 text-white">
+                      {totalItems}
+                    </span>
+                  )}
+                </Button>
+              </div>
 
-      {/* Products Section */}
-      <section id="products-section" className="py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-           <h2 className="text-3xl font-bold">
-  {searchQuery 
-    ? `Search Results for "${searchQuery}"` 
-    : selectedCategory === "all" 
-      ? "All Products" 
-      : `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Products`}
-</h2>
+              {/* Contact Button with Hover Text */}
+              <div className="relative group">
+                <a href="tel:9972803847">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 md:h-12 md:w-12 rounded-full"
+                    data-testid="button-contact"
+                  >
+                    <Phone className="w-4 h-4 md:w-6 md:h-6" />
+                  </Button>
+                </a>
+              </div>
 
-            <div className="text-sm text-gray-600">
-              {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} found
+              {user ? (
+                <>
+                  {/* Account Button */}
+                  <div className="relative group">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 md:h-12 md:w-12 rounded-full"
+                      onClick={() => setLocation("/my-account")}
+                      data-testid="button-account"
+                    >
+                      <UserIcon className="w-4 h-4 md:w-6 md:h-6" />
+                    </Button>
+                  </div>
+
+                  {/* User greeting and Logout Button */}
+                  <div className="flex items-center gap-2 md:gap-4">
+                    <span className="text-xs md:text-sm text-gray-700 font-medium hidden lg:block">
+                      Hello, {user.firstname || 'User'}!
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleLogout}
+                      disabled={logoutMutation.isPending}
+                      data-testid="button-logout"
+                      className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-pink-700 text-white border-0 transition-all duration-300 text-xs md:text-sm px-2 md:px-4 py-1 md:py-2"
+                    >
+                      {logoutMutation.isPending ? 'Logging out...' : 'Log Out'}
+                    </Button>
+                  </div>
+
+                </>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={() => setLocation("/signin")}
+                  data-testid="button-login"
+                  className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white transition-all duration-300 text-xs md:text-sm px-2 md:px-4 py-1 md:py-2"
+                >
+                  <UserIcon className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                  Login
+                </Button>
+              )}
             </div>
           </div>
-          
+
+        </div>
+        <FlowerCategory />
+      </div>
+
+      <div>
+        <PostFile />
+        <section id="flower-categories">
+          <SmallImages />
+        </section>
+        <section id="fresh-flowers">
+          <PostFileOne />
+        </section>
+        <section id="premium">
+          <PostThree />
+        </section>
+        <section id="wedding">
+          <PostFileFour />
+        </section>
+        <VideoFile />
+        <section id="corporate">
+          <PostFileFive />
+        </section>
+        <section id="floral-design-courses">
+          <PostFileSix />
+        </section>
+      </div>
+
+
+      {/* Products Section */}
+      <section id="products-section" className="py-8 md:py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-6 md:mb-8">
+            <h2 className="text-xl md:text-3xl font-bold">
+              {searchQuery
+                ? `Search Results for "${searchQuery}"`
+                : selectedCategory === "all"
+                  ? "Featured Products"
+                  : `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Products`}
+            </h2>
+
+            <div className="text-xs md:text-sm text-gray-600">
+              {/* Show count of displayed products vs total using products array - changed to 8 */}
+              {Math.min(products.length, 8)} of {products.length} product{products.length !== 1 ? 's' : ''} shown
+            </div>
+          </div>
+
           {productsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, index) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+              {/* Show 8 loading cards */}
+              {[...Array(8)].map((_, index) => (
                 <Card key={index} className="overflow-hidden">
-                  <div className="w-full h-64 bg-gray-200 animate-pulse"></div>
-                  <CardContent className="p-4">
+                  <div className="w-full h-48 md:h-64 bg-gray-200 animate-pulse"></div>
+                  <CardContent className="p-3 md:p-4">
                     <div className="h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
                     <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-12">
-              <Gift className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                {searchQuery ? 'No products found' : 'No products in this category'}
+          ) : products.length === 0 ? (
+            <div className="text-center py-6 sm:py-8">
+              <Gift className="w-12 h-12 md:w-16 md:h-16 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
+                No products available
               </h3>
-              <p className="text-gray-600 mb-4">
-                {searchQuery ? 'Try searching with different keywords' : 'Please select a different category'}
+              <p className="text-sm sm:text-base text-gray-600 mb-4">
+                Check back later for new products
               </p>
-              {searchQuery && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => setSearchQuery("")}
-                  data-testid="button-clear-search"
-                >
-                  Clear Search
-                </Button>
-              )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProducts.map((product, index) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+              {products.slice(0, 8).map((product) => (
                 <Card key={product.id} className="overflow-hidden hover-elevate" data-testid={`card-product-${product.id}`}>
                   <div className="relative">
-                    <img 
+                    <img
                       src={`data:image/jpeg;base64,${product.image}`}
                       alt={product.name}
-                      className="w-full h-64 object-cover cursor-pointer"
+                      className="w-full h-48 md:h-64 object-cover cursor-pointer"
                       onClick={() => setLocation(`/product/${product.id}`)}
                     />
-                    <button 
-                      className="absolute top-4 right-4 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover-elevate"
+                    <button
+                      className="absolute top-3 md:top-4 right-3 md:right-4 w-7 h-7 md:w-8 md:h-8 bg-white/90 rounded-full flex items-center justify-center hover-elevate"
                       onClick={(e) => handleToggleFavorite(product.id, e)}
                       disabled={addToFavoritesMutation.isPending || removeFromFavoritesMutation.isPending}
                       data-testid={`button-favorite-${product.id}`}
                     >
-                      <Heart 
-                        className={`w-4 h-4 ${isProductFavorited(product.id) 
-                          ? 'fill-pink-500 text-pink-500' 
+                      <Heart
+                        className={`w-3 h-3 md:w-4 md:h-4 ${isProductFavorited(product.id)
+                          ? 'fill-pink-500 text-pink-500'
                           : 'text-gray-600'
-                        }`} 
+                          }`}
                       />
                     </button>
-                    {!product.inStock && (
+                    {(!product.inStock || product.stockQuantity === 0) && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <Badge variant="secondary" className="bg-white text-black">
+                        <Badge variant="secondary" className="bg-white text-black text-xs">
                           Out of Stock
                         </Badge>
                       </div>
                     )}
                   </div>
-                  <CardContent className="p-4">
-                    <h3 
-                      className="font-semibold text-gray-900 mb-2 cursor-pointer hover:text-pink-600 transition-colors"
+                  <CardContent className="p-3 md:p-4">
+                    <h3
+                      className="font-semibold text-gray-900 mb-2 cursor-pointer hover:text-pink-600 transition-colors text-sm md:text-base"
                       onClick={() => setLocation(`/product/${product.id}`)}
                     >
                       {product.name}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-xl font-bold text-primary">₹{product.price}</span>
+                    <p className="text-xs md:text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
+                    <div className="flex items-center justify-between mb-3 md:mb-4">
+                      <span className="text-lg md:text-xl font-bold text-primary">₹{product.price}</span>
                       <Badge variant="outline" className="text-xs">
                         {product.category}
                       </Badge>
                     </div>
+                    {/* Show stock quantity if in stock and stockQuantity > 0 */}
+                    {product.inStock && typeof product.stockQuantity === "number" && product.stockQuantity > 0 && (
+                      <div className="mb-2">
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 text-xs">
+                          Only {product.stockQuantity} left in stock
+                        </Badge>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <div className="flex gap-1 flex-1">
-                        <Button 
+                        <Button
                           size="sm"
                           variant="outline"
-                          className="flex-1"
+                          className="flex-1 text-xs md:text-sm"
                           onClick={() => setLocation(`/product/${product.id}`)}
                           data-testid={`button-view-details-${product.id}`}
                         >
                           View Details
                         </Button>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={(e) => {
                             e.preventDefault();
                             handleAddToCart(product);
                           }}
                           disabled={!product.inStock}
-                          className="flex-1"
+                          className="flex-1 text-xs md:text-sm"
                           data-testid={`button-add-cart-${product.id}`}
                         >
-                          {isInCart(product.id) ? 
-                            `+${getItemQuantity(product.id)}` : 
+                          {isInCart(product.id) ?
+                            `+${getItemQuantity(product.id)}` :
                             (product.inStock ? 'Add to Cart' : 'Out of Stock')
                           }
                         </Button>
@@ -637,40 +869,42 @@ const scrollToSection = (sectionId: string) => {
               ))}
             </div>
           )}
+
+          {/* Add "View All Products" button if there are more than 8 products */}
+          {products.length > 8 && (
+            <div className="text-center mt-6 md:mt-8">
+              <Button
+                variant="outline"
+                onClick={() => setLocation('/products')}
+                className="border-pink-200 text-pink-700 hover:bg-pink-50 px-6 py-2 rounded-lg font-medium transition-colors"
+              >
+                View All {products.length} Products →
+              </Button>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Celebrations Calendar */}
-      <section className="py-12 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-bold mb-8">Celebrations Calendar</h2>
-          <div className="text-gray-600">
-            <p>Stay updated with upcoming festivals and occasions to never miss a celebration!</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Cart Modal */}
-      {/* Cart Modal - Updated styling */}
+      {/* Cart Modal - Mobile Optimized */}
       <Dialog open={showCartModal} onOpenChange={setShowCartModal}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-white border border-pink-100">
-          <DialogHeader className="bg-pink-25 -m-6 mb-4 p-6 border-b border-pink-100">
-            <DialogTitle className="flex items-center gap-2 text-gray-900">
-              <ShoppingCart className="h-5 w-5 text-pink-600" />
+        <DialogContent className="max-w-sm sm:max-w-2xl max-h-[80vh] overflow-y-auto bg-white border border-pink-100 mx-4">
+          <DialogHeader className="bg-pink-25 -m-4 sm:-m-6 mb-4 p-4 sm:p-6 border-b border-pink-100">
+            <DialogTitle className="flex items-center gap-2 text-gray-900 text-base sm:text-lg">
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 text-pink-600" />
               Shopping Cart ({totalItems} {totalItems === 1 ? 'item' : 'items'})
             </DialogTitle>
-            <DialogDescription className="text-gray-600">
+            <DialogDescription className="text-gray-600 text-sm">
               Review your items and proceed to checkout
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {items.length === 0 ? (
-              <div className="text-center py-8">
-                <ShoppingCart className="h-16 w-16 mx-auto text-pink-300 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Your cart is empty</h3>
-                <p className="text-gray-500 mb-4">Start shopping to add items to your cart</p>
-                <Button 
+              <div className="text-center py-6 sm:py-8">
+                <ShoppingCart className="h-12 w-12 sm:h-16 sm:w-16 mx-auto text-pink-300 mb-4" />
+                <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">Your cart is empty</h3>
+                <p className="text-sm sm:text-base text-gray-500 mb-4">Start shopping to add items to your cart</p>
+                <Button
                   onClick={() => setShowCartModal(false)}
                   className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
                 >
@@ -680,36 +914,36 @@ const scrollToSection = (sectionId: string) => {
             ) : (
               <>
                 {/* Cart Items */}
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   {items.map((item: any) => (
-                    <div key={item.id} className="flex items-center gap-4 p-4 border border-pink-100 rounded-lg bg-white hover:bg-pink-25 transition-colors">
+                    <div key={item.id} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 border border-pink-100 rounded-lg bg-white hover:bg-pink-25 transition-colors">
                       <img
-                        src={item.image}
+                        src={item.image ? `data:image/jpeg;base64,${item.image}` : "/placeholder-image.jpg"}
                         alt={item.name}
-                        className="w-16 h-16 object-cover rounded border border-pink-100"
+                        className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded border border-pink-100"
                       />
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{item.name}</h4>
-                        <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
-                        <p className="text-lg font-bold text-pink-600">₹{parseFloat(item.price).toLocaleString()}</p>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{item.name}</h4>
+                        <p className="text-xs sm:text-sm text-gray-500 line-clamp-1">{item.description}</p>
+                        <p className="text-base sm:text-lg font-bold text-pink-600">₹{parseFloat(item.price).toLocaleString()}</p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 sm:gap-2">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           disabled={isLoading}
-                          className="border-pink-200 hover:bg-pink-50"
+                          className="border-pink-200 hover:bg-pink-50 h-7 w-7 sm:h-8 sm:w-8 p-0"
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
-                        <span className="w-8 text-center font-medium bg-pink-50 py-1 rounded">{item.quantity}</span>
+                        <span className="w-6 sm:w-8 text-center font-medium bg-pink-50 py-1 rounded text-xs sm:text-sm">{item.quantity}</span>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           disabled={isLoading}
-                          className="border-pink-200 hover:bg-pink-50"
+                          className="border-pink-200 hover:bg-pink-50 h-7 w-7 sm:h-8 sm:w-8 p-0"
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
@@ -718,7 +952,7 @@ const scrollToSection = (sectionId: string) => {
                           variant="outline"
                           onClick={() => removeFromCart(item.id)}
                           disabled={isLoading}
-                          className="ml-2 text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
+                          className="ml-1 sm:ml-2 text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50 h-7 w-7 sm:h-8 sm:w-8 p-0"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -730,7 +964,7 @@ const scrollToSection = (sectionId: string) => {
                 <Separator className="border-pink-100" />
 
                 {/* Cart Summary */}
-                <div className="space-y-2 bg-pink-25 p-4 rounded-lg border border-pink-100">
+                <div className="space-y-2 bg-pink-25 p-3 sm:p-4 rounded-lg border border-pink-100">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal ({totalItems} {totalItems === 1 ? 'item' : 'items'})</span>
                     <span>₹{totalPrice.toLocaleString()}</span>
@@ -740,23 +974,20 @@ const scrollToSection = (sectionId: string) => {
                     <span className="text-green-600">Free</span>
                   </div>
                   <Separator className="border-pink-100" />
-                  <div className="flex justify-between text-lg font-bold">
+                  <div className="flex justify-between text-base sm:text-lg font-bold">
                     <span>Total</span>
                     <span className="text-pink-600">₹{totalPrice.toLocaleString()}</span>
                   </div>
                 </div>
 
                 <DialogFooter className="flex-col gap-2">
-                  {/* Always show Checkout button - behavior changes based on login status */}
-                  <Button 
+                  <Button
                     className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
                     onClick={() => {
                       setShowCartModal(false);
                       if (user) {
-                        // User is logged in - go to checkout
                         setLocation('/checkout');
                       } else {
-                        // User is not logged in - go to signin
                         setLocation('/signin');
                       }
                     }}
@@ -764,9 +995,9 @@ const scrollToSection = (sectionId: string) => {
                   >
                     Checkout
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowCartModal(false)} 
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCartModal(false)}
                     className="w-full border-pink-200 text-pink-700 hover:bg-pink-50"
                   >
                     Continue Shopping

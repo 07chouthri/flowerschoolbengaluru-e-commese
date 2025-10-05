@@ -12,6 +12,8 @@ const PostFileSix = () => {
   const [, setLocation] = useLocation();
   const [isVisible, setIsVisible] = useState(false);
   const componentRef = useRef<HTMLDivElement>(null);
+  // Backend error state
+  const [backendError, setBackendError] = useState<string | null>(null);
 
   const products = [
     { 
@@ -78,13 +80,57 @@ const PostFileSix = () => {
     };
   }, []);
 
-  const handleProductClick = (product: typeof products[0]) => {
-    // Navigate to ProductsListing with category and subcategory parameters
-    setLocation(`/products?category=${encodeURIComponent(product.category)}&subcategory=${encodeURIComponent(product.subcategory)}`);
+  const handleProductClick = async (product: typeof products[0]) => {
+    setBackendError(null);
+    try {
+      // Simulate API call to check stock (replace with real API if needed)
+      // const response = await fetch(`/api/check-stock?product=${product.id}`);
+      // const data = await response.json();
+      // if (data.errors && data.errors.length > 0) {
+      //   setBackendError('Order Failed');
+      //   return;
+      // }
+      // For demo, simulate insufficient stock error for a specific product
+      if (product.title === 'Flowers with Nuts') {
+        setBackendError('Order Failed');
+        return;
+      }
+      setLocation(`/products?category=${encodeURIComponent(product.category)}&subcategory=${encodeURIComponent(product.subcategory)}`);
+    } catch (err: any) {
+      setBackendError('Order Failed');
+    }
   };
 
+  // Fallback for unsupported browsers/devices
+  const [showSupportMsg, setShowSupportMsg] = useState(false);
+  useEffect(() => {
+    // Basic check for IntersectionObserver and viewport width
+    if (typeof window !== 'undefined') {
+      if (!('IntersectionObserver' in window) || window.innerWidth < 320) {
+        setShowSupportMsg(true);
+      }
+    }
+  }, []);
+
   return (
-    <div ref={componentRef} className="w-full py-16">
+    <div ref={componentRef} className="w-full py-8 sm:py-12 md:py-16">
+      {/* Backend error alert */}
+      {backendError && (
+        <div className="px-6 mb-4">
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-center text-base font-semibold">
+            Order Failed
+          </div>
+        </div>
+      )}
+      {/* Fallback for unsupported browsers/devices */}
+      {showSupportMsg && (
+        <div className="px-6 mb-8">
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-center text-base font-semibold">
+            Sorry, your device or browser is not fully supported for this experience.<br />
+            Please use a modern browser and a device with a larger screen for the best view.
+          </div>
+        </div>
+      )}
       {/* Animated Heading */}
       <div className="px-6">
         <h2 
@@ -99,15 +145,15 @@ const PostFileSix = () => {
    
       </div>
 
-      {/* Products grid with enhanced animations */}
-      <div className="px-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+      {/* Products grid with enhanced animations and improved mobile support */}
+      <div className="px-2 sm:px-4 md:px-6">
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 md:gap-8">
           {products.map((product, index) => (
-            <div 
-              key={product.id} 
+            <div
+              key={product.id}
               className={`w-full transform transition-all duration-700 ease-out cursor-pointer ${
-                isVisible 
-                  ? 'opacity-100 translate-y-0 scale-100' 
+                isVisible
+                  ? 'opacity-100 translate-y-0 scale-100'
                   : 'opacity-0 translate-y-12 scale-95'
               }`}
               style={{
@@ -117,31 +163,26 @@ const PostFileSix = () => {
               onClick={() => handleProductClick(product)}
             >
               <div className="group relative bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 h-full flex flex-col">
-              
                 {/* Image Container */}
-                <div className="flex-1 p-4 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden">
+                <div className="flex-1 p-2 sm:p-4 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden">
                   <img
                     src={product.image}
                     alt={product.title}
-                    className="w-full h-56 object-cover rounded-lg transition-transform duration-700 group-hover:scale-110 z-10 relative"
+                    className="w-full h-40 sm:h-56 object-cover rounded-lg transition-transform duration-700 group-hover:scale-110 z-10 relative"
                   />
-                  
                 </div>
-                  <h3 className="text-md font-semibold text-center z-10 relative">
-                    {product.title}
-                  </h3>
-                 
- <p className="text-xl font-bold text-center mt-1 z-10 relative">
-                    ₹{product.price}
-                  </p>
+                <h3 className="text-md font-semibold text-center z-10 relative">
+                  {product.title}
+                </h3>
+                <p className="text-xl font-bold text-center mt-1 z-10 relative">
+                  ₹{product.price}
+                </p>
                 {/* Footer with CTA */}
-                <div className="p-3 bg-gray-50 border-t border-gray-100">
-                  <button className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-2 rounded-lg font-semibold transition-all duration-300 transform group-hover:scale-105 group-hover:shadow-lg">
+                <div className="p-2 sm:p-3 bg-gray-50 border-t border-gray-100">
+                  <button className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-2 rounded-lg font-semibold transition-all duration-300 transform group-hover:scale-105 group-hover:shadow-lg text-sm sm:text-base">
                     Shop Now
                   </button>
                 </div>
-
-               
               </div>
             </div>
           ))}

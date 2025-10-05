@@ -83,33 +83,32 @@ function Gallery() {
   const currentImages = activeTab === 'shop' ? shopImages : schoolImages;
 
   return (
-    <section id="gallery" className="bg-white pt-16 pb-10">
-      <div className="text-center mb-16">
+    <section id="gallery" className="bg-white pt-12 sm:pt-16 pb-8 sm:pb-10">
+      <div className="text-center mb-12 sm:mb-16 px-4">
       
-                             <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight text-gray-900 tracking-tight">
-  Our {" "}
-  <span className="bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600">
-    Gallery
-  </span>{" "}
-
-</h2>
-        <p className="text-xl text-muted-foreground">Explore our beautiful creations and learning moments</p>
+        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-tight text-gray-900 tracking-tight mb-4">
+          Our {" "}
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600">
+            Gallery
+          </span>{" "}
+        </h2>
+        <p className="text-base sm:text-lg lg:text-xl text-muted-foreground px-4">Explore our beautiful creations and learning moments</p>
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex justify-center mb-12">
-        <div className="bg-muted rounded-full p-1">
+      <div className="flex justify-center mb-8 sm:mb-12 px-4">
+        <div className="bg-muted rounded-full p-1 w-full max-w-md sm:w-auto">
           <Button
             variant={activeTab === 'shop' ? "default" : "ghost"}
             onClick={() => setActiveTab('shop')}
-            className="rounded-full px-6 py-3"
+            className="rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base flex-1 sm:flex-none"
           >
             Flower Shop
           </Button>
           <Button
             variant={activeTab === 'school' ? "default" : "ghost"}
             onClick={() => setActiveTab('school')}
-            className="rounded-full px-6 py-3"
+            className="rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base flex-1 sm:flex-none"
           >
             Flower School
           </Button>
@@ -117,64 +116,72 @@ function Gallery() {
       </div>
 
       {/* Gallery Layout */}
-      <div className="flex flex-col lg:flex-row items-center justify-center gap-6">
-        {/* Left Side Images - Vertical Stack */}
-        <div className="lg:w-1/4 space-y-6">
-          {currentImages.left.map((image, index) => (
-            <div 
-              key={`left-${index}`}
-              className="group cursor-pointer relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2"
-            >
-              <div className="relative overflow-hidden rounded-xl">
-                <img 
-                  src={image.src} 
-                  alt={image.alt} 
-                  className="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110" 
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
-                  <h3 className="font-semibold text-sm mb-1">{image.alt}</h3>
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-6">
+          {/* Left Side Images - Vertical Stack */}
+          <div className="w-full lg:w-1/4 space-y-4 lg:space-y-6">
+            {currentImages.left.map((image, index) => (
+              <div 
+                key={`left-${index}`}
+                className="group cursor-pointer relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2"
+              >
+                <div className="relative overflow-hidden rounded-xl">
+                  <img 
+                    src={image.src} 
+                    alt={image.alt} 
+                    className="w-full h-48 sm:h-56 lg:h-64 object-cover transition-transform duration-700 group-hover:scale-110" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 text-white">
+                      <h3 className="font-semibold text-sm mb-1">{image.alt}</h3>
+                    </div>
+                  </div>
+                  <div className="absolute inset-0 rounded-xl ring-1 ring-white/20 group-hover:ring-pink-300/50 transition-all duration-500"></div>
                 </div>
-                <div className="absolute inset-0 rounded-xl ring-1 ring-white/20 group-hover:ring-pink-300/50 transition-all duration-500"></div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Center Image - Larger */}
-        <div className="lg:w-2/4 group cursor-pointer relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2">
-          <div className="relative overflow-hidden rounded-xl">
-            <img 
-              src={currentImages.center.src} 
-              alt={currentImages.center.alt} 
-              className="w-full h-[550px] object-cover transition-transform duration-700 group-hover:scale-110" 
-            />
-            <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
-              <h3 className="font-semibold text-lg mb-2">{currentImages.center.alt}</h3>
-            </div>
-            <div className="absolute inset-0 rounded-xl ring-1 ring-white/20 group-hover:ring-pink-300/50 transition-all duration-500"></div>
+            ))}
           </div>
-        </div>
 
-        {/* Right Side Images - Vertical Stack */}
-        <div className="lg:w-1/4 space-y-6">
-          {currentImages.right.map((image, index) => (
-            <div 
-              key={`right-${index}`}
-              className="group cursor-pointer relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2"
-            >
-              <div className="relative overflow-hidden rounded-xl">
-                <img 
-                  src={image.src} 
-                  alt={image.alt} 
-                  className="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110" 
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
-                  <h3 className="font-semibold text-sm mb-1">{image.alt}</h3>
+          {/* Center Image - Larger */}
+          <div className="w-full lg:w-2/4 group cursor-pointer relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2 mt-4 lg:mt-0">
+            <div className="relative overflow-hidden rounded-xl">
+              <img 
+                src={currentImages.center.src} 
+                alt={currentImages.center.alt} 
+                className="w-full h-64 sm:h-80 lg:h-[550px] object-cover transition-transform duration-700 group-hover:scale-110" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white">
+                  <h3 className="font-semibold text-base sm:text-lg mb-2">{currentImages.center.alt}</h3>
                 </div>
-                <div className="absolute inset-0 rounded-xl ring-1 ring-white/20 group-hover:ring-pink-300/50 transition-all duration-500"></div>
               </div>
+              <div className="absolute inset-0 rounded-xl ring-1 ring-white/20 group-hover:ring-pink-300/50 transition-all duration-500"></div>
             </div>
-          ))}
+          </div>
+
+          {/* Right Side Images - Vertical Stack */}
+          <div className="w-full lg:w-1/4 space-y-4 lg:space-y-6 mt-4 lg:mt-0">
+            {currentImages.right.map((image, index) => (
+              <div 
+                key={`right-${index}`}
+                className="group cursor-pointer relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2"
+              >
+                <div className="relative overflow-hidden rounded-xl">
+                  <img 
+                    src={image.src} 
+                    alt={image.alt} 
+                    className="w-full h-48 sm:h-56 lg:h-64 object-cover transition-transform duration-700 group-hover:scale-110" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 text-white">
+                      <h3 className="font-semibold text-sm mb-1">{image.alt}</h3>
+                    </div>
+                  </div>
+                  <div className="absolute inset-0 rounded-xl ring-1 ring-white/20 group-hover:ring-pink-300/50 transition-all duration-500"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -287,27 +294,25 @@ export default function SchoolSection() {
     <section 
       id="school" 
       ref={sectionRef}
-      className="py-16 md:py-28 bg-white relative overflow-hidden"
+      className="py-12 sm:py-16 md:py-20 lg:py-28 bg-white relative overflow-hidden"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Mission Statement */}
-        <div className={`text-center mb-20 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+        <div className={`text-center mb-16 sm:mb-20 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           
-                     <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight text-gray-900 tracking-tight">
-  Flower {" "}
-  <span className="bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600">
-    School
-  </span>{" "}
-
-</h2>
-          <div className="inline-flex items-center justify-center px-6 py-3 rounded-full font-medium mb-8"></div>
-          
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">
-            "Teaching floral design with due respect for nature & community"
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-tight text-gray-900 tracking-tight mb-6">
+            Flower {" "}
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600">
+              School
+            </span>{" "}
           </h2>
           
-          <div className="max-w-4xl mx-auto space-y-6 text-lg text-gray-700 leading-relaxed">
+          <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-6 sm:mb-8 px-4">
+            "Teaching floral design with due respect for nature & community"
+          </h3>
+          
+          <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 text-base sm:text-lg text-gray-700 leading-relaxed px-4">
             <p>
               We empower aspiring and experienced florists alike through hands-on training, artistic exploration, 
               and deep respect for nature's beauty. Our commitment is to nurture not only technical excellence but 
@@ -322,12 +327,9 @@ export default function SchoolSection() {
         </div>
 
         {/* Core Values */}
-        <div className={`mb-20 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <h3 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-12">
-            Our Core Values at the School
-          </h3>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className={`mb-16 sm:mb-20 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {values.map((value, index) => {
               const Icon = value.icon;
               return (
@@ -335,12 +337,12 @@ export default function SchoolSection() {
                   key={index}
                   className="text-center border-0 bg-gray-50 hover:bg-gray-100 transition-all duration-500 hover:-translate-y-1"
                 >
-                  <CardContent className="p-6">
-                    <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Icon className="w-8 h-8 text-pink-600" />
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="bg-white w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                      <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-pink-600" />
                     </div>
-                    <h4 className="font-semibold text-lg text-gray-900 mb-2">{value.title}</h4>
-                    <p className="text-sm text-gray-600">{value.description}</p>
+                    <h4 className="font-semibold text-base sm:text-lg text-gray-900 mb-2">{value.title}</h4>
+                    <p className="text-xs sm:text-sm text-gray-600">{value.description}</p>
                   </CardContent>
                 </Card>
               );
@@ -349,78 +351,73 @@ export default function SchoolSection() {
         </div>
 
         {/* Gallery Component */}
-        <div className={`mb-20 transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+        <div className={`mb-16 sm:mb-20 transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <Gallery />
         </div>
 
         {/* Main Courses */}
-        <div className={`mb-20 transition-all duration-1000 delay-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Our Floristry Courses</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+        <div className={`mb-16 sm:mb-20 transition-all duration-1000 delay-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="text-center mb-8 sm:mb-12 px-4">
+            <h6 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-tight text-gray-900 tracking-tight mb-4 sm:mb-6">
+            Our {" "}
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600">
+              Floristry
+            </span>{" "}
+          </h6>
+            <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
               Comprehensive 5-day programs designed to transform your passion into profession
             </p>
-            <div className="mt-4 bg-amber-100 text-amber-800 px-4 py-2 rounded-lg inline-flex items-center">
-              <IndianRupee className="w-4 h-4 mr-1" />
+            <div className="mt-4 bg-amber-100 text-amber-800 px-3 sm:px-4 py-2 rounded-lg inline-flex items-center text-xs sm:text-sm">
+              <IndianRupee className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
               <span className="font-semibold">Special Offer:</span> Get 5% discount when you enroll in all 3 courses!
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {courses.map((course, index) => {
               const IconComponent = course.icon;
               return (
                 <Card 
                   key={course.id} 
-                  className={`overflow-hidden transition-all duration-500 hover:shadow-xl ${
-                    course.popular ? 'border-2 border-pink-300 relative' : 'border-gray-200'
-                  }`}
+                  className={`overflow-hidden transition-all duration-500 hover:shadow-xl ${course.popular ? 'border-2 border-pink-300 relative' : 'border-gray-200'}`}
                 >
+                  {course.popular && (
+                    <div className="absolute top-0 right-0 bg-pink-500 text-white px-3 py-1 text-xs font-semibold rounded-bl-lg z-10">
+                      Most Popular
+                    </div>
+                  )}
                   
-                  <CardContent className="p-6">
-                    <div className="text-center mb-6">
-                      <div className={`inline-flex items-center justify-center p-4 rounded-full mb-4 ${
-                        course.popular ? 'bg-pink-100' : 'bg-gray-100'
-                      }`}>
-                        <IconComponent className={`w-8 h-8 ${
-                          course.popular ? 'text-pink-600' : 'text-gray-600'
-                        }`} />
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="text-center mb-4 sm:mb-6">
+                      <div className={`inline-flex items-center justify-center p-3 sm:p-4 rounded-full mb-3 sm:mb-4 ${course.popular ? 'bg-pink-100' : 'bg-gray-100'}`}>
+                        <IconComponent className={`w-6 h-6 sm:w-8 sm:h-8 ${course.popular ? 'text-pink-600' : 'text-gray-600'}`} />
                       </div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">
                         {course.title}
                       </h3>
-                      <div className="flex items-center justify-center gap-4 mb-3">
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Calendar className="w-4 h-4 mr-1" />
+                      <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-3">
+                        <div className="flex items-center text-xs sm:text-sm text-gray-500">
+                          <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                           {course.duration}
                         </div>
-                        <div className="flex items-center text-lg font-bold text-pink-600">
-                          <IndianRupee className="w-4 h-4" />
+                        <div className="flex items-center text-base sm:text-lg font-bold text-pink-600">
+                          <IndianRupee className="w-3 h-3 sm:w-4 sm:h-4" />
                           {course.price}
                         </div>
                       </div>
-                      <p className="text-gray-600 text-sm mb-4">
+                      <p className="text-gray-600 text-xs sm:text-sm mb-4">
                         {course.description}
                       </p>
                     </div>
                     
-                    <ul className="space-y-3 text-sm text-gray-600 mb-6">
+                    <ul className="space-y-2 sm:space-y-3 text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">
                       {course.features.map((feature, index) => (
                         <li key={index} className="flex items-start">
-                          <Check className="w-4 h-4 text-pink-500 mt-0.5 mr-2 flex-shrink-0" />
+                          <Check className="w-3 h-3 sm:w-4 sm:h-4 text-pink-500 mt-0.5 mr-2 flex-shrink-0" />
                           <span>{feature}</span>
                         </li>
                       ))}
                     </ul>
-                    
-                    <Button 
-                      className="w-full transition-transform duration-300 hover:scale-105" 
-                      size="lg"
-                      variant={course.popular ? "default" : "outline"}
-                   
-                    >
-                      Enroll Now <ArrowRight className="ml-2 w-4 h-4" />
-                    </Button>
                   </CardContent>
                 </Card>
               );

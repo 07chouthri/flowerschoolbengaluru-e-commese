@@ -348,7 +348,7 @@ export default function Navigation() {
                   {items.map((item: any) => (
                     <div key={item.id} className="flex items-center gap-4 p-4 border border-pink-100 rounded-lg bg-white hover:bg-pink-25 transition-colors">
                       <img
-                        src={item.image}
+                        src={item.image ? `data:image/jpeg;base64,${item.image}` : "/placeholder-image.jpg"}
                         alt={item.name}
                         className="w-16 h-16 object-cover rounded border border-pink-100"
                       />

@@ -74,8 +74,8 @@ export const authStorage = {
   // Save user data and tokens
   saveUser: (userData: UserData): void => {
     try {
-      if (!userData || !userData.token) {
-        console.error('Invalid user data provided');
+      if (!userData || typeof userData !== 'object' || !userData.token || !userData.id || !userData.email) {
+        console.error('Invalid user data provided to saveUser:', userData);
         return;
       }
  
@@ -179,4 +179,3 @@ export const authStorage = {
     return !!(getCookie(AUTH_COOKIE_KEY) && sessionStorage.getItem(SESSION_STORAGE_KEY));
   }
 };
- 

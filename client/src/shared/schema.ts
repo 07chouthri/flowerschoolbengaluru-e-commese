@@ -21,6 +21,7 @@ export interface Product {
   imagethirder?: string;
   imagefoure?: string;
   imagefive?: string;
+  stockQuantity?: number;
 }
 
 export interface CartItem extends Product {
@@ -72,7 +73,7 @@ export interface Testimonial {
 
 export interface Order {
   id: string;
-  orderNumber?: string;
+  ordernumber?: string;
   userId?: string;
   items: CartItem[];
   total: number;

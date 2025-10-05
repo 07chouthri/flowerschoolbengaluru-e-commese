@@ -29,13 +29,15 @@ interface OrderReviewProps {
   onPlaceOrder: () => void;
   onEdit: (section: 'cart' | 'address' | 'delivery' | 'payment') => void;
   isPlacingOrder?: boolean;
+  backendError?: string;
 }
 
 export default function OrderReview({ 
   className,
   onPlaceOrder,
   onEdit,
-  isPlacingOrder = false 
+  isPlacingOrder = false,
+  backendError
 }: OrderReviewProps) {
   const {
     items,
@@ -573,34 +575,42 @@ export default function OrderReview({
       </Card>
 
       {/* Place Order Button */}
-      <div className="flex items-center justify-between pt-4">
-        <Button
-          variant="outline"
-          onClick={() => onEdit('payment')}
-          data-testid="button-back"
-        >
-          Back to Payment
-        </Button>
-        
-        <Button
-          size="lg"
-          onClick={onPlaceOrder}
-          disabled={!canPlaceOrder()}
-          className="min-w-48"
-          data-testid="button-place-order"
-        >
-          {isPlacingOrder ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-background border-t-transparent mr-2" />
-              Placing Order...
-            </>
-          ) : (
-            <>
-              <CheckCircle className="mr-2 h-4 w-4" />
-              Place Order - {formatPrice(finalAmount)}
-            </>
-          )}
-        </Button>
+      <div className="flex flex-col gap-2 pt-4">
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            onClick={() => onEdit('payment')}
+            data-testid="button-back"
+          >
+            Back to Payment
+          </Button>
+          <Button
+            size="lg"
+            onClick={onPlaceOrder}
+            disabled={!canPlaceOrder()}
+            className="min-w-48"
+            data-testid="button-place-order"
+          >
+            {isPlacingOrder ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-background border-t-transparent mr-2" />
+                Placing Order...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Place Order - {formatPrice(finalAmount)}
+              </>
+            )}
+          </Button>
+        </div>
+        {/* Backend error display */}
+        {typeof backendError === 'string' && backendError && (
+          <Alert variant="destructive" className="mt-2" data-testid="alert-backend-error">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{backendError}</AlertDescription>
+          </Alert>
+        )}
       </div>
     </div>
   );

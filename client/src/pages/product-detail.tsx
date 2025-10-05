@@ -11,7 +11,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Product } from "@shared/schema";
 import ShopNav from './ShopNav';
 import Footer from '@/components/footer';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function ProductDetail() {
   const [match, params] = useRoute("/product/:id");
@@ -29,8 +29,8 @@ export default function ProductDetail() {
   const cart = useCart();
   const { toast } = useToast();
 
-  // Add this state at the top of your component
-  const [selectedImage, setSelectedImage] = useState(product?.image);
+  // Fix the selectedImage initialization
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   // Check if user is authenticated
   const { data: user } = useQuery({
@@ -95,6 +95,13 @@ export default function ProductDetail() {
       });
     },
   });
+
+  // Initialize selectedImage when product loads
+  useEffect(() => {
+    if (product?.image && !selectedImage) {
+      setSelectedImage(product.image);
+    }
+  }, [product, selectedImage]);
 
   if (!match || !productId) {
     return <div>Product not found</div>;
@@ -324,7 +331,7 @@ export default function ProductDetail() {
                 {/* Thumbnail Gallery - Left Side */}
                 <div className="w-24 space-y-2">
                   <button
-                    onClick={() => setSelectedImage(product.image)}
+                    onClick={() => setSelectedImage(product.image || null)}
                     className={`w-full aspect-square rounded-lg overflow-hidden ${
                       selectedImage === product.image ? 'ring-2 ring-pink-500' : 'ring-1 ring-gray-200'
                     }`}
@@ -346,7 +353,7 @@ export default function ProductDetail() {
                   ].filter(Boolean).map((image, index) => (
                     <button
                       key={index}
-                      onClick={() => setSelectedImage(image)}
+                      onClick={() => setSelectedImage(image || null)}
                       className={`w-full aspect-square rounded-lg overflow-hidden ${
                         selectedImage === image ? 'ring-2 ring-pink-500' : 'ring-1 ring-gray-200'
                       }`}
@@ -360,10 +367,10 @@ export default function ProductDetail() {
                   ))}
                 </div>
 
-                {/* Main Image - Right Side */}
+                {/* Main Image - Right Side - FIXED */}
                 <div className="flex-1 aspect-square rounded-lg overflow-hidden bg-white shadow-lg">
                   <img
-                    src={`data:image/jpeg;base64,${product.image||selectedImage}`}
+                    src={`data:image/jpeg;base64,${selectedImage || product.image}`}
                     alt={product.name}
                     className="w-full h-full object-cover"
                     data-testid="img-product-main"
@@ -526,7 +533,7 @@ export default function ProductDetail() {
               <div className="mt-16">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">You Might Also Like</h2>
                 <div className="grid grid-cols-5 gap-4">
-                  {relatedProducts.slice(0, 100).map((relatedProduct) => (
+                  {relatedProducts.slice(0, 5).map((relatedProduct) => (
                     <Card key={relatedProduct.id} className="group cursor-pointer hover:shadow-lg transition-shadow">
                       <Link href={`/product/${relatedProduct.id}`}>
                         <CardContent className="p-0">
