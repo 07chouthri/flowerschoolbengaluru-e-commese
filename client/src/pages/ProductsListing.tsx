@@ -461,12 +461,6 @@ export default function ProductsListing() {
             <Link href="/shop" className="hover:text-pink-600 transition-colors">
               Shop
             </Link>
-            {/* {categoryParam && (
-              <>
-                <span>/</span>
-                <span className="text-gray-900 font-medium">{categoryParam}</span>
-              </>
-            )} */}
             {subcategoryParam && (
               <>
                 <span>/</span>

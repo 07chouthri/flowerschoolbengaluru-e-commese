@@ -6,7 +6,6 @@ import AboutSection from "@/components/about-section";
 import ShopSection from "@/components/shop-section";
 import SchoolSection from "@/components/school-section";
 import WhyChooseUs from "@/components/why-choose-us";
-import Gallery from "@/components/gallery";
 import ContactSection from "@/components/contact-section";
 import Footer from "@/components/footer";
 import FloatingWhatsapp from "@/components/floating-whatsapp";
@@ -25,7 +24,6 @@ export default function Home() {
       <AboutSection />
       <ShopSection />
       <SchoolSection />
-       <Gallery />
       <WhyChooseUs />
       <ContactSection />
       <Footer />

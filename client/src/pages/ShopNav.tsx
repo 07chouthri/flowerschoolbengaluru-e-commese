@@ -473,7 +473,7 @@ export default function ShopNav() {
           <div className="lg:hidden">
             <div className="flex items-center justify-between py-3">
               {/* Mobile Logo */}
-              <Link href="/" className="flex items-center gap-2">
+              <Link href="/shop" className="flex items-center gap-2">
                 <img
                   src={logoPath}
                   alt="Bouquet Bar Logo"

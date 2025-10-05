@@ -63,7 +63,7 @@ export default function AboutSection() {
     <section
       id="about"
       ref={sectionRef}
-      className="py-12 sm:py-16 md:py-20 lg:py-28 bg-gradient-to-br from-white via-pink-50/30 to-purple-50/30 relative overflow-hidden"
+      className="py-12 sm:py-16 md:py-20 lg:py-28relative overflow-hidden"
     >
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden">
@@ -143,7 +143,7 @@ export default function AboutSection() {
         </div>
 
         {/* Mission statement */}
-        <div className={`text-center py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-pink-50 to-purple-50 rounded-2xl lg:rounded-3xl transition-all duration-1000 delay-900 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+        <div className={`text-center py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8  rounded-2xl lg:rounded-3xl transition-all duration-1000 delay-900 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <div className="max-w-3xl mx-auto">
             <div className="mb-4 sm:mb-6">
               <span className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full mb-3 sm:mb-4">

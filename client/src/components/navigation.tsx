@@ -20,7 +20,7 @@ export default function Navigation() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // Get current user data
   const { data: user } = useQuery<UserType>({
     queryKey: ["/api/auth/user"],
@@ -28,13 +28,13 @@ export default function Navigation() {
   });
 
   // Cart functionality - now using context, no arguments needed
-  const { 
-    totalItems, 
+  const {
+    totalItems,
     totalPrice,
     items,
     isLoading,
     updateQuantity,
-    removeFromCart 
+    removeFromCart
   } = useCart();
 
   // Logout mutation
@@ -72,7 +72,7 @@ export default function Navigation() {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      
+
       // Show nav when at top of page
       if (currentScrollTop <= 50) {
         setIsScrollingUp(false);
@@ -85,7 +85,7 @@ export default function Navigation() {
       else if (currentScrollTop > lastScrollTop) {
         setIsScrollingUp(false);
       }
-      
+
       setLastScrollTop(currentScrollTop <= 0 ? 0 : currentScrollTop);
     };
 
@@ -109,39 +109,41 @@ export default function Navigation() {
             <img src={logoPath} alt="Bouquet Bar Logo" className="h-12 w-auto" />
             <span className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">Bouquet Bar</span>
           </div>
-          
-          
+
+
           <div className="hidden md:flex space-x-8">
-            <button 
+            <button
               onClick={() => scrollToSection('home')}
               className="text-muted-foreground hover:text-primary transition-colors"
               data-testid="nav-home"
             >
               Home
             </button>
-            <button 
-              onClick={() => scrollToSection('shop')}
+            <button
+              onClick={() => window.open('https://flowerschoolbengaluru.com/shop', '_blank')}
               className="text-muted-foreground hover:text-primary transition-colors"
               data-testid="nav-shop"
             >
               Shop
             </button>
-            <button 
-              onClick={() => scrollToSection('school')}
+
+            <button
+              onClick={() => window.open('https://app.flowerschoolbengaluru.com/', '_blank')}
               className="text-muted-foreground hover:text-primary transition-colors"
               data-testid="nav-school"
             >
               School
             </button>
-            <button 
+
+            <button
               onClick={() => scrollToSection('gallery')}
               className="text-muted-foreground hover:text-primary transition-colors"
               data-testid="nav-gallery"
             >
               Gallery
             </button>
-           
-            <button 
+
+            <button
               onClick={() => scrollToSection('contact')}
               className="text-muted-foreground hover:text-primary transition-colors"
               data-testid="nav-contact"
@@ -160,8 +162,8 @@ export default function Navigation() {
                       {user?.firstname || 'User'}!
                     </span>
                   </div>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={() => setLocation('/shop')}
                     data-testid="button-account"
@@ -169,7 +171,7 @@ export default function Navigation() {
                   >
                     Account
                   </Button>
-                  <Button 
+                  <Button
                     size="sm"
                     onClick={handleLogout}
                     disabled={logoutMutation.isPending}
@@ -181,8 +183,8 @@ export default function Navigation() {
                 </div>
               ) : (
                 <>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={() => scrollToSection('contact')}
                     data-testid="button-contact"
@@ -190,7 +192,7 @@ export default function Navigation() {
                   >
                     Contact
                   </Button>
-                  <Button 
+                  <Button
                     size="sm"
                     onClick={() => setLocation('/signin')}
                     data-testid="button-login"
@@ -217,43 +219,43 @@ export default function Navigation() {
         {isMobileMenuOpen && (
           <div className="md:hidden py-4">
             <div className="flex flex-col space-y-4">
-              <button 
+              <button
                 onClick={() => scrollToSection('home')}
                 className="text-left text-muted-foreground hover:text-primary transition-colors"
                 data-testid="nav-mobile-home"
               >
                 Home
               </button>
-              <button 
+              <button
                 onClick={() => scrollToSection('shop')}
                 className="text-left text-muted-foreground hover:text-primary transition-colors"
                 data-testid="nav-mobile-shop"
               >
                 Shop
               </button>
-              <button 
+              <button
                 onClick={() => scrollToSection('school')}
                 className="text-left text-muted-foreground hover:text-primary transition-colors"
                 data-testid="nav-mobile-school"
               >
                 School
               </button>
-              <button 
+              <button
                 onClick={() => scrollToSection('gallery')}
                 className="text-left text-muted-foreground hover:text-primary transition-colors"
                 data-testid="nav-mobile-gallery"
               >
                 Gallery
               </button>
-             
-              <button 
+
+              <button
                 onClick={() => scrollToSection('contact')}
                 className="text-left text-muted-foreground hover:text-primary transition-colors"
                 data-testid="nav-mobile-contact"
               >
                 Contact
               </button>
-              
+
               {/* Mobile Auth Section */}
               <div className="border-t border-border pt-4 mt-4 space-y-3">
                 {user ? (
@@ -265,18 +267,18 @@ export default function Navigation() {
                       </span>
                     </div>
                     <div className="space-y-2">
-                      <Button 
-                        variant="ghost" 
-                        className="w-full justify-start" 
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start"
                         onClick={() => setLocation('/shop')}
                         data-testid="button-mobile-account"
                       >
                         <User className="w-4 h-4 mr-2" />
                         Account
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full justify-start" 
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start"
                         onClick={handleLogout}
                         disabled={logoutMutation.isPending}
                         data-testid="button-mobile-logout"
@@ -288,17 +290,17 @@ export default function Navigation() {
                   </div>
                 ) : (
                   <>
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start" 
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start"
                       onClick={() => setLocation('/signin')}
                       data-testid="button-mobile-signin"
                     >
                       <User className="w-4 h-4 mr-2" />
                       Sign In
                     </Button>
-                    <Button 
-                      className="w-full" 
+                    <Button
+                      className="w-full"
                       onClick={() => setLocation('/signup')}
                       data-testid="button-mobile-signup"
                     >
@@ -308,14 +310,14 @@ export default function Navigation() {
                   </>
                 )}
               </div>
-              
+
             </div>
           </div>
         )}
-        
+
       </div>
 
-     {/* Cart Modal - Updated styling */}
+      {/* Cart Modal - Updated styling */}
       <Dialog open={showCartModal} onOpenChange={setShowCartModal}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-white border border-pink-100">
           <DialogHeader className="bg-pink-25 -m-6 mb-4 p-6 border-b border-pink-100">
@@ -334,7 +336,7 @@ export default function Navigation() {
                 <ShoppingCart className="h-16 w-16 mx-auto text-pink-300 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Your cart is empty</h3>
                 <p className="text-gray-500 mb-4">Start shopping to add items to your cart</p>
-                <Button 
+                <Button
                   onClick={() => setShowCartModal(false)}
                   className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
                 >
@@ -412,7 +414,7 @@ export default function Navigation() {
 
                 <DialogFooter className="flex-col gap-2">
                   {/* Always show Checkout button - behavior changes based on login status */}
-                  <Button 
+                  <Button
                     className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
                     onClick={() => {
                       setShowCartModal(false);
@@ -428,9 +430,9 @@ export default function Navigation() {
                   >
                     Checkout
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowCartModal(false)} 
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCartModal(false)}
                     className="w-full border-pink-200 text-pink-700 hover:bg-pink-50"
                   >
                     Continue Shopping

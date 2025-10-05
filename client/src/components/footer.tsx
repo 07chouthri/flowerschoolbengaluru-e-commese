@@ -237,22 +237,22 @@ export default function Footer() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/shop">
-                    <button
-                      onClick={() => handleNavigation('/shop')}
-                      className="text-gray-600 hover:text-gray-900 transition-all duration-300 font-medium w-full text-left">
-                      Shop
-                    </button>
-                  </Link>
+                  <button
+                    onClick={() => (window.location.href = 'https://flowerschoolbengaluru.com/shop')}
+                    className="text-gray-600 hover:text-gray-900 transition-all duration-300 font-medium w-full text-left"
+                  >
+                    Shop
+                  </button>
                 </li>
                 <li>
                   <button
-                    onClick={() => scrollToSection('school')}
+                    onClick={() => (window.location.href = 'https://app.flowerschoolbengaluru.com/')}
                     className="text-gray-600 hover:text-gray-900 transition-all duration-300 font-medium w-full text-left"
                   >
                     School
                   </button>
                 </li>
+
                 <li>
                   <button
                     onClick={() => scrollToSection('gallery')}

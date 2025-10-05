@@ -540,7 +540,7 @@ export default function Shop() {
 
           {/* Main Navigation */}
           <div className="flex items-center justify-between py-3 md:py-4">
-            <Link href="/" className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+            <Link href="/shop" className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <img
                 src={bouquetBarLogo}
                 alt="Bouquet Bar Logo"
